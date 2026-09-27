@@ -102,6 +102,47 @@ describe("SerpApi rank tracking", () => {
     expect(url.searchParams.get("no_cache")).toBe("true");
   });
 
+  it("targets Tehran coordinates for Iran rank checks", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(organicPage(["https://example.com/result"]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchSerpApiRankCheck("secret", {
+      ...input,
+      keyword: "روف گاردن",
+      locationCode: 2364,
+      languageCode: "fa",
+    });
+
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+    expect(url.searchParams.get("gl")).toBe("ir");
+    expect(url.searchParams.get("hl")).toBe("fa");
+    expect(url.searchParams.get("lat")).toBe("35.69439");
+    expect(url.searchParams.get("lon")).toBe("51.42151");
+  });
+
+  it("does not override another explicitly selected Iranian city", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(organicPage(["https://example.com/result"]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchSerpApiRankCheck("secret", {
+      ...input,
+      locationCode: 2364,
+      languageCode: "fa",
+      locationName: "Shiraz,Fars Province,Iran",
+    });
+
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+    expect(url.searchParams.get("location")).toBe(
+      "Shiraz,Fars Province,Iran",
+    );
+    expect(url.searchParams.has("lat")).toBe(false);
+    expect(url.searchParams.has("lon")).toBe(false);
+  });
+
   it("paginates and converts page-relative positions to absolute rank", async () => {
     const firstPage = Array.from(
       { length: 10 },

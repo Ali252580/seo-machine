@@ -16,6 +16,8 @@ import { SERPAPI_SEARCH_COST_USD } from "@/shared/rank-tracking";
 const SERPAPI_SEARCH_URL = "https://serpapi.com/search.json";
 const PAGE_SIZE = 10;
 const REQUEST_TIMEOUT_MS = 45_000;
+const IRAN_LOCATION_CODE = 2364;
+const TEHRAN_COORDINATES = { lat: "35.69439", lon: "51.42151" } as const;
 
 const organicResultSchema = z
   .object({
@@ -136,6 +138,15 @@ async function fetchPage(
   url.searchParams.set("num", String(PAGE_SIZE));
   url.searchParams.set("no_cache", "true");
   if (input.locationName) url.searchParams.set("location", input.locationName);
+  const normalizedLocationName = input.locationName?.trim().toLowerCase();
+  const targetsTehran =
+    !normalizedLocationName ||
+    normalizedLocationName.includes("tehran") ||
+    normalizedLocationName.includes("تهران");
+  if (input.locationCode === IRAN_LOCATION_CODE && targetsTehran) {
+    url.searchParams.set("lat", TEHRAN_COORDINATES.lat);
+    url.searchParams.set("lon", TEHRAN_COORDINATES.lon);
+  }
   if (start > 0) url.searchParams.set("start", String(start));
 
   let response: Response;
