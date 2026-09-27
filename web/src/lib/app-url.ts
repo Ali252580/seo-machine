@@ -1,7 +1,8 @@
-const APP_URL = (
-  import.meta.env.VITE_APP_URL ?? "https://app.seomachine.ir"
-).replace(/\/+$/, "");
-
 export function appUrl(path: string): string {
-  return new URL(path, `${APP_URL}/`).href;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  if (import.meta.env.MODE === "vercel") return normalizedPath;
+  const configuredAppUrl = import.meta.env.VITE_APP_URL?.replace(/\/+$/, "");
+  return configuredAppUrl
+    ? new URL(normalizedPath, `${configuredAppUrl}/`).href
+    : normalizedPath;
 }
