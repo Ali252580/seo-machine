@@ -269,7 +269,10 @@ export function createSerpApiRankClient(customer: BillingCustomerContext) {
         );
       }
 
-      if (!(await isHostedServerAuthMode())) {
+      // On Vercel, requests are paid from the project's own SerpApi account.
+      // Keep Autumn metering for the hosted Cloudflare product where Autumn is
+      // configured, and avoid making rank checks depend on an absent key here.
+      if (process.env.VERCEL === "1" || !(await isHostedServerAuthMode())) {
         return (await fetchSerpApiRankCheck(apiKey, input)).data;
       }
 

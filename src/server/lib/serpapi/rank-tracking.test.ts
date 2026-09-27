@@ -1,15 +1,26 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/billing/subscription", () => ({
+const mocks = vi.hoisted(() => ({
   assertUsageCreditsAvailable: vi.fn(),
   getOrCreateOrganizationCustomer: vi.fn(),
   trackUsageCreditSpend: vi.fn(),
-}));
-vi.mock("@/server/lib/runtime-env", () => ({
   getOptionalEnvValue: vi.fn(),
   isHostedServerAuthMode: vi.fn(),
 }));
-import { fetchSerpApiRankCheck } from "./rank-tracking";
+
+vi.mock("@/server/billing/subscription", () => ({
+  assertUsageCreditsAvailable: mocks.assertUsageCreditsAvailable,
+  getOrCreateOrganizationCustomer: mocks.getOrCreateOrganizationCustomer,
+  trackUsageCreditSpend: mocks.trackUsageCreditSpend,
+}));
+vi.mock("@/server/lib/runtime-env", () => ({
+  getOptionalEnvValue: mocks.getOptionalEnvValue,
+  isHostedServerAuthMode: mocks.isHostedServerAuthMode,
+}));
+import {
+  createSerpApiRankClient,
+  fetchSerpApiRankCheck,
+} from "./rank-tracking";
 
 const input = {
   keyword: "rank tracker",
@@ -39,7 +50,33 @@ function organicPage(
 }
 
 describe("SerpApi rank tracking", () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
+  });
+
+  it("uses the project SerpApi key on Vercel without Autumn", async () => {
+    vi.stubEnv("VERCEL", "1");
+    mocks.getOptionalEnvValue.mockResolvedValue("secret");
+    mocks.isHostedServerAuthMode.mockResolvedValue(true);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(organicPage(["https://example.com/result"])),
+    );
+
+    const client = createSerpApiRankClient({
+      userId: "user-1",
+      userEmail: "owner@example.com",
+      organizationId: "org-1",
+    });
+    const result = await client.rankCheck(input);
+
+    expect(result.position).toBe(1);
+    expect(mocks.getOrCreateOrganizationCustomer).not.toHaveBeenCalled();
+    expect(mocks.assertUsageCreditsAvailable).not.toHaveBeenCalled();
+    expect(mocks.trackUsageCreditSpend).not.toHaveBeenCalled();
+  });
 
   it("matches the tracked domain and its subdomains", async () => {
     const fetchMock = vi.fn().mockResolvedValue(

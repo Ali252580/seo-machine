@@ -384,6 +384,10 @@ async function getTracker(configId: string, projectId: string) {
 }
 
 async function requireRankCheckAccess(organizationId: string) {
+  // This Vercel deployment uses the project's own SerpApi account directly.
+  // Project authorization still runs in the server-function middleware; only
+  // Autumn plan enforcement is deferred until billing is configured.
+  if (process.env.VERCEL === "1") return;
   if (!(await isHostedServerAuthMode())) return;
   if (await customerHasPaidPlan(organizationId)) return;
   throw new AppError(
