@@ -180,10 +180,10 @@ export function buildRankTrackingExport(
     "Keyword",
     // Exports lack the table's tooltip, so name the city inline.
     locationName
-      ? `Local volume (${formatLocationLabel(locationName, 2)})`
-      : "Volume",
-    "KD",
-    "CPC",
+      ? `Estimated local volume (${formatLocationLabel(locationName, 2)})`
+      : "Estimated volume",
+    "Estimated KD",
+    "Estimated CPC",
     ...(showDesktop
       ? [
           "Desktop Position",
@@ -273,7 +273,8 @@ export function exportRankTrackingCsv(
 
 function toPath(url: string): string {
   try {
-    return new URL(url).pathname;
+    const parsed = new URL(url);
+    return `${parsed.hostname}${parsed.pathname}${parsed.search}`;
   } catch {
     return url;
   }

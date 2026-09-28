@@ -23,7 +23,10 @@ export async function beginVercelRankCheck(input: {
     ? input.keywords.filter((keyword) => input.keywordIds?.includes(keyword.id))
     : input.keywords;
   if (selected.length === 0) {
-    throw new AppError("VALIDATION_ERROR", "Select at least one tracked keyword.");
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "Select at least one tracked keyword.",
+    );
   }
 
   let created = false;
@@ -38,8 +41,13 @@ export async function beginVercelRankCheck(input: {
       isSubsetRun: Boolean(input.keywordIds?.length),
     });
     if (!created && attempt === 0) {
-      const active = await RankTrackingRepository.getActiveRunForConfig(input.config.id);
-      if (active && Date.now() - new Date(active.startedAt).getTime() > STALE_RUN_MS) {
+      const active = await RankTrackingRepository.getActiveRunForConfig(
+        input.config.id,
+      );
+      if (
+        active &&
+        Date.now() - new Date(active.startedAt).getTime() > STALE_RUN_MS
+      ) {
         await RankTrackingRepository.updateRun(active.id, {
           status: "failed",
           errorMessage: "Previous Vercel rank check timed out.",
@@ -49,8 +57,14 @@ export async function beginVercelRankCheck(input: {
     }
   }
   if (!created) {
-    const active = await RankTrackingRepository.getActiveRunForConfig(input.config.id);
-    return { ok: false, reason: "already_running", blockingRunId: active?.id ?? null };
+    const active = await RankTrackingRepository.getActiveRunForConfig(
+      input.config.id,
+    );
+    return {
+      ok: false,
+      reason: "already_running",
+      blockingRunId: active?.id ?? null,
+    };
   }
 
   try {
@@ -77,11 +91,17 @@ async function runVercelRankCheck(input: {
     await RankTrackingRepository.updateRun(input.runId, { status: "running" });
     const client = createSerpApiRankClient(input.billingCustomer);
     const devices: Array<"desktop" | "mobile"> =
-      input.config.devices === "both" ? ["desktop", "mobile"] : [input.config.devices];
+      input.config.devices === "both"
+        ? ["desktop", "mobile"]
+        : [input.config.devices];
     let checked = 0;
     let firstError: string | null = null;
 
-    for (let offset = 0; offset < input.keywords.length; offset += KEYWORDS_PER_BATCH) {
+    for (
+      let offset = 0;
+      offset < input.keywords.length;
+      offset += KEYWORDS_PER_BATCH
+    ) {
       const batch = input.keywords.slice(offset, offset + KEYWORDS_PER_BATCH);
       const requests = batch.flatMap((keyword) =>
         devices.map(async (device) => {
@@ -105,6 +125,9 @@ async function runVercelRankCheck(input: {
             serpFeatures: result.serpFeatures.length
               ? JSON.stringify(result.serpFeatures)
               : null,
+            estimatedSearchVolume: result.estimatedSearchVolume,
+            estimatedKeywordDifficulty: result.estimatedKeywordDifficulty,
+            estimatedCpc: result.estimatedCpc,
           };
         }),
       );
@@ -114,15 +137,46 @@ async function runVercelRankCheck(input: {
       );
       for (const result of settled) {
         if (result.status === "rejected") {
-          firstError ??= result.reason instanceof Error
+          firstError ??=
+            result.reason instanceof Error
             ? result.reason.message
             : "SerpApi rank check failed.";
         }
       }
       if (snapshots.length) {
-        await RankTrackingRepository.insertSnapshots(snapshots);
+        await RankTrackingRepository.insertSnapshots(
+          snapshots.map(
+            ({
+              estimatedSearchVolume: _volume,
+              estimatedKeywordDifficulty: _kd,
+              estimatedCpc: _cpc,
+              ...snapshot
+            }) => snapshot,
+          ),
+        );
+        const metricsByKeyword = new Map<string, (typeof snapshots)[number]>();
+        for (const snapshot of snapshots) {
+          if (
+            !metricsByKeyword.has(snapshot.trackingKeywordId) ||
+            snapshot.device === "desktop"
+          ) {
+            metricsByKeyword.set(snapshot.trackingKeywordId, snapshot);
       }
-      checked += new Set(snapshots.map((snapshot) => snapshot.trackingKeywordId)).size;
+        }
+        const metricsFetchedAt = new Date().toISOString();
+        await RankTrackingRepository.updateKeywordMetrics(
+          [...metricsByKeyword.values()].map((snapshot) => ({
+            id: snapshot.trackingKeywordId,
+            searchVolume: snapshot.estimatedSearchVolume,
+            keywordDifficulty: snapshot.estimatedKeywordDifficulty,
+            cpc: snapshot.estimatedCpc,
+            metricsFetchedAt,
+          })),
+        );
+      }
+      checked += new Set(
+        snapshots.map((snapshot) => snapshot.trackingKeywordId),
+      ).size;
       await RankTrackingRepository.updateRun(input.runId, {
         keywordsChecked: checked,
         ...(firstError ? { errorMessage: firstError } : {}),
@@ -135,21 +189,27 @@ async function runVercelRankCheck(input: {
       status,
       keywordsChecked: checked,
       completedAt,
-      errorMessage: checked < input.keywords.length
-        ? firstError ?? "Some keywords could not be checked."
+      errorMessage:
+        checked < input.keywords.length
+          ? (firstError ?? "Some keywords could not be checked.")
         : null,
     });
     if (status === "completed") {
-      await RankTrackingRepository.updateConfig(input.config.id, input.projectId, {
+      await RankTrackingRepository.updateConfig(
+        input.config.id,
+        input.projectId,
+        {
         lastCheckedAt: completedAt,
         lastSkipReason: null,
-      });
+        },
+      );
     }
   } catch (error) {
     console.error("Vercel rank check failed:", error);
     await RankTrackingRepository.updateRun(input.runId, {
       status: "failed",
-      errorMessage: error instanceof Error ? error.message : "Rank check failed.",
+      errorMessage:
+        error instanceof Error ? error.message : "Rank check failed.",
       completedAt: new Date().toISOString(),
     });
   }

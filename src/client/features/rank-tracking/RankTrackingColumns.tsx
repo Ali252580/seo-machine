@@ -16,9 +16,9 @@ import type { SelectionAnchor } from "@/client/components/table/tableSelection";
 
 const HEADER_TOOLTIPS: Record<string, string> = {
   keyword: "The search term being tracked in Google",
-  volume: "Estimated monthly search volume from Google",
-  kd: "Keyword difficulty score (0-100) — higher means harder to rank",
-  cpc: "Average cost per click in Google Ads (USD)",
+  volume: "Estimated monthly demand from Google SERP competition signals (not Google Ads volume)",
+  kd: "Estimated keyword difficulty (0-100) from result competition, titles, ads and SERP features",
+  cpc: "Estimated CPC (USD) from ads, shopping results and commercial intent (not Google Ads CPC)",
   desktopPosition:
     "Current Google ranking position, showing change from the comparison period",
   mobilePosition:
@@ -71,11 +71,11 @@ function makeVolumeColumn(locationLabel?: string): ColumnDef<RankTrackingRow> {
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label={locationLabel ? "Local volume" : "Volume"}
+        label={locationLabel ? "Est. local volume" : "Est. volume"}
         id="volume"
         tooltip={
           locationLabel
-            ? `Estimated monthly searches in ${locationLabel} from Google Ads`
+            ? `Estimated monthly demand in ${locationLabel} from Google SERP competition signals (not Google Ads volume)`
             : undefined
         }
       />
@@ -91,7 +91,7 @@ function makeVolumeColumn(locationLabel?: string): ColumnDef<RankTrackingRow> {
 const kdColumn: ColumnDef<RankTrackingRow> = {
   id: "kd",
   accessorFn: (row) => row.keywordDifficulty ?? undefined,
-  header: ({ column }) => <SortableHeader column={column} label="KD" id="kd" />,
+  header: ({ column }) => <SortableHeader column={column} label="Est. KD" id="kd" />,
   size: 70,
   cell: ({ getValue }) => (
     <DifficultyCell value={getValue<number | undefined>() ?? null} />
@@ -103,7 +103,7 @@ const cpcColumn: ColumnDef<RankTrackingRow> = {
   id: "cpc",
   accessorFn: (row) => row.cpc ?? undefined,
   header: ({ column }) => (
-    <SortableHeader column={column} label="CPC" id="cpc" />
+    <SortableHeader column={column} label="Est. CPC" id="cpc" />
   ),
   size: 80,
   cell: ({ getValue }) => (

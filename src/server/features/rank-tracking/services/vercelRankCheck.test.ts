@@ -8,16 +8,22 @@ const mocks = vi.hoisted(() => ({
   getActiveRunForConfig: vi.fn(),
   updateRun: vi.fn(),
   insertSnapshots: vi.fn(),
+  updateKeywordMetrics: vi.fn(),
   updateConfig: vi.fn(),
   rankCheck: vi.fn(),
 }));
 
 vi.mock("@vercel/functions", () => ({
-  waitUntil: (job: Promise<unknown>) => { mocks.jobs.push(job); },
+  waitUntil: (job: Promise<unknown>) => {
+    mocks.jobs.push(job);
+  },
 }));
-vi.mock("@/server/features/rank-tracking/repositories/RankTrackingRepository", () => ({
+vi.mock(
+  "@/server/features/rank-tracking/repositories/RankTrackingRepository",
+  () => ({
   RankTrackingRepository: mocks,
-}));
+  }),
+);
 vi.mock("@/server/lib/serpapi/rank-tracking", () => ({
   createSerpApiRankClient: () => ({ rankCheck: mocks.rankCheck }),
 }));
@@ -40,13 +46,26 @@ describe("Vercel SerpApi rank runner", () => {
     mocks.tryCreateRun.mockResolvedValue(true);
     mocks.updateRun.mockResolvedValue(undefined);
     mocks.insertSnapshots.mockResolvedValue(undefined);
+    mocks.updateKeywordMetrics.mockResolvedValue(undefined);
     mocks.updateConfig.mockResolvedValue(undefined);
-    mocks.rankCheck.mockImplementation(async ({ keywordId, keyword }: {
-      keywordId: string; keyword: string;
+    mocks.rankCheck.mockImplementation(
+      async ({
+        keywordId,
+        keyword,
+      }: {
+        keywordId: string;
+        keyword: string;
     }) => ({
-      keywordId, keyword, position: 4, url: "https://example.com/page",
+        keywordId,
+        keyword,
+        position: 4,
+        url: "https://example.com/page",
       serpFeatures: ["organic", "local"],
-    }));
+        estimatedSearchVolume: 500,
+        estimatedKeywordDifficulty: 42,
+        estimatedCpc: 0.85,
+      }),
+    );
   });
 
   it("persists both device ranks and marks the run complete", async () => {
@@ -54,7 +73,8 @@ describe("Vercel SerpApi rank runner", () => {
       config,
       projectId: "project-1",
       billingCustomer: {
-        userId: "user-1", userEmail: "owner@example.com",
+        userId: "user-1",
+        userEmail: "owner@example.com",
         organizationId: "org-1",
       },
       keywords: [{ id: "keyword-1", keyword: "seo" }],
@@ -65,17 +85,29 @@ describe("Vercel SerpApi rank runner", () => {
     expect(mocks.rankCheck).toHaveBeenCalledTimes(2);
     expect(mocks.insertSnapshots).toHaveBeenCalledWith([
       expect.objectContaining({
-        trackingKeywordId: "keyword-1", device: "desktop",
-        position: 4, url: "https://example.com/page",
+        trackingKeywordId: "keyword-1",
+        device: "desktop",
+        position: 4,
+        url: "https://example.com/page",
         serpFeatures: JSON.stringify(["organic", "local"]),
       }),
       expect.objectContaining({
-        trackingKeywordId: "keyword-1", device: "mobile", position: 4,
+        trackingKeywordId: "keyword-1",
+        device: "mobile",
+        position: 4,
       }),
     ]);
     expect(mocks.updateRun).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({ status: "completed", keywordsChecked: 1 }),
     );
+    expect(mocks.updateKeywordMetrics).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: "keyword-1",
+        searchVolume: 500,
+        keywordDifficulty: 42,
+        cpc: 0.85,
+      }),
+    ]);
   });
 });

@@ -23,6 +23,7 @@ const organicResultSchema = z
   .object({
     position: z.number().int().positive(),
     link: z.string().min(1),
+    title: z.string().optional(),
   })
   .passthrough();
 
@@ -32,7 +33,15 @@ const responseSchema = z
       .object({ status: z.string().optional() })
       .passthrough()
       .optional(),
+    search_information: z
+      .object({ total_results: z.number().nonnegative().optional() })
+      .passthrough()
+      .optional(),
     organic_results: z.array(organicResultSchema).optional(),
+    ads: z.array(z.unknown()).optional(),
+    top_ads: z.array(z.unknown()).optional(),
+    bottom_ads: z.array(z.unknown()).optional(),
+    shopping_results: z.array(z.unknown()).optional(),
     error: z.string().optional(),
   })
   .passthrough();
@@ -45,6 +54,9 @@ export interface RankCheckResult {
   position: number | null;
   url: string | null;
   serpFeatures: string[];
+  estimatedSearchVolume: number;
+  estimatedKeywordDifficulty: number;
+  estimatedCpc: number;
 }
 
 export interface RankCheckInput {
@@ -71,7 +83,9 @@ class SerpApiRequestError extends AppError {
 
 function normalizedHostname(value: string): string | null {
   try {
-    const url = new URL(value);
+    const url = new URL(
+      /^https?:\/\//i.test(value) ? value : `https://${value}`,
+    );
     return url.hostname.toLowerCase().replace(/^www\./, "");
   } catch {
     return null;
@@ -80,8 +94,107 @@ function normalizedHostname(value: string): string | null {
 
 function matchesDomain(link: string, targetDomain: string): boolean {
   const hostname = normalizedHostname(link);
-  const target = targetDomain.toLowerCase().replace(/^www\./, "");
+  const target = normalizedHostname(targetDomain);
+  if (!target) return false;
   return hostname === target || Boolean(hostname?.endsWith("." + target));
+}
+
+function canonicalResultUrl(link: string): string {
+  try {
+    const url = new URL(link);
+    const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+    if (hostname.endsWith("google.com") && url.pathname === "/url") {
+      const destination =
+        url.searchParams.get("url") ?? url.searchParams.get("q");
+      if (destination && /^https?:\/\//i.test(destination)) return destination;
+    }
+    return url.toString();
+  } catch {
+    return link;
+  }
+}
+
+const COMMERCIAL_TERMS = [
+  "buy",
+  "price",
+  "cost",
+  "hire",
+  "service",
+  "shop",
+  "order",
+  "quote",
+  "خرید",
+  "قیمت",
+  "هزینه",
+  "فروش",
+  "سفارش",
+  "اجرا",
+  "نصب",
+  "خدمات",
+];
+
+function roundVolume(value: number): number {
+  const safe = Math.max(10, Math.min(100_000, value));
+  const magnitude = 10 ** Math.floor(Math.log10(safe));
+  const normalized = safe / magnitude;
+  const bucket =
+    normalized < 1.5 ? 1 : normalized < 3.5 ? 2 : normalized < 7.5 ? 5 : 10;
+  return bucket * magnitude;
+}
+
+export function estimateSerpMetrics(
+  response: SerpApiResponse,
+  input: Pick<RankCheckInput, "keyword" | "locationCode" | "locationName">,
+): { searchVolume: number; keywordDifficulty: number; cpc: number } {
+  const totalResults = response.search_information?.total_results ?? 0;
+  const organic = response.organic_results ?? [];
+  const keyword = input.keyword.trim().toLocaleLowerCase();
+  const exactTitleRatio = organic.length
+    ? organic.filter((result) =>
+        result.title?.toLocaleLowerCase().includes(keyword),
+      ).length / organic.length
+    : 0;
+  const features = Math.max(0, collectSerpFeatures(response).length - 1);
+  const adCount =
+    (response.ads?.length ?? 0) +
+    (response.top_ads?.length ?? 0) +
+    (response.bottom_ads?.length ?? 0);
+  const shoppingCount = response.shopping_results?.length ?? 0;
+  const commercialMatches = COMMERCIAL_TERMS.filter((term) =>
+    keyword.includes(term),
+  ).length;
+  const localFactor =
+    input.locationCode === IRAN_LOCATION_CODE || input.locationName ? 0.35 : 1;
+  const demandMultiplier =
+    1 + Math.min(features, 5) * 0.08 + Math.min(adCount, 4) * 0.12;
+  const searchVolume = roundVolume(
+    Math.sqrt(Math.max(totalResults, 1)) * 10 * demandMultiplier * localFactor,
+  );
+  const resultCompetition =
+    (Math.min(9, Math.log10(Math.max(totalResults, 1))) / 9) * 45;
+  const keywordDifficulty = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        10 +
+          resultCompetition +
+          exactTitleRatio * 25 +
+          Math.min(15, features * 3) +
+          Math.min(15, adCount * 4),
+      ),
+    ),
+  );
+  const cpc = Number(
+    Math.min(
+      25,
+      0.05 +
+        adCount * 0.35 +
+        Math.min(3, commercialMatches) * 0.4 +
+        (shoppingCount > 0 ? 0.45 : 0),
+    ).toFixed(2),
+  );
+  return { searchVolume, keywordDifficulty, cpc };
 }
 
 const IGNORED_RESULT_KEYS = new Set([
@@ -199,6 +312,7 @@ export async function fetchSerpApiRankCheck(
   );
   const features = new Set<string>();
   let searchesUsed = 0;
+  let estimatedMetrics = { searchVolume: 10, keywordDifficulty: 10, cpc: 0.05 };
 
   for (let page = 0; page < maxPages; page++) {
     let response: SerpApiResponse;
@@ -207,18 +321,15 @@ export async function fetchSerpApiRankCheck(
       searchesUsed += 1;
     } catch (error) {
       if (error instanceof AppError) {
-        throw new SerpApiRequestError(
-          error.code,
-          error.message,
-          searchesUsed,
-        );
+        throw new SerpApiRequestError(error.code, error.message, searchesUsed);
       }
       throw error;
     }
 
     for (const feature of collectSerpFeatures(response)) features.add(feature);
+    if (page === 0) estimatedMetrics = estimateSerpMetrics(response, input);
     const match = response.organic_results?.find((item) =>
-      matchesDomain(item.link, input.targetDomain),
+      matchesDomain(canonicalResultUrl(item.link), input.targetDomain),
     );
     if (match) {
       return {
@@ -226,8 +337,11 @@ export async function fetchSerpApiRankCheck(
           keywordId: input.keywordId,
           keyword: input.keyword,
           position: page * PAGE_SIZE + match.position,
-          url: match.link,
+          url: canonicalResultUrl(match.link),
           serpFeatures: [...features],
+          estimatedSearchVolume: estimatedMetrics.searchVolume,
+          estimatedKeywordDifficulty: estimatedMetrics.keywordDifficulty,
+          estimatedCpc: estimatedMetrics.cpc,
         },
         searchesUsed,
       };
@@ -243,6 +357,9 @@ export async function fetchSerpApiRankCheck(
       position: null,
       url: null,
       serpFeatures: [...features],
+      estimatedSearchVolume: estimatedMetrics.searchVolume,
+      estimatedKeywordDifficulty: estimatedMetrics.keywordDifficulty,
+      estimatedCpc: estimatedMetrics.cpc,
     },
     searchesUsed,
   };

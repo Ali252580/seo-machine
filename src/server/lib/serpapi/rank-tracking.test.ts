@@ -19,6 +19,7 @@ vi.mock("@/server/lib/runtime-env", () => ({
 }));
 import {
   createSerpApiRankClient,
+  estimateSerpMetrics,
   fetchSerpApiRankCheck,
 } from "./rank-tracking";
 
@@ -79,7 +80,9 @@ describe("SerpApi rank tracking", () => {
   });
 
   it("matches the tracked domain and its subdomains", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
       organicPage([
         "https://other.test/one",
         "https://blog.example.com/result",
@@ -136,9 +139,7 @@ describe("SerpApi rank tracking", () => {
     });
 
     const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
-    expect(url.searchParams.get("location")).toBe(
-      "Shiraz,Fars Province,Iran",
-    );
+    expect(url.searchParams.get("location")).toBe("Shiraz,Fars Province,Iran");
     expect(url.searchParams.has("lat")).toBe(false);
     expect(url.searchParams.has("lon")).toBe(false);
   });
@@ -152,10 +153,7 @@ describe("SerpApi rank tracking", () => {
       .fn()
       .mockResolvedValueOnce(organicPage(firstPage, { local_results: [{}] }))
       .mockResolvedValueOnce(
-        organicPage([
-          "https://another.test/",
-          "https://example.com/winner",
-        ]),
+        organicPage(["https://another.test/", "https://example.com/winner"]),
       );
     vi.stubGlobal("fetch", fetchMock);
 
@@ -185,5 +183,46 @@ describe("SerpApi rank tracking", () => {
     expect(result.data.position).toBeNull();
     expect(result.data.url).toBeNull();
     expect(result.searchesUsed).toBe(2);
+  });
+
+  it("calculates repeatable estimated metrics from SERP signals", () => {
+    const metrics = estimateSerpMetrics(
+      {
+        search_information: { total_results: 1_000_000 },
+        organic_results: [
+          { position: 1, title: "Buy SEO service", link: "https://one.test" },
+          { position: 2, title: "SEO guide", link: "https://two.test" },
+        ],
+        top_ads: [{}, {}],
+        shopping_results: [{}],
+        related_questions: [{}],
+      },
+      { keyword: "buy seo service", locationCode: 2840 },
+    );
+
+    expect(metrics.searchVolume).toBe(10_000);
+    expect(metrics.keywordDifficulty).toBe(70);
+    expect(metrics.cpc).toBe(2);
+  });
+
+  it("unwraps Google redirect links and accepts a URL as the target domain", async () => {
+    const destination = "https://example.com/right-page?ref=google";
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          organicPage([
+            `https://www.google.com/url?url=${encodeURIComponent(destination)}`,
+          ]),
+        ),
+    );
+
+    const result = await fetchSerpApiRankCheck("secret", {
+      ...input,
+      targetDomain: "https://www.example.com/path",
+    });
+
+    expect(result.data.url).toBe(destination);
   });
 });
