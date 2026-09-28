@@ -43,7 +43,7 @@ export function SearchTabStrip({
     <div className="rounded-xl border border-base-300 bg-base-100 p-1">
       <div
         role="tablist"
-        aria-label="Search tabs"
+        aria-label="زبانه‌های جستجو"
         className="flex min-w-0 items-stretch gap-1 overflow-x-auto"
       >
         {tabs.map((tab) => {
@@ -84,7 +84,7 @@ export function SearchTabStrip({
                 data-search-tab-id={tab.id}
                 className="flex items-center px-1.5 text-base-content/50 opacity-60 transition hover:bg-base-content/10 hover:text-base-content hover:opacity-100 group-hover:opacity-100"
                 onClick={() => onClose(tab.id)}
-                aria-label={`Close ${tab.label} tab`}
+                aria-label={`بستن زبانه ${tab.label}`}
               >
                 <X className="size-3.5" />
               </button>

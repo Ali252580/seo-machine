@@ -55,12 +55,12 @@ export function RankTrackingTableToolbar({
             {
               value: "table" as const,
               icon: <Table className="size-3.5" />,
-              label: "Latest",
+              label: "آخرین",
             },
             {
               value: "history" as const,
               icon: <CalendarDays className="size-3.5" />,
-              label: "History",
+              label: "تاریخچه",
             },
           ]}
           value={viewMode}
@@ -71,10 +71,10 @@ export function RankTrackingTableToolbar({
       <button
         className={`btn btn-ghost btn-sm gap-1.5 ${showFilters ? "btn-active" : ""}`}
         onClick={onToggleFilters}
-        title="Toggle table filters"
+        title="نمایش یا پنهان‌کردن فیلترها"
       >
         <SlidersHorizontal className="size-3.5" />
-        Filters
+        فیلترها
         {activeFilterCount > 0 && (
           <span className="badge badge-xs badge-primary border-0 text-primary-content">
             {activeFilterCount}
@@ -87,8 +87,8 @@ export function RankTrackingTableToolbar({
           <Loader2 className="size-3.5 animate-spin text-primary" />
           <span>
             {latestRun.status === "pending"
-              ? "Preparing..."
-              : `Getting rankings for ${latestRun.keywordsTotal || "?"} keyword${latestRun.keywordsTotal !== 1 ? "s" : ""}...`}{" "}
+              ? "در حال آماده‌سازی..."
+              : `در حال دریافت رتبه برای ${latestRun.keywordsTotal || "?"} کلمه کلیدی...`}{" "}
             {latestRun.keywordsChecked}/{latestRun.keywordsTotal || "?"}
           </span>
           {latestRun.keywordsTotal > 0 && (
@@ -101,7 +101,7 @@ export function RankTrackingTableToolbar({
         </div>
       ) : (
         <span className="text-sm text-base-content/60">
-          {keywordCount} keywords
+          {keywordCount} کلمه کلیدی
         </span>
       )}
 
