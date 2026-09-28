@@ -44,7 +44,7 @@ export function DomainTableTabSurface({
         <button
           className={`btn btn-ghost btn-sm gap-1.5 ${showFilters ? "btn-active" : ""}`}
           onClick={onToggleFilters}
-          title="Toggle filters"
+          title="نمایش یا پنهان‌کردن فیلترها"
           type="button"
         >
           <SlidersHorizontal className="size-3.5" />

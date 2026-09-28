@@ -556,7 +556,7 @@ export function DomainOverviewPage({
     <div className="px-4 py-4 md:px-6 md:py-6 pb-24 md:pb-8 overflow-auto">
       <div className="mx-auto max-w-7xl space-y-4">
         <div>
-          <h1 className="text-2xl font-semibold">Domain Overview</h1>
+          <h1 className="text-2xl font-semibold">نمای کلی دامنه</h1>
           <p className="text-sm text-base-content/70">
             Analyze any domain&apos;s SEO profile: traffic, keywords, and
             backlinks.
@@ -604,7 +604,7 @@ export function DomainOverviewPage({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <StatCard
-                label="Estimated Organic Traffic"
+                label="ترافیک ارگانیک تخمینی"
                 value={formatMetric(
                   state.overview.organicTraffic,
                   state.overview.hasData,
@@ -612,7 +612,7 @@ export function DomainOverviewPage({
                 hint={overviewMetricsHint}
               />
               <StatCard
-                label="Organic Keywords"
+                label="کلمات ارگانیک"
                 value={formatMetric(
                   state.overview.organicKeywords,
                   state.overview.hasData,

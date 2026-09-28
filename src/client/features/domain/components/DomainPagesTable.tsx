@@ -40,7 +40,7 @@ function DomainPagesTableComponent({
     () => [
       pageColumnHelper.display({
         id: "page",
-        header: () => "Page",
+        header: () => "صفحه",
         cell: ({ row }) => (
           <ExternalUrlCell
             value={row.original.relativePath ?? row.original.page}
@@ -56,7 +56,7 @@ function DomainPagesTableComponent({
       pageColumnHelper.accessor("organicTraffic", {
         header: () => (
           <SortableHeader
-            label="Organic Traffic"
+            label="ترافیک ارگانیک"
             isActive={toPageSortMode(sortMode) === "traffic"}
             order={currentSortOrder}
             onClick={() => onSortClick("traffic")}
@@ -67,7 +67,7 @@ function DomainPagesTableComponent({
       pageColumnHelper.accessor("keywords", {
         header: () => (
           <SortableHeader
-            label="Keywords"
+            label="کلمات کلیدی"
             isActive={toPageSortMode(sortMode) === "keywords"}
             order={currentSortOrder}
             onClick={() => onSortClick("volume")}

@@ -30,7 +30,7 @@ export function BacklinksTrendChart({
     <div
       ref={containerRef}
       className="h-56 min-w-0"
-      aria-label="Backlink trend chart"
+      aria-label="نمودار روند بک‌لینک"
     >
       {chartWidth > 0 ? (
         <LineChart
@@ -68,7 +68,7 @@ export function BacklinksTrendChart({
             stroke="#2563eb"
             strokeWidth={2}
             dot={false}
-            name="Backlinks"
+            name="بک‌لینک‌ها"
           />
           <Line
             yAxisId="right"
@@ -100,7 +100,7 @@ export function BacklinksNewLostChart({
     <div
       ref={containerRef}
       className="h-56 min-w-0"
-      aria-label="New and lost backlinks chart"
+      aria-label="نمودار بک‌لینک‌های جدید و ازدست‌رفته"
     >
       {chartWidth > 0 ? (
         <LineChart

@@ -50,21 +50,21 @@ const EMPTY_KEYWORDS: KeywordRow[] = [];
 const KEYWORD_TEXT_FILTERS = [
   {
     key: "include",
-    label: "Include Terms",
+    label: "عبارت‌های شامل",
     placeholder: "audit, checker, template",
   },
   {
     key: "exclude",
-    label: "Exclude Terms",
+    label: "عبارت‌های حذف‌شده",
     placeholder: "jobs, salary, course",
   },
 ] as const;
 const KEYWORD_RANGE_FILTERS = [
-  { title: "Traffic", minKey: "minTraffic", maxKey: "maxTraffic" },
-  { title: "Volume", minKey: "minVol", maxKey: "maxVol" },
+  { title: "ترافیک", minKey: "minTraffic", maxKey: "maxTraffic" },
+  { title: "حجم جستجو", minKey: "minVol", maxKey: "maxVol" },
   { title: "CPC (USD)", minKey: "minCpc", maxKey: "maxCpc", step: "0.01" },
   { title: "Score (KD)", minKey: "minKd", maxKey: "maxKd" },
-  { title: "Rank", minKey: "minRank", maxKey: "maxRank" },
+  { title: "رتبه", minKey: "minRank", maxKey: "maxRank" },
 ] as const;
 
 type Props = {
@@ -281,12 +281,12 @@ export function KeywordsTab({
             <TableBulkExportMenu
               actions={[
                 {
-                  label: "Export to Sheets",
+                  label: "خروجی به گوگل شیت",
                   icon: <Sheet className="size-4" />,
                   onClick: handleExportSelectionToSheets,
                 },
                 {
-                  label: "Download CSV",
+                  label: "دریافت CSV",
                   icon: <Download className="size-4" />,
                   onClick: handleDownloadSelectionCsv,
                 },
@@ -316,7 +316,7 @@ export function KeywordsTab({
         showTableLoading={showTableLoading}
         exportActions={[
           {
-            label: "Export to Sheets",
+            label: "خروجی به گوگل شیت",
             icon: <Sheet className="size-4" />,
             onClick: handleExportToSheets,
           },
@@ -326,12 +326,12 @@ export function KeywordsTab({
             onClick: handleCopy,
           },
           {
-            label: "Download CSV",
+            label: "دریافت CSV",
             icon: <Download className="size-4" />,
             onClick: () => handleDownload("csv"),
           },
           {
-            label: "Download Excel",
+            label: "دریافت Excel",
             icon: <FileSpreadsheet className="size-4" />,
             onClick: () => handleDownload("xls"),
           },

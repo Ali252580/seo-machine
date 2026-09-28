@@ -22,7 +22,7 @@ const columns = [
     enableSorting: false,
     header: () => (
       <HeaderHelpLabel
-        label="Page"
+        label="صفحه"
         helpText="Page on the target site receiving backlinks."
       />
     ),
@@ -44,7 +44,7 @@ const columns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Backlinks"
+        label="بک‌لینک‌ها"
         helpText="Total backlinks pointing to this page."
       />
     ),
@@ -56,7 +56,7 @@ const columns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Referring Domains"
+        label="دامنه‌های ارجاع‌دهنده"
         helpText="Unique domains linking to this page."
       />
     ),
@@ -68,7 +68,7 @@ const columns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Rank"
+        label="رتبه"
         helpText="Authority score for this target page."
       />
     ),
@@ -80,7 +80,7 @@ const columns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Broken Backlinks"
+        label="بک‌لینک‌های خراب"
         helpText="Backlinks pointing here that are currently broken."
       />
     ),

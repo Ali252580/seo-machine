@@ -46,7 +46,7 @@ export function DomainSearchCard({
                   <Search className="size-4 text-base-content/60" />
                   <input
                     className="grow min-w-0"
-                    placeholder="Enter a domain or URL"
+                    placeholder="دامنه یا نشانی صفحه را وارد کنید"
                     value={field.state.value}
                     onChange={(event) => {
                       field.handleChange(event.target.value);
@@ -100,11 +100,11 @@ export function DomainSearchCard({
                   onSortChange(next);
                 }}
               >
-                <option value="rank">By Rank</option>
-                <option value="traffic">By Traffic</option>
-                <option value="volume">By Volume</option>
-                <option value="score">By Score</option>
-                <option value="cpc">By CPC</option>
+                <option value="rank">بر اساس رتبه</option>
+                <option value="traffic">بر اساس ترافیک</option>
+                <option value="volume">بر اساس حجم جستجو</option>
+                <option value="score">بر اساس امتیاز</option>
+                <option value="cpc">بر اساس CPC</option>
               </select>
             )}
           </controlsForm.Field>
@@ -116,7 +116,7 @@ export function DomainSearchCard({
                 className="btn btn-primary shrink-0 px-6"
                 disabled={isLoading || isSubmitting}
               >
-                {isLoading || isSubmitting ? "Loading..." : "Search"}
+                {isLoading || isSubmitting ? "Loading..." : "جستجو"}
               </button>
             )}
           </controlsForm.Subscribe>

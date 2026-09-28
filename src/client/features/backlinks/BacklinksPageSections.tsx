@@ -33,8 +33,8 @@ const BACKLINKS_RESULTS_TABS: Array<{
   tab: BacklinksSearchState["tab"];
   label: string;
 }> = [
-  { tab: "backlinks", label: "Backlinks" },
-  { tab: "domains", label: "Referring Domains" },
+  { tab: "backlinks", label: "بک‌لینک‌ها" },
+  { tab: "domains", label: "دامنه‌های ارجاع‌دهنده" },
   { tab: "pages", label: "Top Pages" },
 ];
 
@@ -153,7 +153,7 @@ export function BacklinksResultsCard({
         <button
           className={`btn btn-ghost btn-sm gap-1.5 ${filters.showFilters ? "btn-active" : ""}`}
           onClick={() => filters.setShowFilters((current) => !current)}
-          title="Toggle table filters"
+          title="نمایش یا پنهان‌کردن فیلترهای جدول"
         >
           <SlidersHorizontal className="size-3.5" />
           Filters

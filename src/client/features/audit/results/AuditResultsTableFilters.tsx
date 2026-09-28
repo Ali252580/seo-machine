@@ -20,13 +20,13 @@ export function PagesFilterBar({
     <FilterPanel activeFilterCount={activeFilterCount} onReset={onReset}>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <TextFilter
-          label="Search"
+          label="جستجو"
           value={filters.query}
           placeholder="URL, title, meta"
           onChange={(query) => onChange({ ...filters, query })}
         />
         <SelectFilter
-          label="Status"
+          label="وضعیت"
           value={filters.status}
           onChange={(status) => onChange({ ...filters, status })}
           options={[
@@ -38,7 +38,7 @@ export function PagesFilterBar({
           ]}
         />
         <SelectFilter
-          label="Alt text"
+          label="متن جایگزین"
           value={filters.missingAlt}
           onChange={(missingAlt) => onChange({ ...filters, missingAlt })}
           options={[
@@ -50,7 +50,7 @@ export function PagesFilterBar({
       </div>
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
         <RangeFilter
-          label="Words"
+          label="کلمات"
           min={filters.minWords}
           max={filters.maxWords}
           onMinChange={(minWords) => onChange({ ...filters, minWords })}
@@ -87,13 +87,13 @@ export function PerformanceFilterBar({
     <FilterPanel activeFilterCount={activeFilterCount} onReset={onReset}>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
         <TextFilter
-          label="Search"
+          label="جستجو"
           value={filters.query}
           placeholder="URL"
           onChange={(query) => onChange({ ...filters, query })}
         />
         <SelectFilter
-          label="Device"
+          label="دستگاه"
           value={filters.device}
           onChange={(device) => onChange({ ...filters, device })}
           options={[
@@ -103,7 +103,7 @@ export function PerformanceFilterBar({
           ]}
         />
         <SelectFilter
-          label="Status"
+          label="وضعیت"
           value={filters.status}
           onChange={(status) => onChange({ ...filters, status })}
           options={[
@@ -113,7 +113,7 @@ export function PerformanceFilterBar({
           ]}
         />
         <TextFilter
-          label="Max LCP s"
+          label="حداکثر LCP"
           value={filters.maxLcpSeconds}
           placeholder="2.5"
           type="number"
@@ -122,7 +122,7 @@ export function PerformanceFilterBar({
       </div>
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
         <RangeFilter
-          label="Perf"
+          label="عملکرد"
           min={filters.minPerf}
           max={filters.maxPerf}
           onMinChange={(minPerf) => onChange({ ...filters, minPerf })}
@@ -162,7 +162,7 @@ export function TableFilterToggle({
       <button
         className={`btn btn-ghost btn-sm gap-1.5 ${showFilters ? "btn-active" : ""}`}
         onClick={onToggle}
-        title="Toggle filters"
+        title="نمایش یا پنهان‌کردن فیلترها"
         type="button"
       >
         <SlidersHorizontal className="size-3.5" />
@@ -203,7 +203,7 @@ function FilterPanel({
     <div className="space-y-3 border-b border-base-300 bg-gradient-to-b from-base-100 to-base-200/30 px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold">Refine results</p>
+          <p className="text-sm font-semibold">فیلتر نتایج</p>
           {activeFilterCount > 0 ? (
             <span className="badge badge-xs badge-primary border-0 text-primary-content">
               {activeFilterCount} active
@@ -277,14 +277,14 @@ function RangeFilter({
           className="input input-bordered input-xs bg-base-100"
           type="number"
           value={min}
-          placeholder="Min"
+          placeholder="حداقل"
           onChange={(event) => onMinChange(event.target.value)}
         />
         <input
           className="input input-bordered input-xs bg-base-100"
           type="number"
           value={max}
-          placeholder="Max"
+          placeholder="حداکثر"
           onChange={(event) => onMaxChange(event.target.value)}
         />
       </div>

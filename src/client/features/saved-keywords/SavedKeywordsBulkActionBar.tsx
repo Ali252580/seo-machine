@@ -50,12 +50,12 @@ export function SavedKeywordsBulkActionBar({
                   onClick: onCopy,
                 },
                 {
-                  label: "Export to Sheets",
+                  label: "خروجی به گوگل شیت",
                   icon: <Sheet className="size-4" />,
                   onClick: onExportSheets,
                 },
                 {
-                  label: "Export CSV",
+                  label: "خروجی CSV",
                   icon: <FileDown className="size-4" />,
                   onClick: onExportCsv,
                 },

@@ -108,11 +108,11 @@ export function BacklinksFilterPanel({
         ]}
         rangeFields={[
           {
-            title: "Backlinks",
+            title: "بک‌لینک‌ها",
             minKey: "minBacklinks",
             maxKey: "maxBacklinks",
           },
-          { title: "Rank", minKey: "minRank", maxKey: "maxRank" },
+          { title: "رتبه", minKey: "minRank", maxKey: "maxRank" },
           {
             title: "Spam Score",
             minKey: "minSpamScore",
@@ -155,13 +155,13 @@ export function BacklinksFilterPanel({
         },
       ]}
       rangeFields={[
-        { title: "Backlinks", minKey: "minBacklinks", maxKey: "maxBacklinks" },
+        { title: "بک‌لینک‌ها", minKey: "minBacklinks", maxKey: "maxBacklinks" },
         {
-          title: "Referring Domains",
+          title: "دامنه‌های ارجاع‌دهنده",
           minKey: "minReferringDomains",
           maxKey: "maxReferringDomains",
         },
-        { title: "Rank", minKey: "minRank", maxKey: "maxRank" },
+        { title: "رتبه", minKey: "minRank", maxKey: "maxRank" },
       ]}
       onApply={(values) => {
         state.apply(values);

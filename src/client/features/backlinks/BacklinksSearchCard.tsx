@@ -97,7 +97,7 @@ export function BacklinksSearchCard({
                     >
                       <Search className="size-4 text-base-content/60" />
                       <input
-                        placeholder="Enter a domain or URL"
+                        placeholder="دامنه یا نشانی صفحه را وارد کنید"
                         value={field.state.value}
                         onChange={(event) => {
                           const nextTarget = event.target.value;
@@ -134,7 +134,7 @@ export function BacklinksSearchCard({
                     className="btn btn-primary shrink-0 px-6"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Loading..." : "Search"}
+                    {isSubmitting ? "Loading..." : "جستجو"}
                   </button>
                 )}
               </form.Subscribe>

@@ -55,7 +55,7 @@ export function SerpAnalysisCard({
           {items.length} organic results
         </div>
         <ExportToSheetsButton
-          headers={["Rank", "Title", "URL", "Domain"]}
+          headers={["رتبه", "عنوان", "URL", "دامنه"]}
           rows={items.map((item) => [
             item.rank,
             item.title ?? "",
@@ -88,7 +88,7 @@ function SerpAnalysisTable({ items }: { items: SerpResultItem[] }) {
         <thead>
           <tr className="text-xs text-base-content/60">
             <th className="w-8">#</th>
-            <th>Page</th>
+            <th>صفحه</th>
           </tr>
         </thead>
         <tbody>

@@ -28,7 +28,7 @@ const baseColumns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Domain"
+        label="دامنه"
         helpText="The referring site linking to your target."
       />
     ),
@@ -49,7 +49,7 @@ const baseColumns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Backlinks"
+        label="بک‌لینک‌ها"
         helpText="Total backlinks found from this domain."
       />
     ),
@@ -61,7 +61,7 @@ const baseColumns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Referring Pages"
+        label="صفحه‌های ارجاع‌دهنده"
         helpText="Unique pages on this domain that link to your target."
       />
     ),
@@ -73,7 +73,7 @@ const baseColumns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Rank"
+        label="رتبه"
         helpText="Authority score for the referring domain."
       />
     ),
@@ -85,7 +85,7 @@ const baseColumns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Spam"
+        label="اسپم"
         helpText="Spam risk score for this referring domain."
       />
     ),
@@ -97,7 +97,7 @@ const baseColumns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="First Seen"
+        label="اولین مشاهده"
         helpText="When this domain was first discovered linking to your target."
       />
     ),
@@ -109,7 +109,7 @@ const baseColumns = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Issues"
+        label="مشکلات"
         helpText="Broken link and broken page counts tied to this domain."
       />
     ),

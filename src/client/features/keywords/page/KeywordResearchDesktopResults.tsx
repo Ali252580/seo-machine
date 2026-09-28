@@ -171,7 +171,7 @@ function DesktopTableCard({ controller }: Props) {
         <button
           className={`btn btn-ghost btn-sm gap-1.5 ${showFilters ? "btn-active" : ""}`}
           onClick={() => controller.setShowFilters((current) => !current)}
-          title="Toggle table filters"
+          title="نمایش یا پنهان‌کردن فیلترهای جدول"
         >
           <SlidersHorizontal className="size-3.5" />
           Filters
@@ -192,7 +192,7 @@ function DesktopTableCard({ controller }: Props) {
             className={`btn btn-ghost btn-sm gap-1 ${!canExport ? "btn-disabled" : ""}`}
           >
             <Download className="size-3.5" />
-            <span className="hidden lg:inline">Export</span>
+            <span className="hidden lg:inline">خروجی</span>
             <ChevronDown className="size-3 opacity-60" />
           </div>
           <ul
@@ -229,12 +229,12 @@ function DesktopTableCard({ controller }: Props) {
             <TableBulkExportMenu
               actions={[
                 {
-                  label: "Export to Sheets",
+                  label: "خروجی به گوگل شیت",
                   icon: <Sheet className="size-4" />,
                   onClick: handleExportSelectionToSheets,
                 },
                 {
-                  label: "Export CSV",
+                  label: "خروجی CSV",
                   icon: <FileDown className="size-4" />,
                   onClick: handleExportSelectionCsv,
                 },
@@ -298,13 +298,13 @@ function DesktopFilters({ controller }: Props) {
         <FilterTextInput
           form={filtersForm}
           name="include"
-          label="Include Terms"
+          label="عبارت‌های شامل"
           placeholder="audit, checker, template"
         />
         <FilterTextInput
           form={filtersForm}
           name="exclude"
-          label="Exclude Terms"
+          label="عبارت‌های حذف‌شده"
           placeholder="jobs, salary, course"
         />
       </div>
@@ -325,7 +325,7 @@ function DesktopFilters({ controller }: Props) {
         />
         <FilterRangeInputs
           form={filtersForm}
-          title="Difficulty"
+          title="سختی"
           minName="minKd"
           maxName="maxKd"
         />

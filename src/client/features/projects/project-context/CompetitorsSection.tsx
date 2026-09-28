@@ -54,7 +54,7 @@ export function CompetitorsSection({
   return (
     <section className="space-y-3">
       <SectionHeader
-        title="Competitors"
+        title="رقبا"
         hint="The sites you measure yourself against."
         action={
           <button
@@ -190,16 +190,16 @@ function CompetitorForm({
           placeholder="competitor.com"
           maxLength={255}
           className="input input-bordered input-sm w-full"
-          aria-label="Competitor domain"
+          aria-label="دامنه رقیب"
         />
         <input
           type="text"
           value={draft.name}
           onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-          placeholder="Name (optional)"
+          placeholder="نام (اختیاری)"
           maxLength={120}
           className="input input-bordered input-sm w-full"
-          aria-label="Competitor name"
+          aria-label="نام رقیب"
         />
       </div>
       <input
@@ -209,7 +209,7 @@ function CompetitorForm({
         placeholder="Why they matter — e.g. wins every comparison keyword (optional)"
         maxLength={500}
         className="input input-bordered input-sm w-full"
-        aria-label="Competitor notes"
+        aria-label="یادداشت رقیب"
       />
       <FormActions
         pending={pending}

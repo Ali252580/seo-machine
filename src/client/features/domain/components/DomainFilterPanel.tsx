@@ -189,13 +189,13 @@ export function DomainFilterPanel<TValues extends FilterValues>({
             <FilterNumberInput
               value={draftFilters[field.minKey]}
               onChange={(value) => handleValueChange(field.minKey, value)}
-              placeholder="Min"
+              placeholder="حداقل"
               step={field.step}
             />
             <FilterNumberInput
               value={draftFilters[field.maxKey]}
               onChange={(value) => handleValueChange(field.maxKey, value)}
-              placeholder="Max"
+              placeholder="حداکثر"
               step={field.step}
             />
           </FilterRangeGroup>

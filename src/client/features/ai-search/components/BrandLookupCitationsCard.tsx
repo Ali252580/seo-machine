@@ -221,7 +221,7 @@ export function CitationTabsCard({
           type="button"
           className={`btn btn-ghost btn-sm gap-1.5 ${filters.showFilters ? "btn-active" : ""}`}
           onClick={() => filters.setShowFilters((current) => !current)}
-          title="Toggle table filters"
+          title="نمایش یا پنهان‌کردن فیلترهای جدول"
         >
           <SlidersHorizontal className="size-3.5" />
           Filters

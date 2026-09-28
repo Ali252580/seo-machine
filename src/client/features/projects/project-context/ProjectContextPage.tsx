@@ -333,7 +333,7 @@ function CustomSectionForm({
         placeholder={custom.slug}
         maxLength={120}
         className="input input-bordered input-sm w-full"
-        aria-label="Section title"
+        aria-label="عنوان بخش"
       />
       <textarea
         value={content}
@@ -341,7 +341,7 @@ function CustomSectionForm({
         rows={5}
         maxLength={PROSE_MAX_CHARS}
         className="textarea textarea-bordered w-full text-sm"
-        aria-label="Section content"
+        aria-label="محتوای بخش"
       />
       <FormActions
         pending={pending}

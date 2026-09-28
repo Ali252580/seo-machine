@@ -73,7 +73,7 @@ export function BrandLookupSearchCard({
               <Search className="size-4 text-base-content/60" />
               <input
                 type="text"
-                placeholder="Enter a brand name or domain"
+                placeholder="نام برند یا دامنه را وارد کنید"
                 value={query}
                 maxLength={BRAND_LOOKUP_MAX_INPUT_LENGTH}
                 onChange={(event) => onQueryChange(event.target.value)}
@@ -105,7 +105,7 @@ export function BrandLookupSearchCard({
           <div className="flex flex-col gap-1">
             <input
               type="text"
-              placeholder="Add competitors (comma-separated)"
+              placeholder="رقبا را با ویرگول جدا کنید"
               value={competitors}
               onChange={(event) => onCompetitorsChange(event.target.value)}
               autoComplete="off"
@@ -113,7 +113,7 @@ export function BrandLookupSearchCard({
               className={`input input-bordered w-full ${
                 competitorsError ? "input-error" : ""
               }`}
-              aria-label="Competitors"
+              aria-label="رقبا"
               aria-invalid={competitorsError || undefined}
               aria-describedby={
                 competitorsError ? "brand-lookup-input-error" : undefined

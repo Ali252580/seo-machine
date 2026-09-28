@@ -53,8 +53,8 @@ const PAGE_TEXT_FILTERS = [
   },
 ] as const;
 const PAGE_RANGE_FILTERS = [
-  { title: "Traffic", minKey: "minTraffic", maxKey: "maxTraffic" },
-  { title: "Keywords", minKey: "minVol", maxKey: "maxVol" },
+  { title: "ترافیک", minKey: "minTraffic", maxKey: "maxTraffic" },
+  { title: "کلمات کلیدی", minKey: "minVol", maxKey: "maxVol" },
 ] as const;
 
 type Props = {
@@ -217,7 +217,7 @@ export function PagesTab({
         showTableLoading={showTableLoading}
         exportActions={[
           {
-            label: "Export to Sheets",
+            label: "خروجی به گوگل شیت",
             icon: <Sheet className="size-4" />,
             onClick: handleExportToSheets,
           },
@@ -227,12 +227,12 @@ export function PagesTab({
             onClick: handleCopy,
           },
           {
-            label: "Download CSV",
+            label: "دریافت CSV",
             icon: <Download className="size-4" />,
             onClick: () => handleDownload("csv"),
           },
           {
-            label: "Download Excel",
+            label: "دریافت Excel",
             icon: <FileSpreadsheet className="size-4" />,
             onClick: () => handleDownload("xls"),
           },

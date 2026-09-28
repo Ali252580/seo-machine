@@ -27,7 +27,7 @@ export function SavedKeywordsHeader({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold">Saved Keywords</h1>
+        <h1 className="text-2xl font-semibold">کلمات ذخیره‌شده</h1>
         <p className="text-sm text-base-content/70">
           Save keyword ideas from research, organize them with tags, and revisit
           when you&apos;re ready to act.

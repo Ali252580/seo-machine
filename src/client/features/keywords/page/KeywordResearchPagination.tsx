@@ -36,7 +36,7 @@ export function KeywordResearchPagination({
       </div>
       <div className="flex items-center gap-6">
         <label className="flex items-center gap-2 text-sm text-base-content/70">
-          <span className="whitespace-nowrap">Rows per page</span>
+          <span className="whitespace-nowrap">تعداد ردیف در صفحه</span>
           <select
             className="select select-bordered select-sm w-20"
             value={pageSize}
@@ -61,7 +61,7 @@ export function KeywordResearchPagination({
               className="btn btn-ghost btn-sm btn-square"
               disabled={page <= 1}
               onClick={() => onPageChange(page - 1)}
-              aria-label="Previous page"
+              aria-label="صفحه قبل"
             >
               <ChevronLeft className="size-4" />
             </button>
@@ -70,7 +70,7 @@ export function KeywordResearchPagination({
               className="btn btn-ghost btn-sm btn-square"
               disabled={page >= totalPages}
               onClick={() => onPageChange(page + 1)}
-              aria-label="Next page"
+              aria-label="صفحه بعد"
             >
               <ChevronRight className="size-4" />
             </button>

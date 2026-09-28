@@ -16,7 +16,7 @@ export function SavedKeywordsFilterPanel({
     <div className="space-y-3 border-b border-base-300 bg-gradient-to-b from-base-100 to-base-200/30 px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold">Refine results</p>
+          <p className="text-sm font-semibold">فیلتر نتایج</p>
           {activeFilterCount > 0 ? (
             <span className="badge badge-xs badge-primary border-0 text-primary-content">
               {activeFilterCount} active
@@ -38,16 +38,16 @@ export function SavedKeywordsFilterPanel({
         <TermsTokenInput
           form={form}
           name="include"
-          label="Include"
+          label="شامل"
           variant="include"
-          placeholder="Must contain… e.g. audit"
+          placeholder="باید شامل باشد؛ مثلاً ممیزی"
         />
         <TermsTokenInput
           form={form}
           name="exclude"
-          label="Exclude"
+          label="حذف عبارت"
           variant="exclude"
-          placeholder="Must not contain… e.g. jobs"
+          placeholder="نباید شامل باشد؛ مثلاً استخدام"
         />
       </div>
 
@@ -69,7 +69,7 @@ export function SavedKeywordsFilterPanel({
         />
         <FilterRangeInputs
           form={form}
-          title="Difficulty"
+          title="سختی"
           minName="minKd"
           maxName="maxKd"
           min={0}
@@ -230,7 +230,7 @@ function FilterRangeInputs({
         <CompactRangeInput
           form={form}
           name={minName}
-          placeholder="Min"
+          placeholder="حداقل"
           step={step}
           min={min}
           max={max}
@@ -238,7 +238,7 @@ function FilterRangeInputs({
         <CompactRangeInput
           form={form}
           name={maxName}
-          placeholder="Max"
+          placeholder="حداکثر"
           step={step}
           min={min}
           max={max}

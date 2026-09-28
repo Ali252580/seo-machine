@@ -131,7 +131,7 @@ function StatsCard({ result }: { result: BrandLookupResult }) {
     <section className="rounded-xl border border-base-300 bg-base-100">
       <div className="flex h-full flex-col divide-y divide-base-200">
         <StatBlock
-          label="Mentions"
+          label="اشاره‌ها"
           tooltip="Estimated count of AI answers where the searched brand or domain appeared in the answer text or cited sources."
           value={result.totalMentions}
           perPlatform={result.perPlatform}
@@ -139,7 +139,7 @@ function StatsCard({ result }: { result: BrandLookupResult }) {
           isDomainLevel={result.aggregatesAreDomainLevel}
         />
         <StatBlock
-          label="AI search volume"
+          label="حجم جستجوی هوش مصنوعی"
           tooltip="Estimated monthly search demand for prompts where the searched brand or domain appears in AI answers. This is prompt demand, not mention count."
           value={result.totalAiSearchVolume}
           perPlatform={result.perPlatform}

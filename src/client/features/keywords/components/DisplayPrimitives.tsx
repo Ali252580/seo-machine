@@ -110,7 +110,7 @@ export function AreaTrendChart({ trend }: { trend: MonthlySearch[] }) {
     <div
       ref={containerRef}
       className="w-full h-[210px] min-w-0"
-      aria-label="Search trend chart"
+      aria-label="نمودار روند جستجو"
     >
       {chartWidth > 0 ? (
         <AreaChart

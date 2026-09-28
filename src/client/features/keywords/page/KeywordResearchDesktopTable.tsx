@@ -62,7 +62,7 @@ export function KeywordResearchDesktopTable({
       keywordColumnHelper.accessor("keyword", {
         header: () => (
           <SortHeader
-            label="Keyword"
+            label="کلمه کلیدی"
             field="keyword"
             current={sortField}
             dir={sortDir}
@@ -86,7 +86,7 @@ export function KeywordResearchDesktopTable({
       keywordColumnHelper.accessor("searchVolume", {
         header: () => (
           <SortHeader
-            label="Volume"
+            label="حجم جستجو"
             field="searchVolume"
             current={sortField}
             dir={sortDir}
@@ -148,7 +148,7 @@ export function KeywordResearchDesktopTable({
       keywordColumnHelper.accessor("keywordDifficulty", {
         header: () => (
           <SortHeader
-            label="Score"
+            label="امتیاز"
             helpText="Organic ranking difficulty (0-100): higher means harder to reach Google's top 10."
             field="keywordDifficulty"
             current={sortField}

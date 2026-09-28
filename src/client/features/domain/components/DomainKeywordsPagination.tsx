@@ -52,7 +52,7 @@ export function DomainKeywordsPagination({
 
       <div className="flex items-center gap-6">
         <label className="flex items-center gap-2 text-sm text-base-content/70">
-          <span className="whitespace-nowrap">Rows per page</span>
+          <span className="whitespace-nowrap">تعداد ردیف در صفحه</span>
           <select
             className="select select-bordered select-sm w-20"
             value={pageSize}
@@ -76,7 +76,7 @@ export function DomainKeywordsPagination({
               page={page - 1}
               disabled={!canGoPrev || isLoading}
               onPageChange={onPageChange}
-              label="Previous page"
+              label="صفحه قبل"
             >
               <ChevronLeft className="size-4" />
             </PageLink>
@@ -84,7 +84,7 @@ export function DomainKeywordsPagination({
               page={page + 1}
               disabled={!canGoNext || isLoading}
               onPageChange={onPageChange}
-              label="Next page"
+              label="صفحه بعد"
             >
               <ChevronRight className="size-4" />
             </PageLink>

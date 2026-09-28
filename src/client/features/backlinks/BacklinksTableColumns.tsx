@@ -137,7 +137,7 @@ function buildBaseColumns(
       id: "source",
       enableSorting: false,
       header: () => (
-        <HeaderHelpLabel label="Source" helpText="Page linking to you" />
+        <HeaderHelpLabel label="منبع" helpText="صفحه‌ای که به شما لینک داده" />
       ),
       size: 250,
       minSize: 180,
@@ -149,7 +149,7 @@ function buildBaseColumns(
       id: "target",
       enableSorting: false,
       header: () => (
-        <HeaderHelpLabel label="Target" helpText="Destination on your site" />
+        <HeaderHelpLabel label="مقصد" helpText="مقصد در سایت شما" />
       ),
       size: 220,
       minSize: 150,
@@ -167,7 +167,7 @@ function buildBaseColumns(
       id: "anchor",
       enableSorting: false,
       header: () => (
-        <HeaderHelpLabel label="Anchor" helpText="Text or format of the link" />
+        <HeaderHelpLabel label="انکر تکست" helpText="متن یا نوع لینک" />
       ),
       size: 150,
       minSize: 100,
@@ -185,7 +185,7 @@ function buildBaseColumns(
       enableSorting: false,
       header: () => (
         <HeaderHelpLabel
-          label="Flags"
+          label="نشانه‌ها"
           helpText="Special backlink attributes, such as lost, broken, nofollow, or multiple links from the same source."
         />
       ),
@@ -200,7 +200,7 @@ function buildBaseColumns(
       header: ({ column }) => (
         <SortableHeader
           column={column}
-          label="Link"
+          label="لینک"
           helpText="Authority of the linking page"
           align="right"
         />
@@ -242,7 +242,7 @@ function buildBaseColumns(
       header: ({ column }) => (
         <SortableHeader
           column={column}
-          label="Spam"
+          label="اسپم"
           helpText="Estimated spam risk for this backlink. Higher scores are more likely to be manipulative or low quality."
           align="right"
         />
@@ -266,7 +266,7 @@ function buildBaseColumns(
       header: ({ column }) => (
         <SortableHeader
           column={column}
-          label="First Seen"
+          label="اولین مشاهده"
           helpText="When this link was first discovered by the crawler"
         />
       ),

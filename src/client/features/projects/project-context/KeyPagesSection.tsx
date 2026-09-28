@@ -201,7 +201,7 @@ function KeyPageForm({
         placeholder="example.com/pricing"
         maxLength={2048}
         className="input input-bordered input-sm w-full"
-        aria-label="Page URL"
+        aria-label="نشانی صفحه"
       />
       <div className="grid gap-2 sm:grid-cols-2">
         <select
@@ -215,7 +215,7 @@ function KeyPageForm({
             })
           }
           className="select select-bordered select-sm w-full"
-          aria-label="Page role"
+          aria-label="نقش صفحه"
         >
           {KEY_PAGE_ROLES.map((role) => (
             <option key={role} value={role}>
@@ -229,20 +229,20 @@ function KeyPageForm({
           onChange={(event) =>
             setDraft({ ...draft, topic: event.target.value })
           }
-          placeholder="Target topic (optional)"
+          placeholder="موضوع هدف (اختیاری)"
           maxLength={200}
           className="input input-bordered input-sm w-full"
-          aria-label="Target topic"
+          aria-label="موضوع هدف"
         />
       </div>
       <input
         type="text"
         value={draft.notes}
         onChange={(event) => setDraft({ ...draft, notes: event.target.value })}
-        placeholder="Notes (optional)"
+        placeholder="یادداشت (اختیاری)"
         maxLength={500}
         className="input input-bordered input-sm w-full"
-        aria-label="Page notes"
+        aria-label="یادداشت صفحه"
       />
       <FormActions
         pending={pending}

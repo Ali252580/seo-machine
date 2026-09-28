@@ -109,13 +109,13 @@ export function SavedKeywordsBulkTagsModal({
           <SegmentButton
             active={mode === "add"}
             onClick={() => setMode("add")}
-            label="Add tags"
+            label="افزودن برچسب"
             count={addNames.length}
           />
           <SegmentButton
             active={mode === "remove"}
             onClick={() => setMode("remove")}
-            label="Remove tags"
+            label="حذف برچسب"
             count={removeIds.length}
             disabled={selectedRowTags.length === 0}
           />
@@ -167,7 +167,7 @@ export function SavedKeywordsBulkTagsModal({
                     handleCreate();
                   }
                 }}
-                placeholder="Search or create…"
+                placeholder="جستجو یا ایجاد…"
                 className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content/40"
               />
             </label>

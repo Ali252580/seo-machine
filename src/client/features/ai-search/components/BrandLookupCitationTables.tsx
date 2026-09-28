@@ -196,7 +196,7 @@ export function buildTopPagesColumns({
       id: "url",
       header: () => (
         <HeaderWithHelp
-          label="Source"
+          label="منبع"
           helpText="A page cited as a source in AI answers where the searched brand or domain appears."
         />
       ),
@@ -210,7 +210,7 @@ export function buildTopPagesColumns({
           pagesHelper.accessor("platform", {
             id: "platform",
             header: () => (
-              <HeaderWithHelp label="Platform" helpText={PLATFORM_HELP} />
+              <HeaderWithHelp label="پلتفرم" helpText={PLATFORM_HELP} />
             ),
             enableSorting: false,
             cell: ({ getValue }) => <PlatformCell platform={getValue()} />,
@@ -221,7 +221,7 @@ export function buildTopPagesColumns({
       id: "keywords",
       header: () => (
         <HeaderWithHelp
-          label="Cited for"
+          label="دلیل استناد"
           helpText="Example prompts from the fetched sample where this page was cited."
         />
       ),
@@ -266,7 +266,7 @@ export function buildTopQueriesColumns({
       id: "question",
       header: () => (
         <HeaderWithHelp
-          label="Query"
+          label="عبارت"
           helpText="A sampled user prompt whose AI answer cited the searched brand or domain in its text or sources. The prompt itself may not name the brand."
         />
       ),
@@ -287,7 +287,7 @@ export function buildTopQueriesColumns({
           queriesHelper.accessor("platform", {
             id: "platform",
             header: () => (
-              <HeaderWithHelp label="Platform" helpText={PLATFORM_HELP} />
+              <HeaderWithHelp label="پلتفرم" helpText={PLATFORM_HELP} />
             ),
             enableSorting: false,
             cell: ({ getValue }) => <PlatformCell platform={getValue()} />,

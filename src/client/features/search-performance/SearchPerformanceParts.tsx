@@ -45,7 +45,7 @@ function strikingExportTable(report: Report): ExportTable {
   const stamp = `${report.range.startDate}-to-${report.range.endDate}`;
   return {
     filename: `search-performance-striking-distance-${stamp}.csv`,
-    headers: ["Query", "Page", "Impressions", "Clicks", "Position"],
+    headers: ["عبارت", "صفحه", "نمایش‌ها", "کلیک‌ها", "رتبه"],
     rows: report.strikingDistance.map((row) => [
       row.query,
       row.page,
@@ -65,11 +65,11 @@ function dimensionExportTable(
   return {
     filename: `search-performance-${isPage ? "pages" : "queries"}-${stamp}.csv`,
     headers: [
-      isPage ? "Page" : "Query",
-      "Clicks",
-      "Impressions",
+      isPage ? "صفحه" : "عبارت",
+      "کلیک‌ها",
+      "نمایش‌ها",
       "CTR",
-      "Position",
+      "رتبه",
     ],
     rows: rows.map((row) => [
       row.key,
@@ -160,13 +160,13 @@ export function TotalsCards({ report }: { report: Report }) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <TotalCard
-        label="Clicks"
+        label="کلیک‌ها"
         value={formatCount(totals.clicks)}
         delta={percentDelta(totals.clicks, prevTotals.clicks)}
         deltaTitle={deltaTitle}
       />
       <TotalCard
-        label="Impressions"
+        label="نمایش‌ها"
         value={formatCount(totals.impressions)}
         delta={percentDelta(totals.impressions, prevTotals.impressions)}
         deltaTitle={deltaTitle}
@@ -178,7 +178,7 @@ export function TotalsCards({ report }: { report: Report }) {
         deltaTitle={deltaTitle}
       />
       <TotalCard
-        label="Avg position"
+        label="میانگین رتبه"
         value={formatPosition(totals.position)}
         delta={positionDelta(totals.position, prevTotals.position)}
         deltaTitle={deltaTitle}

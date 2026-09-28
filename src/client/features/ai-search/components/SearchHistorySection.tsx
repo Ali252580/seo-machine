@@ -85,7 +85,7 @@ export function SearchHistorySection<TItem extends { timestamp: number }>({
                 type="button"
                 className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 p-1"
                 onClick={() => onRemoveHistoryItem(item.timestamp)}
-                aria-label="Remove from history"
+                aria-label="حذف از تاریخچه"
               >
                 <X className="size-3" />
               </button>

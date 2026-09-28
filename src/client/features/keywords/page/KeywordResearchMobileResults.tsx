@@ -164,7 +164,7 @@ function MobileKeywordResults({ controller }: Props) {
             tabIndex={0}
             role="button"
             className={`btn btn-ghost btn-xs gap-1 ${!canExport ? "btn-disabled" : ""}`}
-            aria-label="Export"
+            aria-label="خروجی"
           >
             <Download className="size-3.5" />
             <ChevronDown className="size-3 opacity-60" />
@@ -203,12 +203,12 @@ function MobileKeywordResults({ controller }: Props) {
             <TableBulkExportMenu
               actions={[
                 {
-                  label: "Export to Sheets",
+                  label: "خروجی به گوگل شیت",
                   icon: <Sheet className="size-4" />,
                   onClick: handleExportSelectionToSheets,
                 },
                 {
-                  label: "Export CSV",
+                  label: "خروجی CSV",
                   icon: <FileDown className="size-4" />,
                   onClick: handleExportSelectionCsv,
                 },
