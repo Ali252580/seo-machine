@@ -13,6 +13,7 @@ import { BILLING_ROUTE } from "@/shared/billing";
 import { getSeoApiKeyStatus } from "@/serverFunctions/config";
 import { getProjects } from "@/serverFunctions/projects";
 import { getLastProjectId } from "@/client/lib/active-project";
+import { isHostedClientAuthMode } from "@/lib/auth-mode";
 
 const DATAFORSEO_HELP_PATH = "/help/dataforseo-api-key";
 
@@ -56,7 +57,9 @@ export function AuthenticatedAppLayout({
   // builds links that self-correct via the route guard once data arrives.
   const sidebarProjectId =
     projectId ?? fallbackProjectId ?? rememberedProjectId;
-  const shouldCheckSeoApiKeyStatus = location.pathname !== BILLING_ROUTE;
+  const isHostedMode = isHostedClientAuthMode();
+  const shouldCheckSeoApiKeyStatus =
+    !isHostedMode && location.pathname !== BILLING_ROUTE;
   const seoApiKeyStatusQuery = useQuery({
     queryKey: ["seoApiKeyStatus"],
     queryFn: () => getSeoApiKeyStatus(),

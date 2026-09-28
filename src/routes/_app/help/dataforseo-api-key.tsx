@@ -1,8 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { isHostedClientAuthMode } from "@/lib/auth-mode";
 
 const DATAFORSEO_API_ACCESS_URL = "https://app.dataforseo.com/api-access";
 
 export const Route = createFileRoute("/_app/help/dataforseo-api-key")({
+  beforeLoad: () => {
+    if (isHostedClientAuthMode()) {
+      throw redirect({ to: "/billing", replace: true });
+    }
+  },
   component: DataforseoApiKeyHelpPage,
 });
 
