@@ -42,7 +42,9 @@ export function RankTrackingHistoryMatrix({
           <tr>
             {/* Unconstrained keyword column absorbs the slack when only a few
                 check columns exist, so sparse history doesn't stretch oddly. */}
-            <th className="sticky left-0 z-10 bg-base-100 w-full">Keyword</th>
+            <th className="sticky left-0 z-10 bg-base-100 w-full">
+              کلمه کلیدی
+            </th>
             {runs.map((r) => (
               <th
                 key={r.runId}

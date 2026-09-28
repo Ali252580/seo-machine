@@ -31,7 +31,7 @@ export function SearchTargetingField({
   return (
     <div className="form-control">
       <label className="label">
-        <span className="label-text font-medium">Search Targeting</span>
+        <span className="label-text font-medium">محدوده جستجو</span>
       </label>
       <div className="flex gap-2">
         <label className="flex items-center gap-2 cursor-pointer">
@@ -44,7 +44,7 @@ export function SearchTargetingField({
               onLocationNameChange(undefined);
             }}
           />
-          <span className="text-sm">National</span>
+          <span className="text-sm">کشوری</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
           <input
@@ -53,18 +53,19 @@ export function SearchTargetingField({
             checked={mode === "local"}
             onChange={() => onModeChange("local")}
           />
-          <span className="text-sm">Local</span>
+          <span className="text-sm">محلی</span>
         </label>
       </div>
       <p className="text-xs text-base-content/50 mt-1.5">
         {mode === "local" ? (
           <>
-            <span className="text-success font-medium">Best for:</span> "near
-            me" queries, city/county keywords, service-area pages.
+            <span className="text-success font-medium">مناسب برای:</span>{" "}
+            جستجوهای «نزدیک من»، نام شهر و صفحه‌های خدمات محلی.
           </>
         ) : (
           <>
-            Local targeting can understate rankings for non-geo-modified terms.
+            هدف‌گیری محلی ممکن است رتبه عبارت‌های بدون موقعیت مکانی را کمتر نشان
+            دهد.
           </>
         )}
       </p>
@@ -74,7 +75,7 @@ export function SearchTargetingField({
             value={locationName}
             onChange={onLocationNameChange}
             countryCode={countryCode}
-            placeholder="Search cities..."
+            placeholder="جستجوی شهرها..."
           />
         </div>
       )}

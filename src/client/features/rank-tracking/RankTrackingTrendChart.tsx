@@ -63,7 +63,7 @@ export function RankTrendChart({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-[11px] text-base-content/50">
-        <span>Google position (1 = best)</span>
+        <span>رتبه گوگل (۱ بهترین است)</span>
         <span className="inline-flex items-center gap-1">
           Better <span aria-hidden>↑</span>
         </span>
@@ -184,7 +184,7 @@ export function useChartWidth() {
 const TREND_RANGES = [
   { label: "30d", sinceDays: 30 },
   { label: "90d", sinceDays: 90 },
-  { label: "All", sinceDays: 730 },
+  { label: "همه", sinceDays: 730 },
 ] as const;
 
 export function TrendRangeToggle({

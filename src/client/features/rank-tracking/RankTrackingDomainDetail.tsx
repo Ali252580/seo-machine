@@ -139,11 +139,9 @@ export function RankTrackingDomainDetail({
     });
     setShowAddKeywords(false);
     captureClientEvent("rank_tracking:keywords_add");
-    toast.success(
-      `${result.added} keyword${result.added !== 1 ? "s" : ""} added`,
-    );
+    toast.success(`${result.added} کلمه کلیدی اضافه شد`);
     if (!result.checkTriggered && result.added > 0) {
-      toast.info("Use 'Check Now' to check these keywords");
+      toast.info("برای بررسی این کلمات، «بررسی رتبه‌ها» را بزنید");
     }
   };
 
@@ -193,15 +191,15 @@ export function RankTrackingDomainDetail({
         onClick={onBack}
       >
         <ArrowLeft className="size-3" />
-        Back to domains
+        بازگشت به دامنه‌ها
       </button>
 
       {config.lastSkipReason === "insufficient_credits" && (
         <div className="alert alert-warning text-sm py-2">
           <AlertTriangle className="size-4" />
           <span>
-            Last scheduled check was skipped due to insufficient credits. Top up
-            your balance to resume automatic tracking.
+            آخرین بررسی زمان‌بندی‌شده به‌دلیل اعتبار ناکافی انجام نشد. برای
+            ادامه ردیابی خودکار، اعتبار حساب را افزایش دهید.
           </span>
         </div>
       )}
@@ -210,7 +208,7 @@ export function RankTrackingDomainDetail({
         <div className="alert alert-warning text-sm py-2">
           <AlertTriangle className="size-4" />
           <span>
-            This run may be unresponsive and will be cleaned up automatically.
+            این اجرا ممکن است پاسخ‌گو نباشد و به‌صورت خودکار پاک خواهد شد.
           </span>
         </div>
       )}
@@ -219,7 +217,7 @@ export function RankTrackingDomainDetail({
         <div className="alert alert-error text-sm py-2">
           <AlertTriangle className="size-4" />
           <span>
-            <span className="font-medium">Last check failed.</span>{" "}
+            <span className="font-medium">آخرین بررسی ناموفق بود.</span>{" "}
             {latestRun.errorMessage}
           </span>
         </div>
@@ -295,7 +293,7 @@ export function RankTrackingDomainDetail({
             void navigator.clipboard.writeText(
               filtered.map((r) => r.keyword).join("\n"),
             );
-            toast.success("Keywords copied to clipboard");
+            toast.success("کلمات کلیدی کپی شدند");
           }}
           onCheckNow={() => {
             const count = costEstimate?.keywordCount ?? rows?.length ?? 0;

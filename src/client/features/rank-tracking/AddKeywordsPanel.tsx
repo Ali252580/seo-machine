@@ -29,7 +29,9 @@ export function AddKeywordsPanel({
       onSuccess(result);
     },
     onError: (error) => {
-      toast.error(getStandardErrorMessage(error, "Failed to add keywords"));
+      toast.error(
+        getStandardErrorMessage(error, "افزودن کلمات کلیدی ناموفق بود"),
+      );
     },
   });
   const isPending = mutation.isPending;
@@ -39,13 +41,13 @@ export function AddKeywordsPanel({
         <textarea
           className="textarea textarea-bordered textarea-sm w-full"
           rows={3}
-          placeholder="Enter keywords, one per line"
+          placeholder="کلمات کلیدی را هر کدام در یک خط وارد کنید"
           value={keywordInput}
           onChange={(e) => setKeywordInput(e.target.value)}
         />
         <label
           className="flex items-center gap-2 text-xs cursor-pointer w-fit"
-          title="Track these keywords exactly as typed instead of lowercasing them. Google can return different results for a capitalized brand name."
+          title="کلمات دقیقاً با همین حروف ثبت شوند؛ گوگل ممکن است برای نام برند با حروف متفاوت نتایج دیگری نمایش دهد."
         >
           <input
             type="checkbox"
@@ -53,7 +55,7 @@ export function AddKeywordsPanel({
             checked={matchCase}
             onChange={(e) => setMatchCase(e.target.checked)}
           />
-          Match case
+          تطبیق حروف
         </label>
       </div>
       <div className="flex flex-col gap-1">
@@ -66,7 +68,7 @@ export function AddKeywordsPanel({
               .filter(Boolean);
             if (lines.some((l) => l.length > MAX_TRACKED_KEYWORD_LENGTH)) {
               toast.error(
-                `Keywords must be ${MAX_TRACKED_KEYWORD_LENGTH} characters or fewer.`,
+                `هر کلمه باید حداکثر ${MAX_TRACKED_KEYWORD_LENGTH} نویسه باشد.`,
               );
               return;
             }
@@ -75,10 +77,10 @@ export function AddKeywordsPanel({
           disabled={isPending || !keywordInput.trim()}
         >
           {isPending && <Loader2 className="size-3 animate-spin" />}
-          Add
+          افزودن
         </button>
         <button className="btn btn-ghost btn-sm" onClick={onCancel}>
-          Cancel
+          انصراف
         </button>
       </div>
     </div>

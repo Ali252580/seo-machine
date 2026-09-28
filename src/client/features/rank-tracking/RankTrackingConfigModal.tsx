@@ -46,7 +46,7 @@ export function RankTrackingConfigModal({
         labelledBy="rank-config-modal-title"
       >
         <h2 id="rank-config-modal-title" className="sr-only">
-          Add Domain
+          افزودن دامنه
         </h2>
         <div className="flex min-h-40 items-center justify-center">
           <Loader2 className="size-5 animate-spin text-base-content/50" />
@@ -128,16 +128,16 @@ function RankTrackingConfigModalContent({
     e.preventDefault();
     if (isPending) return;
     if (!domain.trim()) {
-      toast.error("Please enter a domain");
+      toast.error("دامنه را وارد کنید");
       return;
     }
     if (targetingMode === "local" && !locationName) {
-      toast.error("Please select a city or region for local targeting");
+      toast.error("برای هدف‌گیری محلی، شهر یا منطقه را انتخاب کنید");
       return;
     }
     const parsedDomain = domainField.safeParse(domain);
     if (!parsedDomain.success) {
-      toast.error("Please enter a valid domain");
+      toast.error("یک دامنه معتبر وارد کنید");
       return;
     }
     setDomain(parsedDomain.data);
@@ -187,7 +187,7 @@ function RankTrackingConfigModalContent({
     >
       <div className="flex items-center justify-between">
         <h2 id="rank-config-modal-title" className="text-lg font-semibold">
-          {isEdit ? "Edit Domain Config" : "Add Domain"}
+          {isEdit ? "ویرایش تنظیمات دامنه" : "افزودن دامنه"}
         </h2>
         <button className="btn btn-ghost btn-sm btn-square" onClick={onClose}>
           <X className="size-4" />
@@ -197,7 +197,7 @@ function RankTrackingConfigModalContent({
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="form-control">
           <label className="label">
-            <span className="label-text font-medium">Target Domain</span>
+            <span className="label-text font-medium">دامنه هدف</span>
           </label>
           <input
             type="text"
@@ -211,7 +211,7 @@ function RankTrackingConfigModalContent({
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text font-medium">Country</span>
+            <span className="label-text font-medium">کشور</span>
           </label>
           <LocationSelect
             value={locationCode}
@@ -234,7 +234,7 @@ function RankTrackingConfigModalContent({
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text font-medium">Language</span>
+            <span className="label-text font-medium">زبان</span>
           </label>
           <select
             className="select select-bordered w-full"
@@ -248,14 +248,14 @@ function RankTrackingConfigModalContent({
             ))}
           </select>
           <div className="mt-1.5 text-xs text-base-content/50">
-            Defaults to the country's language. Any language can be tracked in
-            any country — pick the one your customers search in.
+            زبان کشور به‌صورت پیش‌فرض انتخاب می‌شود. زبانی را انتخاب کنید که
+            مشتریان شما با آن جستجو می‌کنند.
           </div>
         </div>
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text font-medium">Devices</span>
+            <span className="label-text font-medium">دستگاه‌ها</span>
           </label>
           <select
             className="select select-bordered w-full"
@@ -271,19 +271,19 @@ function RankTrackingConfigModalContent({
               }
             }}
           >
-            <option value="both">Desktop + Mobile</option>
-            <option value="desktop">Desktop only</option>
-            <option value="mobile">Mobile only</option>
+            <option value="both">دسکتاپ + موبایل</option>
+            <option value="desktop">فقط دسکتاپ</option>
+            <option value="mobile">فقط موبایل</option>
           </select>
           <div className="mt-1.5 text-xs text-base-content/50">
-            Most Google searches come from mobile, but select this based on your
-            customer.
+            بیشتر جستجوهای گوگل از موبایل انجام می‌شوند؛ گزینه مناسب کاربران خود
+            را انتخاب کنید.
           </div>
           {devices === "both" && (
             <div className="mt-1.5 flex items-start gap-1.5 text-xs text-info">
               <Info className="size-3.5 shrink-0 mt-0.5" />
               <span>
-                Tracking both devices uses 2x credits per keyword check
+                ردیابی هر دو دستگاه برای هر کلمه دو برابر اعتبار مصرف می‌کند
               </span>
             </div>
           )}
@@ -291,7 +291,7 @@ function RankTrackingConfigModalContent({
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text font-medium">Schedule</span>
+            <span className="label-text font-medium">زمان‌بندی</span>
           </label>
           <select
             className="select select-bordered w-full"
@@ -308,22 +308,22 @@ function RankTrackingConfigModalContent({
               }
             }}
           >
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly (end of month)</option>
-            <option value="manual">Manual only</option>
+            <option value="daily">روزانه</option>
+            <option value="weekly">هفتگی</option>
+            <option value="monthly">ماهانه (پایان ماه)</option>
+            <option value="manual">فقط دستی</option>
           </select>
           {schedule === "daily" && (
             <div className="mt-1.5 flex items-start gap-1.5 text-xs text-warning">
               <Info className="size-3.5 shrink-0 mt-0.5" />
-              <span>Daily checks use 7x more credits than weekly</span>
+              <span>بررسی روزانه ۷ برابر بررسی هفتگی اعتبار مصرف می‌کند</span>
             </div>
           )}
         </div>
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text font-medium">Search Depth</span>
+            <span className="label-text font-medium">عمق جستجو</span>
           </label>
           <select
             className="select select-bordered w-full"
@@ -332,13 +332,12 @@ function RankTrackingConfigModalContent({
           >
             {Array.from({ length: 10 }, (_, i) => i + 1).map((pages) => (
               <option key={pages} value={pages}>
-                {pages} {pages === 1 ? "page" : "pages"} (top {pages * 10}{" "}
-                results)
+                {pages} صفحه (تا {pages * 10} نتیجه)
               </option>
             ))}
           </select>
           <div className="mt-1.5 text-xs text-base-content/50">
-            10 pages is ~8x more expensive than 1 page
+            بررسی ۱۰ صفحه حدود ۸ برابر بررسی یک صفحه هزینه دارد
           </div>
         </div>
 
@@ -359,15 +358,15 @@ function RankTrackingConfigModalContent({
                 <span className="font-mono font-semibold text-base-content">
                   ~${costPerKeyword.toFixed(4)}
                 </span>{" "}
-                per keyword per check
+                برای هر کلمه در هر بررسی
               </div>
               {schedule !== "manual" && (
                 <div>
-                  50 keywords would cost{" "}
+                  هزینه ۵۰ کلمه کلیدی حدود{" "}
                   <span className="font-mono font-semibold text-base-content">
                     ~${(costPerKeyword * 50 * checksPerMonth).toFixed(2)}
                   </span>
-                  /month
+                  در ماه است
                 </div>
               )}
             </div>
@@ -380,7 +379,7 @@ function RankTrackingConfigModalContent({
             className="btn btn-ghost btn-sm"
             onClick={onClose}
           >
-            Cancel
+            انصراف
           </button>
           <button
             type="submit"
@@ -388,7 +387,7 @@ function RankTrackingConfigModalContent({
             disabled={isPending || !domain.trim()}
           >
             {isPending && <Loader2 className="size-3.5 animate-spin" />}
-            {isEdit ? "Save Changes" : "Add Domain"}
+            {isEdit ? "ذخیره تغییرات" : "افزودن دامنه"}
           </button>
         </div>
       </form>

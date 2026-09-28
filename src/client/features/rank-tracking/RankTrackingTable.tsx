@@ -143,7 +143,7 @@ export function RankTrackingTable({
       );
     },
     onError: (error) => {
-      toast.error(getStandardErrorMessage(error, "Failed to remove keywords"));
+      toast.error(getStandardErrorMessage(error, "حذف کلمات کلیدی ناموفق بود"));
     },
   });
 
@@ -159,8 +159,8 @@ export function RankTrackingTable({
     return (
       <div className="rounded-xl border border-dashed border-base-300 p-10 text-center text-sm text-base-content/55">
         {totalCount === 0
-          ? 'No rank data yet. Click "Check Now" to run your first check.'
-          : "No keywords match your search."}
+          ? "هنوز داده رتبه‌ای وجود ندارد. برای شروع «بررسی رتبه‌ها» را بزنید."
+          : "کلمه‌ای مطابق جستجو پیدا نشد."}
       </div>
     );
   }
@@ -182,12 +182,12 @@ export function RankTrackingTable({
             <TableBulkExportMenu
               actions={[
                 {
-                  label: "Export to Sheets",
+                  label: "خروجی به گوگل شیت",
                   icon: <Sheet className="size-4" />,
                   onClick: exportSelectionToSheets,
                 },
                 {
-                  label: "Export CSV",
+                  label: "خروجی CSV",
                   icon: <FileDown className="size-4" />,
                   onClick: exportSelectionCsv,
                 },

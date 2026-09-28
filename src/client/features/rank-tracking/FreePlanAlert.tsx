@@ -9,15 +9,15 @@ export function FreePlanAlert({ visible }: { visible: boolean }) {
     <div className="alert alert-warning text-sm py-2">
       <AlertTriangle className="size-4" />
       <span>
-        We only start to track keyword positions once you{" "}
+        ردیابی رتبه کلمات پس از{" "}
         <Link
           to={SUBSCRIBE_ROUTE}
           search={{ upgrade: true }}
           className="link font-medium"
         >
-          upgrade to the paid plan
+          ارتقا به بسته پولی
         </Link>
-        .
+        آغاز می‌شود.
       </span>
     </div>
   );

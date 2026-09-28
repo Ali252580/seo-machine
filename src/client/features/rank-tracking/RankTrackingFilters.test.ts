@@ -193,8 +193,8 @@ describe("getDomainListFilterOptions", () => {
     ]);
 
     expect(options.devices).toEqual([
-      { value: "desktop", label: "Desktop" },
-      { value: "mobile", label: "Mobile" },
+      { value: "desktop", label: "دسکتاپ" },
+      { value: "mobile", label: "موبایل" },
     ]);
     expect(options.locations).toEqual([
       { value: "2250", label: "FR" },

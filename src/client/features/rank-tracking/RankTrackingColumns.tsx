@@ -15,16 +15,14 @@ import {
 import type { SelectionAnchor } from "@/client/components/table/tableSelection";
 
 const HEADER_TOOLTIPS: Record<string, string> = {
-  keyword: "The search term being tracked in Google",
-  volume: "Estimated monthly demand from Google SERP competition signals (not Google Ads volume)",
-  kd: "Estimated keyword difficulty (0-100) from result competition, titles, ads and SERP features",
-  cpc: "Estimated CPC (USD) from ads, shopping results and commercial intent (not Google Ads CPC)",
-  desktopPosition:
-    "Current Google ranking position, showing change from the comparison period",
-  mobilePosition:
-    "Current Google ranking position, showing change from the comparison period",
-  url: "The page on your site that ranks for this keyword",
-  serp: "Special result features appearing on the search results page (e.g. AI Overview, People Also Ask)",
+  keyword: "عبارت جستجویی که رتبه آن در گوگل ردیابی می‌شود",
+  volume: "برآورد تقاضای ماهانه بر اساس سیگنال‌های نتایج گوگل",
+  kd: "برآورد سختی کلمه از ۰ تا ۱۰۰",
+  cpc: "برآورد هزینه هر کلیک به دلار",
+  desktopPosition: "رتبه فعلی در گوگل و تغییر آن نسبت به دوره مقایسه",
+  mobilePosition: "رتبه فعلی در گوگل و تغییر آن نسبت به دوره مقایسه",
+  url: "صفحه‌ای از سایت شما که برای این کلمه رتبه گرفته است",
+  serp: "ویژگی‌های ویژه صفحه نتایج مانند پاسخ هوش مصنوعی و پرسش‌های مرتبط",
 };
 
 export function SortableHeader({
@@ -71,11 +69,11 @@ function makeVolumeColumn(locationLabel?: string): ColumnDef<RankTrackingRow> {
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label={locationLabel ? "Est. local volume" : "Est. volume"}
+        label={locationLabel ? "حجم محلی تخمینی" : "حجم تخمینی"}
         id="volume"
         tooltip={
           locationLabel
-            ? `Estimated monthly demand in ${locationLabel} from Google SERP competition signals (not Google Ads volume)`
+            ? `برآورد تقاضای ماهانه در ${locationLabel} بر اساس سیگنال‌های نتایج گوگل`
             : undefined
         }
       />
@@ -91,7 +89,9 @@ function makeVolumeColumn(locationLabel?: string): ColumnDef<RankTrackingRow> {
 const kdColumn: ColumnDef<RankTrackingRow> = {
   id: "kd",
   accessorFn: (row) => row.keywordDifficulty ?? undefined,
-  header: ({ column }) => <SortableHeader column={column} label="Est. KD" id="kd" />,
+  header: ({ column }) => (
+    <SortableHeader column={column} label="سختی تخمینی" id="kd" />
+  ),
   size: 70,
   cell: ({ getValue }) => (
     <DifficultyCell value={getValue<number | undefined>() ?? null} />
@@ -103,7 +103,7 @@ const cpcColumn: ColumnDef<RankTrackingRow> = {
   id: "cpc",
   accessorFn: (row) => row.cpc ?? undefined,
   header: ({ column }) => (
-    <SortableHeader column={column} label="Est. CPC" id="cpc" />
+    <SortableHeader column={column} label="CPC تخمینی" id="cpc" />
   ),
   size: 80,
   cell: ({ getValue }) => (
@@ -119,7 +119,7 @@ function makeKeywordColumn(
     id: "keyword",
     accessorKey: "keyword",
     header: ({ column }) => (
-      <SortableHeader column={column} label="Keyword" id="keyword" />
+      <SortableHeader column={column} label="کلمه کلیدی" id="keyword" />
     ),
     cell: ({ row }) => (
       <div className="flex items-center gap-1.5">
@@ -127,14 +127,14 @@ function makeKeywordColumn(
           type="button"
           className="font-medium text-left link link-hover decoration-dotted underline-offset-2"
           onClick={() => onKeywordClick(row.original)}
-          title="View position history"
+          title="مشاهده تاریخچه رتبه"
         >
           {row.original.keyword}
         </button>
         {row.original.matchCase && (
           <span
             className="badge badge-xs cursor-help bg-base-300 border-0 text-base-content/70"
-            title="Tracked exactly as typed, not lowercased"
+            title="دقیقاً با همین حروف ردیابی می‌شود"
           >
             Aa
           </span>
@@ -153,7 +153,7 @@ function makeDeviceColumn(
     id,
     accessorFn: (row) => row[device].position ?? undefined,
     header: ({ column }) => (
-      <SortableHeader column={column} label="Position" id={id} />
+      <SortableHeader column={column} label="رتبه" id={id} />
     ),
     size: 120,
     maxSize: 140,

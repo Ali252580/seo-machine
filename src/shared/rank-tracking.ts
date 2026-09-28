@@ -210,17 +210,17 @@ export function computeNextCheckAt(
 // ---------------------------------------------------------------------------
 
 export function devicesLabel(devices: RankTrackingConfig["devices"]): string {
-  if (devices === "both") return "Desktop + Mobile";
-  return devices === "desktop" ? "Desktop" : "Mobile";
+  if (devices === "both") return "دسکتاپ + موبایل";
+  return devices === "desktop" ? "دسکتاپ" : "موبایل";
 }
 
 export function scheduleLabel(
   interval: RankTrackingConfig["scheduleInterval"],
 ): string {
-  if (interval === "daily") return "Daily";
-  if (interval === "weekly") return "Weekly";
-  if (interval === "monthly") return "Monthly";
-  return "Manual";
+  if (interval === "daily") return "روزانه";
+  if (interval === "weekly") return "هفتگی";
+  if (interval === "monthly") return "ماهانه";
+  return "دستی";
 }
 
 export function devicesCount(devices: RankTrackingConfig["devices"]): number {

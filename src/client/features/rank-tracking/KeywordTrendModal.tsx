@@ -21,8 +21,8 @@ const DEVICE_STYLE: Record<
   "desktop" | "mobile",
   { label: string; color: string }
 > = {
-  desktop: { label: "Desktop", color: "#2563eb" },
-  mobile: { label: "Mobile", color: "#14b8a6" },
+  desktop: { label: "دسکتاپ", color: "#2563eb" },
+  mobile: { label: "موبایل", color: "#14b8a6" },
 };
 
 export interface KeywordTrendTarget {
@@ -124,7 +124,7 @@ export function KeywordTrendModal({
   const handleCopy = () => {
     const headers = ["Date", "Device", "Position", "Change vs previous"];
     void navigator.clipboard.writeText(buildCsv(headers, exportRows()));
-    toast.success("Copied to clipboard");
+    toast.success("در کلیپ‌بورد کپی شد");
     captureClientEvent("rank_tracking:keyword_trend_copy");
   };
 
@@ -200,9 +200,9 @@ export function KeywordTrendModal({
             <table className="table table-sm">
               <thead className="sticky top-0 bg-base-100">
                 <tr>
-                  <th>Date</th>
-                  {devices.length > 1 && <th>Device</th>}
-                  <th>Position</th>
+                  <th>تاریخ</th>
+                  {devices.length > 1 && <th>دستگاه</th>}
+                  <th>رتبه</th>
                   <th>Δ vs previous check</th>
                 </tr>
               </thead>
@@ -282,8 +282,8 @@ function EmptyState({ count }: { count: number }) {
   return (
     <div className="rounded-lg border border-dashed border-base-300 p-10 text-center text-sm text-base-content/60">
       {count === 0
-        ? "No history yet — run a check to start tracking position over time."
-        : "Only 1 check so far — the trend chart fills in after the next check."}
+        ? "هنوز تاریخچه‌ای وجود ندارد؛ یک بررسی اجرا کنید."
+        : "فعلاً فقط یک بررسی انجام شده؛ نمودار پس از بررسی بعدی تکمیل می‌شود."}
     </div>
   );
 }

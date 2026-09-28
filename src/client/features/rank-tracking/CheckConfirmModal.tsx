@@ -42,12 +42,10 @@ export function CheckConfirmModal({
     >
       <div>
         <h3 id="rank-check-confirm-title" className="text-lg font-semibold">
-          Check {keywordCount} keyword
-          {keywordCount !== 1 ? "s" : ""}
+          بررسی {keywordCount} کلمه کلیدی
         </h3>
         <p className="text-sm text-base-content/60 mt-1">
-          {keywordCount} keywords &times; {dc} device
-          {dc !== 1 ? "s" : ""} = {totalChecks} SERP checks
+          {keywordCount} کلمه &times; {dc} دستگاه = {totalChecks} بررسی نتایج
         </p>
       </div>
 
@@ -60,10 +58,12 @@ export function CheckConfirmModal({
           <Zap className="size-5 text-primary" />
         </div>
         <div className="flex-1">
-          <p className="font-medium">Run Now</p>
+          <p className="font-medium">اجرای فوری</p>
           <p className="text-xs text-base-content/60">
-            Results in ~
-            {liveTime < 60 ? `${liveTime}s` : `${Math.ceil(liveTime / 60)} min`}
+            زمان تقریبی:
+            {liveTime < 60
+              ? `${liveTime} ثانیه`
+              : `${Math.ceil(liveTime / 60)} دقیقه`}
           </p>
         </div>
         <div className="text-right">
@@ -73,7 +73,7 @@ export function CheckConfirmModal({
       </button>
 
       <button className="btn btn-ghost btn-sm self-center" onClick={onCancel}>
-        Cancel
+        انصراف
       </button>
     </Modal>
   );

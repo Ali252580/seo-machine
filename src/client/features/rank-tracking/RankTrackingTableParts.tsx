@@ -13,25 +13,24 @@ const FEATURE_SHORT_LABELS: Record<string, string> = {
   featured_snippet: "FS",
   people_also_ask: "PAA",
   ai_overview: "AI",
-  local_pack: "Local",
+  local_pack: "محلی",
   knowledge_panel: "KP",
-  video: "Video",
-  images: "Img",
-  shopping: "Shop",
-  top_stories: "News",
+  video: "ویدئو",
+  images: "تصویر",
+  shopping: "خرید",
+  top_stories: "خبر",
 };
 
 const FEATURE_TOOLTIPS: Record<string, string> = {
-  featured_snippet:
-    "Featured Snippet — highlighted answer box at top of results",
-  people_also_ask: "People Also Ask — expandable related questions",
-  ai_overview: "AI Overview — AI-generated summary at top of search",
-  local_pack: "Local Pack — map with local business listings",
-  knowledge_panel: "Knowledge Panel — info box about an entity",
-  video: "Video — video results shown in the SERP",
-  images: "Images — image results shown in the SERP",
-  shopping: "Shopping — product listings with prices",
-  top_stories: "Top Stories — news articles carousel",
+  featured_snippet: "پاسخ ویژه در بالای نتایج",
+  people_also_ask: "پرسش‌های مرتبط کاربران",
+  ai_overview: "خلاصه تولیدشده با هوش مصنوعی",
+  local_pack: "نقشه و کسب‌وکارهای محلی",
+  knowledge_panel: "پنل اطلاعات درباره یک موضوع",
+  video: "نتایج ویدئویی",
+  images: "نتایج تصویری",
+  shopping: "فهرست محصولات و قیمت‌ها",
+  top_stories: "خبرهای برتر",
 };
 
 export function SerpFeatureTags({ features }: { features: string[] }) {
@@ -251,7 +250,7 @@ export function exportRankTrackingCsv(
   locationName?: string | null,
 ) {
   if (sorted.length === 0) {
-    toast.error("No data to export");
+    toast.error("داده‌ای برای خروجی وجود ندارد");
     return;
   }
   const { headers, rows } = buildRankTrackingExport(

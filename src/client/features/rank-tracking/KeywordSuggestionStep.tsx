@@ -38,9 +38,9 @@ const baseColumns: ColumnDef<SuggestedKeyword>[] = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Keyword"
+        label="کلمه کلیدی"
         id="keyword"
-        tooltip="The search term this domain ranks for"
+        tooltip="عبارتی که دامنه برای آن رتبه گرفته است"
       />
     ),
     cell: ({ getValue }) => (
@@ -54,9 +54,9 @@ const baseColumns: ColumnDef<SuggestedKeyword>[] = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Position"
+        label="رتبه"
         id="position"
-        tooltip="Current Google ranking position"
+        tooltip="رتبه فعلی در گوگل"
       />
     ),
     cell: ({ getValue }) => {
@@ -79,9 +79,9 @@ const baseColumns: ColumnDef<SuggestedKeyword>[] = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Volume"
+        label="حجم جستجو"
         id="searchVolume"
-        tooltip="Monthly search volume"
+        tooltip="حجم جستجوی ماهانه"
       />
     ),
     cell: ({ getValue }) => {
@@ -104,9 +104,9 @@ const baseColumns: ColumnDef<SuggestedKeyword>[] = [
     header: ({ column }) => (
       <SortableHeader
         column={column}
-        label="Traffic"
+        label="ترافیک"
         id="traffic"
-        tooltip="Estimated monthly organic traffic"
+        tooltip="ترافیک ارگانیک ماهانه تخمینی"
       />
     ),
     cell: ({ getValue }) => {
@@ -214,7 +214,9 @@ export function KeywordSuggestionStep({
       onDone(configId);
     },
     onError: (error) => {
-      toast.error(getStandardErrorMessage(error, "Failed to add keywords"));
+      toast.error(
+        getStandardErrorMessage(error, "افزودن کلمات کلیدی ناموفق بود"),
+      );
     },
   });
 
@@ -241,7 +243,7 @@ export function KeywordSuggestionStep({
   if (!labsSupported) {
     return (
       <>
-        {sectionHeader("Add keywords manually")}
+        {sectionHeader("افزودن دستی کلمات")}
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <p className="text-xs text-base-content/50">
             Ranked-keyword suggestions aren't available for this country.
@@ -259,7 +261,7 @@ export function KeywordSuggestionStep({
   if (suggestionsQuery.isLoading) {
     return (
       <>
-        {sectionHeader("Finding your top keywords...")}
+        {sectionHeader("در حال یافتن کلمات برتر...")}
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <Loader2 className="size-8 animate-spin text-primary" />
           <p className="text-xs text-base-content/50">
@@ -274,7 +276,7 @@ export function KeywordSuggestionStep({
   if (suggestionsQuery.isError) {
     return (
       <>
-        {sectionHeader("Couldn't fetch keywords")}
+        {sectionHeader("دریافت کلمات ناموفق بود")}
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <AlertCircle className="size-8 text-error" />
           <p className="text-xs text-base-content/50">
@@ -294,7 +296,7 @@ export function KeywordSuggestionStep({
   if (data.length === 0) {
     return (
       <>
-        {sectionHeader("No rankings found")}
+        {sectionHeader("رتبه‌ای پیدا نشد")}
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <p className="text-xs text-base-content/50">
             We couldn't find any keywords {domain} currently ranks for. You can
@@ -311,7 +313,7 @@ export function KeywordSuggestionStep({
   // Data loaded
   return (
     <div className="flex flex-col gap-3">
-      {sectionHeader("Choose keywords to track")}
+      {sectionHeader("کلمات موردنظر برای ردیابی را انتخاب کنید")}
       <div className="flex items-center justify-between">
         <p className="text-sm text-base-content/60">
           We found {data.length} keywords {domain} ranks for.

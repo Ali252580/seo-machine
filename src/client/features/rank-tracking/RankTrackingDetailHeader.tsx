@@ -54,11 +54,16 @@ export function RankTrackingDetailHeader({
           {run?.lastCheckedAt && (
             <>
               {" "}
-              &middot; Last: {new Date(run.lastCheckedAt).toLocaleDateString()}
+              &middot; آخرین بررسی:{" "}
+              {new Date(run.lastCheckedAt).toLocaleDateString()}
             </>
           )}
           {costEstimate && costEstimate.keywordCount > 0 && (
-            <> &middot; ~${costEstimate.costUsd.toFixed(2)}/check</>
+            <>
+              {" "}
+              &middot; حدود ${costEstimate.costUsd.toFixed(2)} دلار برای هر
+              بررسی
+            </>
           )}
         </p>
       </div>
@@ -69,12 +74,12 @@ export function RankTrackingDetailHeader({
               {
                 value: "desktop" as const,
                 icon: <Monitor className="size-3.5" />,
-                label: "Desktop",
+                label: "دسکتاپ",
               },
               {
                 value: "mobile" as const,
                 icon: <Smartphone className="size-3.5" />,
-                label: "Mobile",
+                label: "موبایل",
               },
             ]}
             value={activeDevice}
@@ -83,29 +88,29 @@ export function RankTrackingDetailHeader({
         )}
         <select
           className="select select-bordered select-sm text-xs w-auto"
-          title="Comparison period"
+          title="دوره مقایسه"
           value={comparePeriod}
           onChange={(e) => {
             if (isComparePeriod(e.target.value))
               onComparePeriodChange(e.target.value);
           }}
         >
-          <option value="1d">vs yesterday</option>
-          <option value="7d">vs last week</option>
-          <option value="30d">vs last month</option>
-          <option value="90d">vs 90 days ago</option>
+          <option value="1d">نسبت به دیروز</option>
+          <option value="7d">نسبت به هفته قبل</option>
+          <option value="30d">نسبت به ماه قبل</option>
+          <option value="90d">نسبت به ۹۰ روز قبل</option>
         </select>
         <div className="hidden sm:block h-6 w-px bg-base-300" />
         <button className="btn btn-sm gap-1" onClick={onEdit}>
           <Settings className="size-3.5" />
-          Configure
+          تنظیمات
         </button>
         <button
           className="btn btn-primary btn-sm gap-1"
           onClick={onToggleAddKeywords}
         >
           <Plus className="size-3.5" />
-          Add Keywords
+          افزودن کلمه
         </button>
       </div>
     </div>
