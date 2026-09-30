@@ -111,6 +111,7 @@ export const {
   member,
   invitation,
   billingCustomerStatus,
+  billingPayments,
   ga4Connections,
   gscConnections,
   telemetryState,

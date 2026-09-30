@@ -16,11 +16,7 @@ import { pgStep } from "@/server/workflows/pgStep";
 import { createRankTrackingClient } from "@/server/lib/serpapi/client";
 import { captureServerEvent } from "@/server/lib/posthog";
 import { AppError } from "@/server/lib/errors";
-import { autumn } from "@/server/billing/autumn";
-import {
-  AUTUMN_SEO_DATA_BALANCE_FEATURE_ID,
-  AUTUMN_SEO_DATA_TOPUP_BALANCE_FEATURE_ID,
-} from "@/shared/billing";
+import { getCreditBalance } from "@/server/billing/subscription";
 import {
   estimateRankCheckCredits,
   rankCheckCostApprovalError,
@@ -101,19 +97,9 @@ export async function prepareRankCheckKeywords(input: {
   // The estimate is a worst-case SerpApi page count. Actual usage can be lower
   // because pagination stops as soon as the tracked domain is found.
   if (await isHostedServerAuthMode()) {
-    const [monthlyCheck, topupCheck] = await Promise.all([
-      autumn.check({
-        customerId: input.billingCustomer.organizationId,
-        featureId: AUTUMN_SEO_DATA_BALANCE_FEATURE_ID,
-      }),
-      autumn.check({
-        customerId: input.billingCustomer.organizationId,
-        featureId: AUTUMN_SEO_DATA_TOPUP_BALANCE_FEATURE_ID,
-      }),
-    ]);
-    const available =
-      (monthlyCheck.balance?.remaining ?? 0) +
-      (topupCheck.balance?.remaining ?? 0);
+    const available = await getCreditBalance(
+      input.billingCustomer.organizationId,
+    );
     if (available < costCredits) {
       throw new AppError(
         "INSUFFICIENT_CREDITS",

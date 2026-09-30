@@ -1,9 +1,7 @@
-import { useCustomer } from "autumn-js/react";
 import { AuditHistorySection } from "@/client/features/audit/launch/AuditHistorySection";
 import { LaunchFormCard } from "@/client/features/audit/launch/LaunchFormCard";
 import { useLaunchController } from "@/client/features/audit/launch/useLaunchController";
-import { getCustomerPlanStatus } from "@/client/features/billing/plan-detection";
-import { useSession } from "@/lib/auth-client";
+import { useBillingAccount } from "@/client/features/billing/useBillingAccount";
 import { isHostedClientAuthMode } from "@/lib/auth-mode";
 
 type LaunchViewProps = {
@@ -22,18 +20,8 @@ export function LaunchView(props: LaunchViewProps) {
 }
 
 function HostedLaunchView(props: LaunchViewProps) {
-  const { data: session } = useSession();
-  const customerQuery = useCustomer({
-    queryOptions: {
-      enabled: Boolean(session?.user?.id),
-    },
-  });
-
-  // Until the customer loads, leave the form unrestricted rather than flash
-  // free-plan copy at paid users; the server enforces the limit regardless.
-  const isFreePlan =
-    customerQuery.data != null &&
-    getCustomerPlanStatus(customerQuery.data) === "free";
+  const account = useBillingAccount();
+  const isFreePlan = account.data ? !account.data.isPaying : false;
 
   return <LaunchContent {...props} isFreePlan={isFreePlan} />;
 }

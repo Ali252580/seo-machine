@@ -1,22 +1,9 @@
-import { autumn } from "@/server/billing/autumn";
-import {
-  AUTUMN_SEO_DATA_BALANCE_FEATURE_ID,
-  AUTUMN_SEO_DATA_TOPUP_BALANCE_FEATURE_ID,
-} from "@/shared/billing";
+import { getCreditBalance } from "@/server/billing/subscription";
 import { mcpResponse } from "@/server/mcp/formatters";
 import { type ToolContext } from "@/server/mcp/context";
 import { isHostedServerAuthMode } from "@/server/lib/runtime-env";
 import { optionalMetaOutputSchema } from "@/server/mcp/output-schemas";
 import { z } from "zod";
-
-async function checkBalance(featureId: string, customerId: string) {
-  try {
-    const result = await autumn.check({ customerId, featureId });
-    return result.balance?.remaining ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export const whoamiTool = {
   name: "whoami",
@@ -43,14 +30,7 @@ export const whoamiTool = {
     const isHosted = await isHostedServerAuthMode();
     let creditsRemaining: number | null = null;
     if (isHosted) {
-      const [base, topup] = await Promise.all([
-        checkBalance(AUTUMN_SEO_DATA_BALANCE_FEATURE_ID, auth.organizationId),
-        checkBalance(
-          AUTUMN_SEO_DATA_TOPUP_BALANCE_FEATURE_ID,
-          auth.organizationId,
-        ),
-      ]);
-      creditsRemaining = (base ?? 0) + (topup ?? 0);
+      creditsRemaining = await getCreditBalance(auth.organizationId);
     }
     const lines = [
       `Account: ${auth.userEmail}`,

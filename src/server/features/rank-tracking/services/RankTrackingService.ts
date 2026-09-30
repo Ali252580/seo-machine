@@ -285,11 +285,15 @@ async function getLatestRun(configId: string, projectId: string) {
   if (process.env.VERCEL === "1") {
     const isActive = run.status === "pending" || run.status === "running";
     const isStale =
-      isActive && Date.now() - new Date(run.startedAt).getTime() > 10 * 60 * 1000;
+      isActive &&
+      Date.now() - new Date(run.startedAt).getTime() > 10 * 60 * 1000;
     return formatRun(
       run,
       isStale
-        ? { maybeStale: true, staleReason: "Vercel rank check may have timed out" }
+        ? {
+            maybeStale: true,
+            staleReason: "Vercel rank check may have timed out",
+          }
         : undefined,
     );
   }
@@ -384,10 +388,6 @@ async function getTracker(configId: string, projectId: string) {
 }
 
 async function requireRankCheckAccess(organizationId: string) {
-  // This Vercel deployment uses the project's own SerpApi account directly.
-  // Project authorization still runs in the server-function middleware; only
-  // Autumn plan enforcement is deferred until billing is configured.
-  if (process.env.VERCEL === "1") return;
   if (!(await isHostedServerAuthMode())) return;
   if (await customerHasPaidPlan(organizationId)) return;
   throw new AppError(
