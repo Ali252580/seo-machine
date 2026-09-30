@@ -139,11 +139,12 @@ it("profiles backlink rows per page with offset and total count", async () => {
         page_from_rank: 54,
         backlink_spam_score: 3,
         first_seen: "2026-01-01",
-        last_visited: "2026-03-01",
+        last_seen: "2026-03-01",
         lost_date: null,
         is_lost: false,
         is_broken: false,
         links_count: 1,
+        group_count: 7,
         rel_attributes: ["noopener"],
       },
     ],
@@ -171,6 +172,10 @@ it("profiles backlink rows per page with offset and total count", async () => {
     }),
   );
   expect(result.rows).toHaveLength(1);
+  expect(result.rows[0]).toMatchObject({
+    lastSeen: "2026-03-01",
+    linksCount: 7,
+  });
   expect(result.totalCount).toBe(450);
   expect(result.hasMore).toBe(true);
   expect(result.page).toBe(2);

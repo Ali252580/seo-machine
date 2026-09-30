@@ -63,7 +63,7 @@ function createBacklinksService(cache: BacklinksCache = defaultCache) {
       options?: BacklinksSpamFilterOptions,
     ) {
       const cacheKey = await buildPageCacheKey(
-        "backlinks:rows-page",
+        "backlinks:v2:rows-page",
         input,
         billingCustomer,
         options,
