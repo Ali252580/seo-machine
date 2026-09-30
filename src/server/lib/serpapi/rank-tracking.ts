@@ -42,6 +42,10 @@ const responseSchema = z
     top_ads: z.array(z.unknown()).optional(),
     bottom_ads: z.array(z.unknown()).optional(),
     shopping_results: z.array(z.unknown()).optional(),
+    serpapi_pagination: z
+      .object({ next: z.string().optional() })
+      .passthrough()
+      .optional(),
     error: z.string().optional(),
   })
   .passthrough();
@@ -250,7 +254,7 @@ async function fetchPage(
   url.searchParams.set("google_domain", "google.com");
   url.searchParams.set("num", String(PAGE_SIZE));
   url.searchParams.set("no_cache", "true");
-  if (input.locationName) url.searchParams.set("location", input.locationName);
+  url.searchParams.set("nfpr", "1");
   const normalizedLocationName = input.locationName?.trim().toLowerCase();
   const targetsTehran =
     !normalizedLocationName ||
@@ -259,6 +263,8 @@ async function fetchPage(
   if (input.locationCode === IRAN_LOCATION_CODE && targetsTehran) {
     url.searchParams.set("lat", TEHRAN_COORDINATES.lat);
     url.searchParams.set("lon", TEHRAN_COORDINATES.lon);
+  } else if (input.locationName) {
+    url.searchParams.set("location", input.locationName);
   }
   if (start > 0) url.searchParams.set("start", String(start));
 
@@ -347,7 +353,9 @@ export async function fetchSerpApiRankCheck(
       };
     }
 
-    if ((response.organic_results?.length ?? 0) < PAGE_SIZE) break;
+    const resultCount = response.organic_results?.length ?? 0;
+    if (resultCount === 0) break;
+    if (resultCount < PAGE_SIZE && !response.serpapi_pagination?.next) break;
   }
 
   return {

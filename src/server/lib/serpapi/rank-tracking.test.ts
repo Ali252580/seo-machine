@@ -57,10 +57,16 @@ describe("SerpApi rank tracking", () => {
     vi.clearAllMocks();
   });
 
-  it("uses the project SerpApi key on Vercel without Autumn", async () => {
+  it("uses the project SerpApi key and records internal usage on Vercel", async () => {
     vi.stubEnv("VERCEL", "1");
     mocks.getOptionalEnvValue.mockResolvedValue("secret");
     mocks.isHostedServerAuthMode.mockResolvedValue(true);
+    mocks.getOrCreateOrganizationCustomer.mockResolvedValue({
+      id: "customer-1",
+    });
+    mocks.assertUsageCreditsAvailable.mockResolvedValue({
+      monthlyRemaining: 10,
+    });
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(organicPage(["https://example.com/result"])),
@@ -74,20 +80,23 @@ describe("SerpApi rank tracking", () => {
     const result = await client.rankCheck(input);
 
     expect(result.position).toBe(1);
-    expect(mocks.getOrCreateOrganizationCustomer).not.toHaveBeenCalled();
-    expect(mocks.assertUsageCreditsAvailable).not.toHaveBeenCalled();
-    expect(mocks.trackUsageCreditSpend).not.toHaveBeenCalled();
+    expect(mocks.assertUsageCreditsAvailable).toHaveBeenCalledWith(
+      "customer-1",
+    );
+    expect(mocks.trackUsageCreditSpend).toHaveBeenCalledWith(
+      expect.objectContaining({ customerId: "customer-1", costUsd: 0.025 }),
+    );
   });
 
   it("matches the tracked domain and its subdomains", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue(
-      organicPage([
-        "https://other.test/one",
-        "https://blog.example.com/result",
-      ]),
-    );
+        organicPage([
+          "https://other.test/one",
+          "https://blog.example.com/result",
+        ]),
+      );
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await fetchSerpApiRankCheck("secret", input);
@@ -123,6 +132,27 @@ describe("SerpApi rank tracking", () => {
     expect(url.searchParams.get("hl")).toBe("fa");
     expect(url.searchParams.get("lat")).toBe("35.69439");
     expect(url.searchParams.get("lon")).toBe("51.42151");
+    expect(url.searchParams.get("nfpr")).toBe("1");
+    expect(url.searchParams.has("location")).toBe(false);
+  });
+
+  it("uses Tehran coordinates without sending the conflicting location parameter", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(organicPage(["https://example.com/result"]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchSerpApiRankCheck("secret", {
+      ...input,
+      locationCode: 2364,
+      languageCode: "fa",
+      locationName: "Tehran,Tehran Province,Iran",
+    });
+
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+    expect(url.searchParams.get("lat")).toBe("35.69439");
+    expect(url.searchParams.get("lon")).toBe("51.42151");
+    expect(url.searchParams.has("location")).toBe(false);
   });
 
   it("does not override another explicitly selected Iranian city", async () => {
@@ -166,6 +196,29 @@ describe("SerpApi rank tracking", () => {
     expect(result.searchesUsed).toBe(2);
     const secondUrl = new URL(String(fetchMock.mock.calls[1]?.[0]));
     expect(secondUrl.searchParams.get("start")).toBe("10");
+  });
+
+  it("follows SerpApi pagination when a rich SERP returns fewer than ten organic rows", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        organicPage(
+          Array.from(
+            { length: 8 },
+            (_, index) => `https://other${index}.test/`,
+          ),
+          {
+            serpapi_pagination: { next: "https://serpapi.com/search?start=10" },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(organicPage(["https://example.com/winner"]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchSerpApiRankCheck("secret", input);
+
+    expect(result.data.position).toBe(11);
+    expect(result.searchesUsed).toBe(2);
   });
 
   it("returns a null rank when the result depth is exhausted", async () => {
