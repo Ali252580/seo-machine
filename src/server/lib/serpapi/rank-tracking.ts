@@ -14,6 +14,7 @@ import { getIsoCountryCode } from "@/shared/keyword-locations";
 import { SERPAPI_SEARCH_COST_USD } from "@/shared/rank-tracking";
 
 const SERPAPI_SEARCH_URL = "https://serpapi.com/search.json";
+const SCRAPINGDOG_SEARCH_URL = "https://api.scrapingdog.com/google";
 const PAGE_SIZE = 10;
 const REQUEST_TIMEOUT_MS = 45_000;
 const IRAN_LOCATION_CODE = 2364;
@@ -52,6 +53,37 @@ const responseSchema = z
 
 type SerpApiResponse = z.infer<typeof responseSchema>;
 
+const scrapingDogResponseSchema = z
+  .object({
+    search_information: z
+      .object({ total_results: z.number().nonnegative().optional() })
+      .passthrough()
+      .optional(),
+    organic_results: z
+      .array(
+        z
+          .object({
+            rank: z.number().int().positive(),
+            link: z.string().min(1),
+            title: z.string().optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
+    ads: z.array(z.unknown()).optional(),
+    shopping_results: z.array(z.unknown()).optional(),
+    peopleAlsoAskedFor: z.array(z.unknown()).optional(),
+    relatedSearches: z.array(z.unknown()).optional(),
+    scrapingdog_pagination: z
+      .object({ page_no: z.record(z.string(), z.string()).optional() })
+      .passthrough()
+      .optional(),
+    error: z.string().optional(),
+  })
+  .passthrough();
+
+type ScrapingDogResponse = z.infer<typeof scrapingDogResponseSchema>;
+
 export interface RankCheckResult {
   keywordId: string;
   keyword: string;
@@ -74,14 +106,14 @@ export interface RankCheckInput {
   depth: number;
 }
 
-class SerpApiRequestError extends AppError {
+class RankProviderRequestError extends AppError {
   constructor(
     code: ConstructorParameters<typeof AppError>[0],
     message: string,
     readonly searchesUsed: number,
   ) {
     super(code, message);
-    this.name = "SerpApiRequestError";
+    this.name = "RankProviderRequestError";
   }
 }
 
@@ -327,7 +359,11 @@ export async function fetchSerpApiRankCheck(
       searchesUsed += 1;
     } catch (error) {
       if (error instanceof AppError) {
-        throw new SerpApiRequestError(error.code, error.message, searchesUsed);
+        throw new RankProviderRequestError(
+          error.code,
+          error.message,
+          searchesUsed,
+        );
       }
       throw error;
     }
@@ -373,11 +409,149 @@ export async function fetchSerpApiRankCheck(
   };
 }
 
-async function trackSerpApiUsage(input: {
+function normalizeScrapingDogResponse(
+  response: ScrapingDogResponse,
+): SerpApiResponse {
+  return {
+    search_information: response.search_information,
+    organic_results: response.organic_results?.map((result) => ({
+      ...result,
+      position: result.rank,
+    })),
+    ads: response.ads,
+    shopping_results: response.shopping_results,
+    people_also_ask: response.peopleAlsoAskedFor,
+    related_searches: response.relatedSearches,
+  };
+}
+
+async function fetchScrapingDogPage(
+  apiKey: string,
+  input: RankCheckInput,
+  page: number,
+): Promise<ScrapingDogResponse> {
+  const url = new URL(SCRAPINGDOG_SEARCH_URL);
+  url.searchParams.set("api_key", apiKey);
+  url.searchParams.set("query", input.keyword);
+  url.searchParams.set("country", getIsoCountryCode(input.locationCode));
+  url.searchParams.set("domain", "google.com");
+  url.searchParams.set("language", input.languageCode);
+  url.searchParams.set("results", String(PAGE_SIZE));
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("nfpr", "1");
+  if (input.locationName) url.searchParams.set("location", input.locationName);
+  if (input.device === "mobile") url.searchParams.set("mob_search", "true");
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    throw new AppError(
+      "UPSTREAM_UNAVAILABLE",
+      error instanceof Error ? error.message : "Scrapingdog request failed",
+    );
+  }
+  if (!response.ok) {
+    throw new AppError(
+      classifyHttpError(response.status),
+      "Scrapingdog request failed with HTTP " + response.status,
+    );
+  }
+  const parsed = scrapingDogResponseSchema.safeParse(await response.json());
+  if (!parsed.success) {
+    throw new AppError(
+      "UPSTREAM_UNAVAILABLE",
+      "Scrapingdog returned an invalid response",
+    );
+  }
+  if (parsed.data.error) {
+    throw new AppError("UPSTREAM_UNAVAILABLE", parsed.data.error);
+  }
+  return parsed.data;
+}
+
+export async function fetchScrapingDogRankCheck(
+  apiKey: string,
+  input: RankCheckInput,
+): Promise<{ data: RankCheckResult; searchesUsed: number }> {
+  const maxPages = Math.max(
+    1,
+    Math.min(10, Math.ceil(input.depth / PAGE_SIZE)),
+  );
+  const features = new Set<string>();
+  let searchesUsed = 0;
+  let estimatedMetrics = { searchVolume: 10, keywordDifficulty: 10, cpc: 0.05 };
+
+  for (let page = 0; page < maxPages; page++) {
+    let response: ScrapingDogResponse;
+    try {
+      response = await fetchScrapingDogPage(apiKey, input, page);
+      searchesUsed += 1;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw new RankProviderRequestError(
+          error.code,
+          error.message,
+          searchesUsed,
+        );
+      }
+      throw error;
+    }
+
+    const normalized = normalizeScrapingDogResponse(response);
+    for (const feature of collectSerpFeatures(normalized))
+      features.add(feature);
+    if (page === 0) estimatedMetrics = estimateSerpMetrics(normalized, input);
+    const match = normalized.organic_results?.find((item) =>
+      matchesDomain(canonicalResultUrl(item.link), input.targetDomain),
+    );
+    if (match) {
+      return {
+        data: {
+          keywordId: input.keywordId,
+          keyword: input.keyword,
+          position: page * PAGE_SIZE + match.position,
+          url: canonicalResultUrl(match.link),
+          serpFeatures: [...features],
+          estimatedSearchVolume: estimatedMetrics.searchVolume,
+          estimatedKeywordDifficulty: estimatedMetrics.keywordDifficulty,
+          estimatedCpc: estimatedMetrics.cpc,
+        },
+        searchesUsed,
+      };
+    }
+
+    const resultCount = response.organic_results?.length ?? 0;
+    const hasNext = Object.keys(
+      response.scrapingdog_pagination?.page_no ?? {},
+    ).some((number) => Number(number) > page + 1);
+    if (resultCount === 0 || !hasNext) break;
+  }
+
+  return {
+    data: {
+      keywordId: input.keywordId,
+      keyword: input.keyword,
+      position: null,
+      url: null,
+      serpFeatures: [...features],
+      estimatedSearchVolume: estimatedMetrics.searchVolume,
+      estimatedKeywordDifficulty: estimatedMetrics.keywordDifficulty,
+      estimatedCpc: estimatedMetrics.cpc,
+    },
+    searchesUsed,
+  };
+}
+
+async function trackRankUsage(input: {
   customer: BillingCustomerContext;
   customerId: string;
   monthlyRemaining: number;
   searchesUsed: number;
+  provider: "scrapingdog" | "serpapi";
 }) {
   if (input.searchesUsed <= 0) return;
   await trackUsageCreditSpend({
@@ -387,7 +561,7 @@ async function trackSerpApiUsage(input: {
     costUsd: input.searchesUsed * SERPAPI_SEARCH_COST_USD,
     monthlyRemaining: input.monthlyRemaining,
     properties: {
-      provider: "serpapi",
+      provider: input.provider,
       searches: input.searchesUsed,
       fromCache: false,
     },
@@ -397,16 +571,24 @@ async function trackSerpApiUsage(input: {
 export function createSerpApiRankClient(customer: BillingCustomerContext) {
   return {
     rankCheck: async (input: RankCheckInput): Promise<RankCheckResult> => {
-      const apiKey = (await getOptionalEnvValue("SERPAPI_API_KEY"))?.trim();
+      const scrapingDogApiKey = (
+        await getOptionalEnvValue("SCRAPINGDOG_API_KEY")
+      )?.trim();
+      const serpApiKey = (await getOptionalEnvValue("SERPAPI_API_KEY"))?.trim();
+      const apiKey = scrapingDogApiKey ?? serpApiKey;
       if (!apiKey) {
         throw new AppError(
           "AUTH_CONFIG_MISSING",
-          "Rank tracking requires SERPAPI_API_KEY.",
+          "Rank tracking requires SCRAPINGDOG_API_KEY or SERPAPI_API_KEY.",
         );
       }
+      const provider = scrapingDogApiKey ? "scrapingdog" : "serpapi";
+      const fetchRankCheck = scrapingDogApiKey
+        ? fetchScrapingDogRankCheck
+        : fetchSerpApiRankCheck;
 
       if (!(await isHostedServerAuthMode())) {
-        return (await fetchSerpApiRankCheck(apiKey, input)).data;
+        return (await fetchRankCheck(apiKey, input)).data;
       }
 
       const billingCustomer = await getOrCreateOrganizationCustomer(customer);
@@ -415,21 +597,23 @@ export function createSerpApiRankClient(customer: BillingCustomerContext) {
       );
 
       try {
-        const result = await fetchSerpApiRankCheck(apiKey, input);
-        await trackSerpApiUsage({
+        const result = await fetchRankCheck(apiKey, input);
+        await trackRankUsage({
           customer,
           customerId: billingCustomer.id,
           monthlyRemaining,
           searchesUsed: result.searchesUsed,
+          provider,
         });
         return result.data;
       } catch (error) {
-        if (error instanceof SerpApiRequestError) {
-          await trackSerpApiUsage({
+        if (error instanceof RankProviderRequestError) {
+          await trackRankUsage({
             customer,
             customerId: billingCustomer.id,
             monthlyRemaining,
             searchesUsed: error.searchesUsed,
+            provider,
           });
         }
         throw error;

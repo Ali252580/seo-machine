@@ -20,6 +20,7 @@ vi.mock("@/server/lib/runtime-env", () => ({
 import {
   createSerpApiRankClient,
   estimateSerpMetrics,
+  fetchScrapingDogRankCheck,
   fetchSerpApiRankCheck,
 } from "./rank-tracking";
 
@@ -50,6 +51,26 @@ function organicPage(
   );
 }
 
+function scrapingDogPage(
+  links: string[],
+  extras: Record<string, unknown> = {},
+): Response {
+  return new Response(
+    JSON.stringify({
+      search_information: {
+        organic_results_state: "Results for exact spelling",
+      },
+      organic_results: links.map((link, index) => ({
+        rank: index + 1,
+        link,
+        title: index === 0 ? "Roof garden" : undefined,
+      })),
+      ...extras,
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  );
+}
+
 describe("SerpApi rank tracking", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -59,7 +80,11 @@ describe("SerpApi rank tracking", () => {
 
   it("uses the project SerpApi key and records internal usage on Vercel", async () => {
     vi.stubEnv("VERCEL", "1");
-    mocks.getOptionalEnvValue.mockResolvedValue("secret");
+    mocks.getOptionalEnvValue.mockImplementation((name: string) =>
+      name === "SERPAPI_API_KEY"
+        ? Promise.resolve("secret")
+        : Promise.resolve(undefined),
+    );
     mocks.isHostedServerAuthMode.mockResolvedValue(true);
     mocks.getOrCreateOrganizationCustomer.mockResolvedValue({
       id: "customer-1",
@@ -86,6 +111,61 @@ describe("SerpApi rank tracking", () => {
     expect(mocks.trackUsageCreditSpend).toHaveBeenCalledWith(
       expect.objectContaining({ customerId: "customer-1", costUsd: 0.025 }),
     );
+  });
+
+  it("prefers Scrapingdog and maps its rank response", async () => {
+    mocks.getOptionalEnvValue.mockImplementation((name: string) =>
+      name === "SCRAPINGDOG_API_KEY"
+        ? Promise.resolve("dog-secret")
+        : Promise.resolve("serp-secret"),
+    );
+    mocks.isHostedServerAuthMode.mockResolvedValue(false);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(scrapingDogPage(["https://example.com/result"]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createSerpApiRankClient({
+      userId: "user-1",
+      userEmail: "owner@example.com",
+      organizationId: "org-1",
+    });
+    const result = await client.rankCheck({
+      ...input,
+      languageCode: "fa",
+      locationCode: 2364,
+    });
+
+    expect(result.position).toBe(1);
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+    expect(url.origin + url.pathname).toBe(
+      "https://api.scrapingdog.com/google",
+    );
+    expect(url.searchParams.get("country")).toBe("ir");
+    expect(url.searchParams.get("language")).toBe("fa");
+  });
+
+  it("paginates Scrapingdog results", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        scrapingDogPage(
+          Array.from(
+            { length: 9 },
+            (_, index) => `https://other${index}.test/`,
+          ),
+          { scrapingdog_pagination: { page_no: { 2: "next" } } },
+        ),
+      )
+      .mockResolvedValueOnce(scrapingDogPage(["https://example.com/winner"]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchScrapingDogRankCheck("secret", input);
+
+    expect(result.data.position).toBe(11);
+    expect(result.searchesUsed).toBe(2);
+    const secondUrl = new URL(String(fetchMock.mock.calls[1]?.[0]));
+    expect(secondUrl.searchParams.get("page")).toBe("1");
   });
 
   it("matches the tracked domain and its subdomains", async () => {

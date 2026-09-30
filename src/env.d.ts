@@ -55,6 +55,7 @@ declare namespace Cloudflare {
 
     // DataForSEO API Basic auth value (base64 of login:password)
     DATAFORSEO_API_KEY: string;
+    SCRAPINGDOG_API_KEY?: string;
     SERPAPI_API_KEY?: string;
 
     // OpenRouter API key for the SAM in-app chat agent.
