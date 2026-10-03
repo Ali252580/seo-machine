@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   LogOut,
   MessageCircle,
+  Shield,
   Settings,
   User,
   X,
@@ -27,6 +28,7 @@ import { closeDropdown } from "@/client/lib/dropdown";
 import { signOutAndRedirect, useSession } from "@/lib/auth-client";
 import { isHostedClientAuthMode } from "@/lib/auth-mode";
 import { BILLING_ROUTE } from "@/shared/billing";
+import { getPlatformAdminAccess } from "@/serverFunctions/admin-billing";
 
 interface SidebarProps {
   projectId: string | null;
@@ -238,6 +240,11 @@ function SidebarFooter({ onNavigate }: { onNavigate?: () => void }) {
     ...organizationContextQueryOptions(),
     enabled: isHostedMode && Boolean(email),
   });
+  const adminAccessQuery = useQuery({
+    queryKey: ["platform-admin-access"],
+    queryFn: () => getPlatformAdminAccess(),
+    enabled: isHostedMode && Boolean(email),
+  });
   const organizations = orgContextQuery.data?.organizations ?? [];
   const activeOrganizationId = orgContextQuery.data?.organizationId;
 
@@ -324,12 +331,22 @@ function SidebarFooter({ onNavigate }: { onNavigate?: () => void }) {
               </Link>
             </li>
             {isHostedMode ? (
-              <li>
-                <Link to={BILLING_ROUTE} onClick={closeMenu}>
-                  <CreditCard className="h-4 w-4" />
-                  صورت‌حساب
-                </Link>
-              </li>
+              <>
+                <li>
+                  <Link to={BILLING_ROUTE} onClick={closeMenu}>
+                    <CreditCard className="h-4 w-4" />
+                    صورت‌حساب
+                  </Link>
+                </li>
+                {adminAccessQuery.data ? (
+                  <li>
+                    <Link to="/admin/billing" onClick={closeMenu}>
+                      <Shield className="h-4 w-4" />
+                      مدیریت مالی
+                    </Link>
+                  </li>
+                ) : null}
+              </>
             ) : null}
             <ThemePreferenceMenuItems />
             {isHostedMode ? (

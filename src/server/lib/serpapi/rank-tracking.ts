@@ -12,6 +12,7 @@ import {
 } from "@/server/lib/runtime-env";
 import { getIsoCountryCode } from "@/shared/keyword-locations";
 import { SERPAPI_SEARCH_COST_USD } from "@/shared/rank-tracking";
+import { fetchIranPlaywrightResults } from "./iran-playwright-client";
 
 const SERPAPI_SEARCH_URL = "https://serpapi.com/search.json";
 const SCRAPINGDOG_SEARCH_URL = "https://api.scrapingdog.com/google";
@@ -43,6 +44,7 @@ const responseSchema = z
     top_ads: z.array(z.unknown()).optional(),
     bottom_ads: z.array(z.unknown()).optional(),
     shopping_results: z.array(z.unknown()).optional(),
+    serp_features: z.array(z.string()).optional(),
     serpapi_pagination: z
       .object({ next: z.string().optional() })
       .passthrough()
@@ -240,11 +242,13 @@ const IGNORED_RESULT_KEYS = new Set([
   "organic_results",
   "pagination",
   "serpapi_pagination",
+  "serp_features",
+  "pages_used",
   "error",
 ]);
 
 function collectSerpFeatures(response: SerpApiResponse): string[] {
-  const features = new Set<string>();
+  const features = new Set(response.serp_features ?? []);
   if ((response.organic_results?.length ?? 0) > 0) features.add("organic");
 
   for (const [key, value] of Object.entries(response)) {
@@ -546,12 +550,56 @@ export async function fetchScrapingDogRankCheck(
   };
 }
 
+export async function fetchIranPlaywrightRankCheck(
+  endpoint: string,
+  secret: string | undefined,
+  input: RankCheckInput,
+): Promise<{ data: RankCheckResult; searchesUsed: number }> {
+  let response;
+  try {
+    response = await fetchIranPlaywrightResults(endpoint, secret, input);
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new RankProviderRequestError(error.code, error.message, 0);
+    }
+    throw new RankProviderRequestError(
+      "UPSTREAM_UNAVAILABLE",
+      error instanceof Error
+        ? error.message
+        : "Iran Playwright rank service request failed",
+      0,
+    );
+  }
+
+  const searchesUsed =
+    response.pages_used ??
+    Math.max(1, Math.min(10, Math.ceil(input.depth / PAGE_SIZE)));
+  const metrics = estimateSerpMetrics(response, input);
+  const match = response.organic_results?.find((item) =>
+    matchesDomain(canonicalResultUrl(item.link), input.targetDomain),
+  );
+
+  return {
+    data: {
+      keywordId: input.keywordId,
+      keyword: input.keyword,
+      position: match?.position ?? null,
+      url: match ? canonicalResultUrl(match.link) : null,
+      serpFeatures: collectSerpFeatures(response),
+      estimatedSearchVolume: metrics.searchVolume,
+      estimatedKeywordDifficulty: metrics.keywordDifficulty,
+      estimatedCpc: metrics.cpc,
+    },
+    searchesUsed,
+  };
+}
+
 async function trackRankUsage(input: {
   customer: BillingCustomerContext;
   customerId: string;
   monthlyRemaining: number;
   searchesUsed: number;
-  provider: "scrapingdog" | "serpapi";
+  provider: "iran-playwright" | "scrapingdog" | "serpapi";
 }) {
   if (input.searchesUsed <= 0) return;
   await trackUsageCreditSpend({
@@ -571,21 +619,41 @@ async function trackRankUsage(input: {
 export function createSerpApiRankClient(customer: BillingCustomerContext) {
   return {
     rankCheck: async (input: RankCheckInput): Promise<RankCheckResult> => {
+      const isIran = getIsoCountryCode(input.locationCode) === "ir";
+      const iranSerpApiUrl = (
+        await getOptionalEnvValue("IRAN_SERP_API_URL")
+      )?.trim();
+      const iranSerpApiSecret = (
+        await getOptionalEnvValue("IRAN_SERP_API_SECRET")
+      )?.trim();
       const scrapingDogApiKey = (
         await getOptionalEnvValue("SCRAPINGDOG_API_KEY")
       )?.trim();
       const serpApiKey = (await getOptionalEnvValue("SERPAPI_API_KEY"))?.trim();
-      const apiKey = scrapingDogApiKey ?? serpApiKey;
+      const apiKey = isIran ? iranSerpApiUrl : scrapingDogApiKey ?? serpApiKey;
       if (!apiKey) {
         throw new AppError(
           "AUTH_CONFIG_MISSING",
-          "Rank tracking requires SCRAPINGDOG_API_KEY or SERPAPI_API_KEY.",
+          isIran
+            ? "Iran rank tracking requires IRAN_SERP_API_URL."
+            : "Rank tracking requires SCRAPINGDOG_API_KEY or SERPAPI_API_KEY.",
         );
       }
-      const provider = scrapingDogApiKey ? "scrapingdog" : "serpapi";
-      const fetchRankCheck = scrapingDogApiKey
-        ? fetchScrapingDogRankCheck
-        : fetchSerpApiRankCheck;
+      const provider = isIran
+        ? "iran-playwright"
+        : scrapingDogApiKey
+          ? "scrapingdog"
+          : "serpapi";
+      const fetchRankCheck = isIran
+        ? (url: string, rankInput: RankCheckInput) =>
+            fetchIranPlaywrightRankCheck(
+              url,
+              iranSerpApiSecret,
+              rankInput,
+            )
+        : scrapingDogApiKey
+          ? fetchScrapingDogRankCheck
+          : fetchSerpApiRankCheck;
 
       if (!(await isHostedServerAuthMode())) {
         return (await fetchRankCheck(apiKey, input)).data;

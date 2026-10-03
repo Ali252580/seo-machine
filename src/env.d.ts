@@ -57,6 +57,9 @@ declare namespace Cloudflare {
     DATAFORSEO_API_KEY: string;
     SCRAPINGDOG_API_KEY?: string;
     SERPAPI_API_KEY?: string;
+    IRAN_SERP_API_URL?: string;
+    IRAN_SERP_API_SECRET?: string;
+    PLATFORM_ADMIN_EMAILS?: string;
 
     // OpenRouter API key for the SAM in-app chat agent.
     OPENROUTER_API_KEY?: string;

@@ -20,6 +20,7 @@ vi.mock("@/server/lib/runtime-env", () => ({
 import {
   createSerpApiRankClient,
   estimateSerpMetrics,
+  fetchIranPlaywrightRankCheck,
   fetchScrapingDogRankCheck,
   fetchSerpApiRankCheck,
 } from "./rank-tracking";
@@ -113,7 +114,7 @@ describe("SerpApi rank tracking", () => {
     );
   });
 
-  it("prefers Scrapingdog and maps its rank response", async () => {
+  it("uses Scrapingdog for countries outside Iran", async () => {
     mocks.getOptionalEnvValue.mockImplementation((name: string) =>
       name === "SCRAPINGDOG_API_KEY"
         ? Promise.resolve("dog-secret")
@@ -132,8 +133,8 @@ describe("SerpApi rank tracking", () => {
     });
     const result = await client.rankCheck({
       ...input,
-      languageCode: "fa",
-      locationCode: 2364,
+      languageCode: "en",
+      locationCode: 2840,
     });
 
     expect(result.position).toBe(1);
@@ -141,8 +142,73 @@ describe("SerpApi rank tracking", () => {
     expect(url.origin + url.pathname).toBe(
       "https://api.scrapingdog.com/google",
     );
-    expect(url.searchParams.get("country")).toBe("ir");
-    expect(url.searchParams.get("language")).toBe("fa");
+    expect(url.searchParams.get("country")).toBe("us");
+    expect(url.searchParams.get("language")).toBe("en");
+  });
+
+  it("routes Iran rank checks to the Playwright service", async () => {
+    mocks.getOptionalEnvValue.mockImplementation((name: string) => {
+      if (name === "IRAN_SERP_API_URL")
+        return Promise.resolve("https://iran-serp.example/search");
+      if (name === "IRAN_SERP_API_SECRET") return Promise.resolve("shared");
+      if (name === "SCRAPINGDOG_API_KEY") return Promise.resolve("dog-secret");
+      return Promise.resolve(undefined);
+    });
+    mocks.isHostedServerAuthMode.mockResolvedValue(false);
+    const fetchMock = vi.fn().mockResolvedValue(
+      organicPage(["https://example.com/iran-result"], {
+        pages_used: 1,
+        serp_features: ["organic", "local"],
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createSerpApiRankClient({
+      userId: "user-1",
+      userEmail: "owner@example.com",
+      organizationId: "org-1",
+    });
+    const result = await client.rankCheck({
+      ...input,
+      keyword: "روف گاردن",
+      languageCode: "fa",
+      locationCode: 2364,
+    });
+
+    expect(result.position).toBe(1);
+    expect(result.serpFeatures).toContain("local");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "https://iran-serp.example/search",
+    );
+    expect(fetchMock.mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ Authorization: "Bearer shared" }),
+      }),
+    );
+  });
+
+  it("maps a direct Iran Playwright result", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        organicPage(
+          ["https://other.test", "https://example.com/right-page"],
+          { pages_used: 2 },
+        ),
+      ),
+    );
+
+    const result = await fetchIranPlaywrightRankCheck(
+      "https://iran-serp.example/search",
+      undefined,
+      { ...input, locationCode: 2364, languageCode: "fa" },
+    );
+
+    expect(result.searchesUsed).toBe(2);
+    expect(result.data.position).toBe(2);
+    expect(result.data.url).toBe("https://example.com/right-page");
   });
 
   it("paginates Scrapingdog results", async () => {
