@@ -11,7 +11,9 @@ import {
   getVerifyEmailSearch,
 } from "@/lib/auth-redirect";
 
-export function useHostedAuthRouteGuard() {
+export function useHostedAuthRouteGuard(options?: {
+  allowUnauthenticated?: boolean;
+}) {
   const navigate = useNavigate();
   const { data: session, isPending } = useSession();
   const isHostedMode = isHostedClientAuthMode();
@@ -26,6 +28,8 @@ export function useHostedAuthRouteGuard() {
     const redirectTo = getCurrentAuthRedirectFromHref(window.location.href);
 
     if (!session?.user?.id) {
+      if (options?.allowUnauthenticated) return;
+
       void navigate({
         to: "/sign-in",
         search: getSignInSearch(redirectTo),
@@ -48,6 +52,7 @@ export function useHostedAuthRouteGuard() {
     session?.user?.email,
     session?.user?.id,
     navigate,
+    options?.allowUnauthenticated,
   ]);
 
   const hasVerifiedHostedSession =
