@@ -239,7 +239,7 @@ export function PublicHomePage() {
             <span className="seo-eyebrow">پیش از شروع</span>
             <h2>پرسشی دارید؟</h2>
             <p>چند پاسخ برای شناخت بهتر امکانات، داده‌ها و نحوهٔ استفاده.</p>
-            <a className="seo-text-link" href="mailto:chekad.company@gmail.com">
+            <a className="seo-text-link" href="mailto:seomachine@info.ir">
               تماس با پشتیبانی <ArrowUpLeft size={17} />
             </a>
           </div>
@@ -297,7 +297,7 @@ export function PublicHomePage() {
               <a href="#faq">پرسش‌های رایج</a>
               <a href="/privacy">سیاست حریم خصوصی</a>
               <a href="/terms-and-conditions">شرایط استفاده</a>
-              <a href="mailto:chekad.company@gmail.com">تماس با پشتیبانی</a>
+              <a href="mailto:seomachine@info.ir">تماس با پشتیبانی</a>
             </nav>
           </div>
           <div className="seo-footer-bottom">

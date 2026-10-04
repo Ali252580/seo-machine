@@ -110,9 +110,9 @@ function TermsPage() {
         <p>
           در صورت نقض این شرایط، تهدید امنیت، تقلب یا عدم پرداخت، دسترسی
           می‌تواند محدود یا متوقف شود. کاربر می‌تواند درخواست حذف حساب را به{" "}
-          <a href="mailto:chekad.company@gmail.com">chekad.company@gmail.com</a>{" "}
-          ارسال کند. نحوه نگهداری و حذف اطلاعات در{" "}
-          <a href="/privacy">سیاست حریم خصوصی</a> توضیح داده شده است.
+          <a href="mailto:seomachine@info.ir">seomachine@info.ir</a> ارسال کند.
+          نحوه نگهداری و حذف اطلاعات در <a href="/privacy">سیاست حریم خصوصی</a>{" "}
+          توضیح داده شده است.
         </p>
       </section>
 
@@ -139,8 +139,8 @@ function TermsPage() {
         <h2>۱۲. تماس</h2>
         <p>
           برای پرسش درباره این شرایط با{" "}
-          <a href="mailto:chekad.company@gmail.com">chekad.company@gmail.com</a>{" "}
-          تماس بگیرید.
+          <a href="mailto:seomachine@info.ir">seomachine@info.ir</a> تماس
+          بگیرید.
         </p>
       </section>
     </LegalPage>
