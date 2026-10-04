@@ -79,13 +79,18 @@ const projectNavItems = [
     label: "زمینه",
     icon: Brain,
   },
+  {
+    to: "/p/$projectId/sam" as const,
+    label: "عامل هوشمند داخل سایت",
+    icon: Bot,
+  },
 ] as const;
 
 // Project-independent. Rendered inside the project "AI" group when a project
 // is selected, and on its own (connectNavGroup) when none is.
 const aiNavItem = linkOptions({
   to: "/ai" as const,
-  label: "تنظیم عامل هوشمند",
+  label: "اتصال عامل بیرونی",
   icon: Bot,
 });
 
@@ -140,6 +145,7 @@ export function getProjectNavGroups(projectId: string) {
     {
       label: "هوش مصنوعی",
       items: [
+        byPath("/p/$projectId/sam"),
         byPath("/p/$projectId/reports"),
         byPath("/p/$projectId/context"),
         aiNavItem,

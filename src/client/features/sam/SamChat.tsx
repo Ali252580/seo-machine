@@ -56,16 +56,27 @@ export function SamChat({
     goToSession(firstSessionId);
   }, [activeSessionId, firstSessionId, goToSession]);
 
-  // SAM cannot answer a turn without OPENROUTER_API_KEY, so surface setup
-  // instructions instead of letting a chat fail mid-stream. Only shown once the
-  // check confirms the key is missing (self-hosted) — never as a blocking
-  // skeleton while the check is in flight.
+  // Wait for the server capability check before opening a chat connection.
+  // A key alone cannot make the Cloudflare transport run on Vercel.
+  if (access.isChecking) {
+    return (
+      <div
+        className="flex h-full items-center justify-center"
+        role="status"
+        aria-label="در حال بررسی عامل هوشمند"
+      >
+        <Loader2 className="size-5 animate-spin text-base-content/40" />
+      </div>
+    );
+  }
   if (access.showSetupGate) {
     return (
       <div className="overflow-auto px-4 py-4 md:px-6 md:py-6">
         <div className="mx-auto max-w-3xl">
           <SamSetupGate
             errorMessage={access.errorMessage}
+            reason={access.reason}
+            hasApiKey={access.hasApiKey}
             isRefetching={access.isRefetching}
             onRetry={access.onRetry}
           />
@@ -84,7 +95,7 @@ export function SamChat({
             memory SAM reads and writes during the conversation. */}
         <div className="flex items-center justify-between gap-3 border-b border-base-300 px-5 py-3.5">
           <span className="truncate text-sm font-medium text-base-content/80">
-            {activeTitle ?? "Chat"}
+            {activeTitle ?? "گفت‌وگو"}
           </span>
           <Link
             to="/p/$projectId/context"
@@ -92,7 +103,7 @@ export function SamChat({
             className="flex shrink-0 items-center gap-1.5 text-xs text-base-content/60 transition-colors hover:text-base-content"
           >
             <Brain className="size-3.5" />
-            Project memory
+            زمینهٔ پروژه
           </Link>
         </div>
         <div className="flex min-h-0 flex-1">
@@ -134,10 +145,10 @@ export function SamChat({
         <Wrench className="size-6" />
       </div>
       <div className="space-y-1">
-        <p className="text-lg font-medium">What should we work on?</p>
+        <p className="text-lg font-medium">از کجا شروع کنیم؟</p>
         <p className="max-w-sm text-sm text-base-content/60">
-          SAM is your in-app SEO agent with access to every OpenSEO research
-          tool. Start a chat to get going.
+          SAM عامل هوشمند سئوی داخل OpenSEO است. برای بررسی پروژه و برنامه‌ریزی،
+          یک گفت‌وگو بسازید.
         </p>
       </div>
       <button
@@ -151,7 +162,7 @@ export function SamChat({
         ) : (
           <Plus className="size-4" />
         )}
-        New chat
+        گفت‌وگوی جدید
       </button>
     </div>
   );

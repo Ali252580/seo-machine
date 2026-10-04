@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 const OPENROUTER_KEYS_URL = "https://openrouter.ai/settings/keys";
+const VERCEL_ENV_URL =
+  "https://vercel.com/chekad/seo-machine-api/settings/environment-variables";
 
 export const Route = createFileRoute("/_app/help/openrouter-api-key")({
   component: OpenrouterApiKeyHelpPage,
@@ -8,99 +10,75 @@ export const Route = createFileRoute("/_app/help/openrouter-api-key")({
 
 function OpenrouterApiKeyHelpPage() {
   return (
-    <div className="px-4 py-4 md:px-6 md:py-6 pb-24 md:pb-8 overflow-auto">
+    <main dir="rtl" className="overflow-auto px-4 py-6 pb-24 md:px-6 md:pb-8">
       <div className="mx-auto max-w-3xl space-y-4">
-        <div className="card bg-base-100 border border-base-300">
+        <section className="card border border-base-300 bg-base-100">
           <div className="card-body gap-3">
             <h1 className="text-2xl font-semibold">
-              Set up your OpenRouter API key
+              راه‌اندازی عامل هوشمند SAM
             </h1>
-            <p className="text-sm text-base-content/70">
-              OpenSEO needs the <code>OPENROUTER_API_KEY</code> secret before AI
-              features like SAM, the in-app SEO agent, can run. It is optional —
-              everything else in OpenSEO works without it.
+            <p className="text-sm leading-7 text-base-content/70">
+              SAM عامل هوشمند داخل سایت است و پاسخ‌ها را از OpenRouter دریافت
+              می‌کند. کلید سرویس باید فقط به‌عنوان متغیر محیطی سرور نگهداری شود.
             </p>
           </div>
-        </div>
+        </section>
 
-        <div className="card bg-base-100 border border-base-300">
+        <section className="card border border-base-300 bg-base-100">
           <div className="card-body gap-4">
-            <h2 className="card-title text-base">Steps</h2>
-            <ol className="list-decimal pl-5 text-sm space-y-3 text-base-content/80">
+            <h2 className="card-title text-base">تنظیم کلید در Vercel</h2>
+            <ol className="list-decimal space-y-3 pr-5 text-sm leading-7 text-base-content/80">
               <li>
-                Create an account at{" "}
-                <a
-                  className="link link-primary"
-                  href="https://openrouter.ai"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  openrouter.ai
-                </a>{" "}
-                and add credits (pay-as-you-go, like DataForSEO).
-              </li>
-              <li>
-                Go to{" "}
+                در{" "}
                 <a
                   className="link link-primary"
                   href={OPENROUTER_KEYS_URL}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  OpenRouter API Keys
+                  OpenRouter
                 </a>{" "}
-                and click "Create API Key".
+                یک کلید API بسازید.
               </li>
               <li>
-                Save the key as the <code>OPENROUTER_API_KEY</code> secret in
-                your environment:
-                <ul className="list-disc pl-5 mt-2 space-y-1">
-                  <li>
-                    Docker self-hosting: <code>.env</code>
-                  </li>
-                  <li>Cloudflare: set it in the Workers UI (see below)</li>
-                  <li>
-                    Local development: <code>.env.local</code>
-                  </li>
-                </ul>
+                در{" "}
+                <a
+                  className="link link-primary"
+                  href={VERCEL_ENV_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  تنظیمات پروژهٔ Vercel
+                </a>{" "}
+                متغیر
+                <code dir="ltr" className="mx-1">
+                  OPENROUTER_API_KEY
+                </code>{" "}
+                را برای Production اضافه کنید.
               </li>
-              <li>Restart OpenSEO.</li>
+              <li>یک Deployment تازه بسازید تا متغیر جدید به سرور برسد.</li>
             </ol>
+            <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm leading-7">
+              موتور فعلی گفت‌وگوی SAM بر پایهٔ Cloudflare Durable Objects و
+              WebSocket است. در استقرار فعلی Vercel، ثبت کلید به‌تنهایی گفت‌وگو
+              را فعال نمی‌کند؛ این بخش به پیاده‌سازی جداگانهٔ Vercel نیاز دارد.
+            </p>
           </div>
-        </div>
+        </section>
 
-        <div className="card bg-base-100 border border-base-300">
-          <div className="card-body gap-2 text-sm text-base-content/75">
-            <h2 className="card-title text-base">
-              Cloudflare Workers (Dashboard UI)
-            </h2>
-            <ol className="list-decimal pl-5 space-y-2 text-sm text-base-content/80">
-              <li>
-                In Cloudflare, go to <code>Compute</code> -&gt;{" "}
-                <code>Workers &amp; Pages</code>
-                and open your OpenSEO Worker.
-              </li>
-              <li>
-                Open <code>Settings</code>.
-              </li>
-              <li>
-                Go to <code>Variables &amp; Secrets</code> and add a new secret
-                named
-                <code className="mx-1">OPENROUTER_API_KEY</code>.
-              </li>
-              <li>Paste your OpenRouter API key and save.</li>
-            </ol>
-
-            <div className="divider my-1" />
-
-            <p>Or set the same secret from your terminal with:</p>
-            <pre className="p-3 rounded bg-base-200 border border-base-300 overflow-x-auto text-xs">
-              <code>npx wrangler secret put OPENROUTER_API_KEY</code>
-            </pre>
-            <p>Paste your OpenRouter API key when prompted.</p>
+        <section className="card border border-base-300 bg-base-100">
+          <div className="card-body gap-3 text-sm leading-7 text-base-content/75">
+            <h2 className="card-title text-base">استقرار محلی یا Cloudflare</h2>
+            <p>
+              در اجرای محلی، مقدار کلید را در <code dir="ltr">.env.local</code>
+              با نام <code dir="ltr">OPENROUTER_API_KEY</code> قرار دهید. در
+              Cloudflare، آن را در Variables &amp; Secrets همان Worker ثبت کنید.
+              سپس برنامه را دوباره اجرا کنید.
+            </p>
+            <p>کلید را در چت، فایل‌های Git یا فرم‌های عمومی سایت قرار ندهید.</p>
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
