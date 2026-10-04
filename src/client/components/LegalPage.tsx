@@ -46,7 +46,7 @@ export function LegalPage({
             شرایط استفاده
           </Link>
           <a
-            href="mailto:chekad.company@gmail.com"
+            href="mailto:seomachine@info.ir"
             className="hover:text-base-content"
           >
             تماس با پشتیبانی
