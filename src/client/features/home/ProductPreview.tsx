@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, Sparkles } from "lucide-react";
+import { ArrowLeft, BarChart3, Hand, Sparkles } from "lucide-react";
 const previews = {
   research: {
     label: "تحقیق کلمات",
@@ -40,6 +40,9 @@ const previews = {
 export function ProductPreview() {
   const [active, setActive] = useState<keyof typeof previews>("research");
   const preview = previews[active];
+  const steps = Object.keys(previews) as Array<keyof typeof previews>;
+  const step = steps.indexOf(active);
+  const next = steps[(step + 1) % steps.length];
   return (
     <div className="seo-preview">
       <div className="seo-preview-bar">
@@ -47,6 +50,10 @@ export function ProductPreview() {
           <span className="seo-live-dot" /> فضای کاری من
         </span>
         <span className="seo-example">پیش‌نمایش · دادهٔ نمونه</span>
+      </div>
+      <div className="seo-preview-guide">
+        <Hand size={17} aria-hidden="true" />
+        <span>این پیش‌نمایش تعاملی است؛ روی هر تب کلیک کنید.</span>
       </div>
       <div
         className="seo-preview-tabs"
@@ -63,6 +70,14 @@ export function ProductPreview() {
             {previews[key].label}
           </button>
         ))}
+      </div>
+      <div className="seo-preview-next">
+        <span>نمایش {new Intl.NumberFormat("fa").format(step + 1)} از ۳</span>
+        <button type="button" onClick={() => setActive(next)}>
+          {step === steps.length - 1 ? "بازگشت به" : "بعدی:"}{" "}
+          {previews[next].label}
+          <ArrowLeft size={16} aria-hidden="true" />
+        </button>
       </div>
       <div className="seo-preview-body" aria-live="polite">
         <div className="seo-preview-title">

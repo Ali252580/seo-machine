@@ -1173,3 +1173,50 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* A persistent cue and explicit next action make all demo tabs discoverable. */
+.seo-preview-guide,
+.seo-preview-next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 12px;
+}
+.seo-preview-guide {
+  background: #fff3ed;
+  color: #963516;
+}
+.seo-preview-guide svg {
+  animation: seo-tab-hint 1s ease-in-out 3;
+}
+.seo-preview-next {
+  justify-content: space-between;
+  color: var(--seo-muted);
+  border-bottom: 1px solid var(--seo-line);
+}
+.seo-preview-next button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--seo-line);
+  border-radius: 8px;
+  background: white;
+  color: var(--seo-ink);
+  font: inherit;
+}
+.seo-preview-next button:hover {
+  background: var(--seo-soft);
+}
+@keyframes seo-tab-hint {
+  50% {
+    transform: translateY(4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seo-preview-guide svg {
+    animation: none;
+  }
+}
