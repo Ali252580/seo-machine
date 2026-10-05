@@ -1,8 +1,15 @@
 import { useState } from "react";
-import { ArrowLeft, BarChart3, Hand, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  Hand,
+  Sparkles,
+  Search,
+  TrendingUp,
+} from "lucide-react";
 const previews = {
   research: {
-    label: "تحقیق کلمات",
+    label: "تحقیق کلمات کلیدی",
     heading: "از یک موضوع، به یک برنامهٔ محتوا",
     columns: ["کلمهٔ کلیدی", "قصد جست‌وجو", "اقدام پیشنهادی"],
     rows: [
@@ -24,7 +31,7 @@ const previews = {
     note: "نمونهٔ مقایسهٔ دو بررسی با کشور و دستگاه یکسان.",
   },
   ai: {
-    label: "تحلیل هوشمند",
+    label: "عامل هوشمند SAM",
     heading: "داده‌ها را به قدم بعدی تبدیل کنید",
     columns: ["فرصت محتوایی", "پیشنهاد", "مرحلهٔ بعد"],
     rows: [
@@ -47,7 +54,8 @@ export function ProductPreview() {
     <div className="seo-preview">
       <div className="seo-preview-bar">
         <span>
-          <span className="seo-live-dot" /> فضای کاری من
+          <strong dir="ltr">OpenSEO</strong>
+          <span aria-hidden="true">/</span> پروژهٔ آموزش سئو
         </span>
         <span className="seo-example">پیش‌نمایش · دادهٔ نمونه</span>
       </div>
@@ -67,6 +75,13 @@ export function ProductPreview() {
             aria-pressed={active === key}
             onClick={() => setActive(key)}
           >
+            {key === "research" ? (
+              <Search size={15} />
+            ) : key === "rank" ? (
+              <TrendingUp size={15} />
+            ) : (
+              <Sparkles size={15} />
+            )}
             {previews[key].label}
           </button>
         ))}
@@ -109,8 +124,16 @@ export function ProductPreview() {
                 x2="0"
                 y2="1"
               >
-                <stop offset="0%" stopColor="#ec6a42" stopOpacity=".22" />
-                <stop offset="100%" stopColor="#ec6a42" stopOpacity="0" />
+                <stop
+                  offset="0%"
+                  stopColor="var(--seo-accent)"
+                  stopOpacity=".22"
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--seo-accent)"
+                  stopOpacity="0"
+                />
               </linearGradient>
             </defs>
             <path
@@ -120,7 +143,7 @@ export function ProductPreview() {
             <path
               d="M0 130 C40 125 45 95 80 108 S140 85 175 93 S215 57 250 70 S310 30 355 48 S410 35 445 40 S530 10 600 12"
               fill="none"
-              stroke="#dc542f"
+              stroke="var(--seo-accent)"
               strokeWidth="3"
               vectorEffect="non-scaling-stroke"
             />
