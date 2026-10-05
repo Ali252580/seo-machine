@@ -9,7 +9,10 @@
   color: var(--seo-ink);
   font-family: IRANYekanWeb, Tahoma, sans-serif;
   line-height: 1.8;
-  overflow: clip;
+  /* The app shell locks document scrolling; the public page needs its own scroller. */
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
   color-scheme: light;
 }
 .seo-home * {
