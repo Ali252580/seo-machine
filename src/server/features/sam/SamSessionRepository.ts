@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "@/db";
 import { samSessions } from "@/db/schema";
 
@@ -99,6 +99,35 @@ async function archiveSession(id: string) {
     .where(eq(samSessions.id, id));
 }
 
+// Atomic claim for the Vercel request/response transport. A function killed
+// mid-turn leaves a claim; it expires after two minutes so the user can retry.
+async function claimTurn(id: string, userId: string, turnId: string) {
+  const staleBefore = new Date(Date.now() - 120_000).toISOString();
+  const [claimed] = await db
+    .update(samSessions)
+    .set({ activeTurnId: turnId, activeTurnAt: new Date().toISOString() })
+    .where(
+      and(
+        eq(samSessions.id, id),
+        eq(samSessions.userId, userId),
+        isNull(samSessions.archivedAt),
+        or(
+          isNull(samSessions.activeTurnId),
+          lt(samSessions.activeTurnAt, staleBefore),
+        ),
+      ),
+    )
+    .returning({ id: samSessions.id });
+  return Boolean(claimed);
+}
+
+async function releaseTurn(id: string, turnId: string) {
+  await db
+    .update(samSessions)
+    .set({ activeTurnId: null, activeTurnAt: null })
+    .where(and(eq(samSessions.id, id), eq(samSessions.activeTurnId, turnId)));
+}
+
 export const SamSessionRepository = {
   createSession,
   listSessionsForProject,
@@ -107,4 +136,6 @@ export const SamSessionRepository = {
   setTitle,
   touch,
   archiveSession,
+  claimTurn,
+  releaseTurn,
 } as const;

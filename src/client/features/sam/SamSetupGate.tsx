@@ -10,13 +10,13 @@ export function SamSetupGate({
   onRetry,
 }: {
   errorMessage: string | null;
-  reason: "missing_key" | "unsupported_runtime" | null;
+  reason: "missing_key" | "missing_database" | null;
   hasApiKey: boolean | null;
   isRefetching: boolean;
   onRetry: () => void;
 }) {
   const hosted = isHostedClientAuthMode();
-  const unsupported = reason === "unsupported_runtime";
+  const databaseMissing = reason === "missing_database";
 
   return (
     <section
@@ -29,26 +29,26 @@ export function SamSetupGate({
         </div>
         <div className="space-y-2">
           <h1 className="text-xl font-semibold">
-            {unsupported
-              ? "اجرای SAM روی Vercel در دست آماده‌سازی است"
+            {databaseMissing
+              ? "پایگاه‌دادهٔ SAM تنظیم نشده است"
               : "راه‌اندازی عامل هوشمند SAM"}
           </h1>
           <p className="text-sm leading-7 text-base-content/70">
-            {unsupported
-              ? "موتور گفت‌وگوی فعلی SAM مخصوص Cloudflare است و هنوز روی Vercel اجرا نمی‌شود. افزودن کلید به‌تنهایی این بخش را فعال نمی‌کند."
+            {databaseMissing
+              ? "برای ذخیرهٔ تاریخچهٔ گفت‌وگو، DATABASE_URL باید در پروژهٔ Vercel تنظیم شود و migration پایگاه‌داده اجرا شده باشد."
               : "SAM عامل هوشمند داخل OpenSEO است. برای دریافت پاسخ، کلید OpenRouter باید در تنظیمات سرور ثبت شود؛ آن را داخل فرم سایت یا گفت‌وگو وارد نکنید."}
           </p>
         </div>
       </div>
 
-      {unsupported && (
+      {databaseMissing && (
         <p className="mt-4 text-sm text-base-content/70">
           وضعیت کلید OpenRouter در سرور:{" "}
           <strong>{hasApiKey ? "ثبت شده" : "ثبت نشده"}</strong>
         </p>
       )}
 
-      {!unsupported && (
+      {!databaseMissing && (
         <ol className="mt-5 list-decimal space-y-2 pr-5 text-sm leading-7 text-base-content/75">
           <li>در OpenRouter یک کلید API بسازید.</li>
           <li>
@@ -66,7 +66,17 @@ export function SamSetupGate({
       )}
 
       <div className="mt-5 flex flex-wrap gap-3">
-        {!unsupported && (
+        {databaseMissing && hosted && (
+          <a
+            className="btn"
+            href="https://vercel.com/chekad/seo-machine-api/settings/environment-variables"
+            target="_blank"
+            rel="noreferrer"
+          >
+            تنظیمات Vercel
+          </a>
+        )}
+        {!databaseMissing && (
           <>
             <a
               className="btn"

@@ -6,20 +6,21 @@ import { requireProjectContext } from "@/serverFunctions/middleware";
 const OPENROUTER_KEY_MISSING_MESSAGE =
   "کلید OPENROUTER_API_KEY برای این استقرار تنظیم نشده است. آن را در متغیرهای محیطی پروژه قرار دهید و یک استقرار تازه بسازید.";
 
-const VERCEL_RUNTIME_MESSAGE =
-  "گفت‌وگوی SAM هنوز روی Vercel اجرا نمی‌شود. موتور فعلی آن به Cloudflare Durable Objects و WebSocket وابسته است و باید برای Vercel پیاده‌سازی شود.";
+const DATABASE_MISSING_MESSAGE =
+  "پایگاه‌دادهٔ PostgreSQL برای ذخیرهٔ گفت‌وگوهای SAM در Vercel تنظیم نشده است.";
 
 const projectScopedSchema = z.object({ projectId: z.string().min(1) });
 
 type SamAccessStatus = {
   enabled: boolean;
   errorMessage: string | null;
-  reason: "missing_key" | "unsupported_runtime" | null;
+  reason: "missing_key" | "missing_database" | null;
   hasApiKey: boolean;
+  runtime: "vercel" | "cloudflare";
 };
 
-// Check the actual deployment before allowing a chat. Vercel currently has no
-// Durable Object transport for SAM, even when OpenRouter is configured.
+// The client picks the Vercel HTTP or Cloudflare DO transport from this status.
+// Never disclose the API key or database URL, only whether each is present.
 export const getSamAccessSetupStatus = createServerFn({ method: "GET" })
   .middleware(requireProjectContext)
   .validator(projectScopedSchema)
@@ -28,12 +29,14 @@ export const getSamAccessSetupStatus = createServerFn({ method: "GET" })
     const isVercel =
       (await getOptionalEnvValue("VERCEL")) === "1" ||
       import.meta.env.MODE === "vercel";
-    if (isVercel) {
+    const runtime = isVercel ? "vercel" : "cloudflare";
+    if (isVercel && !(await getOptionalEnvValue("DATABASE_URL"))) {
       return {
         enabled: false,
-        errorMessage: VERCEL_RUNTIME_MESSAGE,
-        reason: "unsupported_runtime",
+        errorMessage: DATABASE_MISSING_MESSAGE,
+        reason: "missing_database",
         hasApiKey,
+        runtime,
       };
     }
     if (!hasApiKey) {
@@ -42,6 +45,7 @@ export const getSamAccessSetupStatus = createServerFn({ method: "GET" })
         errorMessage: OPENROUTER_KEY_MISSING_MESSAGE,
         reason: "missing_key",
         hasApiKey: false,
+        runtime,
       };
     }
     return {
@@ -49,5 +53,6 @@ export const getSamAccessSetupStatus = createServerFn({ method: "GET" })
       errorMessage: null,
       reason: null,
       hasApiKey: true,
+      runtime,
     };
   });

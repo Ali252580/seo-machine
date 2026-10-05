@@ -13,6 +13,7 @@ import type { ResolvedResearchKeywordsInput } from "@/types/schemas/keywords";
 import { z } from "zod";
 import { getKeywordDataProvider } from "@/shared/keyword-locations";
 import { type EnrichedKeyword, normalizeKeyword } from "./helpers";
+import { fetchGoogleSuggestRows } from "./google-suggest";
 import {
   fetchGoogleAdsResearchRows,
   fetchResearchRowsBySource,
@@ -71,14 +72,26 @@ const cachedKeywordRowSchema = z.object({
 });
 
 const sourceAttemptSchema = z.object({
-  source: z.enum(["related", "suggestions", "ideas", "google_ads"]),
+  source: z.enum([
+    "related",
+    "suggestions",
+    "ideas",
+    "google_ads",
+    "google_suggest",
+  ]),
   rowCount: z.number(),
   nonSeedCount: z.number(),
 });
 
 const cachedResultSchema = z.object({
   rows: z.array(cachedKeywordRowSchema),
-  source: z.enum(["related", "suggestions", "ideas", "google_ads"]),
+  source: z.enum([
+    "related",
+    "suggestions",
+    "ideas",
+    "google_ads",
+    "google_suggest",
+  ]),
   usedFallback: z.boolean(),
   diagnostics: z.object({
     requestedMode: z.enum(["auto", "related", "suggestions", "ideas"]),
@@ -89,7 +102,7 @@ const cachedResultSchema = z.object({
 
 // v3: research volumes are no longer clickstream-refined, and Google-Ads-only
 // locations route to keywords_for_keywords.
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 
 async function fetchRowsFromSource(
   source: KeywordSource,
@@ -180,7 +193,7 @@ async function fetchGoogleAdsRows(
   billingCustomer: BillingCustomerContext,
   creditFeature?: CreditFeature,
 ): Promise<ResearchResult> {
-  const rows = await fetchGoogleAdsResearchRows(
+  const adsRequest = fetchGoogleAdsResearchRows(
     {
       seedKeyword,
       locationCode: input.locationCode,
@@ -191,19 +204,64 @@ async function fetchGoogleAdsRows(
     billingCustomer,
   );
 
+  // For Iran, add real Autocomplete phrases to the paid Ads ideas. Suggestions
+  // have no trustworthy volume/KD/CPC, so only Ads rows carry those metrics.
+  const suggestRequest =
+    input.locationCode === 2364
+      ? fetchGoogleSuggestRows(seedKeyword, input.resultLimit)
+      : Promise.resolve([] as EnrichedKeyword[]);
+  const [ads, suggestions] = await Promise.allSettled([
+    adsRequest,
+    suggestRequest,
+  ]);
+  if (ads.status === "rejected") {
+    // A zero-credit account must stay gated; a free source must not silently
+    // bypass the existing paid-feature refusal.
+    if (
+      ads.reason instanceof AppError &&
+      ads.reason.code === "INSUFFICIENT_CREDITS"
+    ) {
+      throw ads.reason;
+    }
+    if (suggestions.status === "rejected" || suggestions.value.length <= 1) {
+      throw ads.reason;
+    }
+  }
+  const adsRows = ads.status === "fulfilled" ? ads.value : [];
+  const suggestRows =
+    suggestions.status === "fulfilled" ? suggestions.value : [];
+  const seen = new Set<string>();
+  const rows = [...adsRows, ...suggestRows]
+    .filter((row) => {
+      if (seen.has(row.keyword)) return false;
+      seen.add(row.keyword);
+      return true;
+    })
+    .slice(0, input.resultLimit);
+  const source = adsRows.length > 0 ? "google_ads" : "google_suggest";
+
   return {
     rows,
-    source: "google_ads",
-    usedFallback: false,
+    source,
+    usedFallback: source === "google_suggest",
     diagnostics: {
       requestedMode: "auto",
       threshold: MIN_NON_SEED_FOR_AUTO,
       sourceAttempts: [
         {
           source: "google_ads",
-          rowCount: rows.length,
-          nonSeedCount: countNonSeedKeywords(rows, seedKeyword),
+          rowCount: adsRows.length,
+          nonSeedCount: countNonSeedKeywords(adsRows, seedKeyword),
         },
+        ...(input.locationCode === 2364
+          ? [
+              {
+                source: "google_suggest" as const,
+                rowCount: suggestRows.length,
+                nonSeedCount: countNonSeedKeywords(suggestRows, seedKeyword),
+              },
+            ]
+          : []),
       ],
     },
   };
@@ -266,20 +324,31 @@ function persistRows(
   rows: EnrichedKeyword[],
 ) {
   void Promise.all(
-    rows.map((row) =>
-      KeywordResearchRepository.upsertKeywordMetric({
-        projectId: input.projectId,
-        keyword: row.keyword,
-        locationCode: input.locationCode,
-        languageCode: input.languageCode,
-        searchVolume: row.searchVolume,
-        cpc: row.cpc,
-        competition: row.competition,
-        keywordDifficulty: row.keywordDifficulty,
-        intent: row.intent,
-        monthlySearchesJson: JSON.stringify(row.trend),
-      }),
-    ),
+    rows
+      .filter(
+        (row) =>
+          // Suggest phrases have no metrics; don't overwrite an older measured
+          // row with nulls when refreshing ideas.
+          row.searchVolume !== null ||
+          row.cpc !== null ||
+          row.competition !== null ||
+          row.keywordDifficulty !== null ||
+          row.trend.length > 0,
+      )
+      .map((row) =>
+        KeywordResearchRepository.upsertKeywordMetric({
+          projectId: input.projectId,
+          keyword: row.keyword,
+          locationCode: input.locationCode,
+          languageCode: input.languageCode,
+          searchVolume: row.searchVolume,
+          cpc: row.cpc,
+          competition: row.competition,
+          keywordDifficulty: row.keywordDifficulty,
+          intent: row.intent,
+          monthlySearchesJson: JSON.stringify(row.trend),
+        }),
+      ),
   ).catch((error) => {
     console.error("keywords.research.persist-metrics failed:", error);
   });
