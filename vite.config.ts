@@ -92,7 +92,8 @@ export default defineConfig(({ mode }) => {
           }),
       tsConfigPaths(),
       tanstackStart(
-        isVercel ? { server: { entry: "./src/server.vercel.ts" } } : undefined,
+        // Start resolves this path relative to srcDirectory (src).
+        isVercel ? { server: { entry: "./server.vercel.ts" } } : undefined,
       ),
       viteReact(),
       tailwindcss(),
