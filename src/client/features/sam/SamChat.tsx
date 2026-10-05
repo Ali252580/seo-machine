@@ -75,9 +75,6 @@ export function SamChat({
       <div className="overflow-auto px-4 py-4 md:px-6 md:py-6">
         <div className="mx-auto max-w-3xl">
           <SamSetupGate
-            errorMessage={access.errorMessage}
-            reason={access.reason}
-            hasApiKey={access.hasApiKey}
             isRefetching={access.isRefetching}
             onRetry={access.onRetry}
           />
