@@ -1,11 +1,17 @@
-/* Scoped marketing styles: the workspace keeps its existing theme. */
+/* Reuse the workspace theme so the public site follows the same light/dark palette. */
 .seo-home {
-  --seo-ink: #182c40;
-  --seo-muted: #617080;
-  --seo-accent: #d64d29;
-  --seo-soft: #f3f6f8;
-  --seo-line: #dfe6ec;
-  background: #fff;
+  --seo-ink: var(--color-base-content);
+  --seo-muted: color-mix(
+    in oklch,
+    var(--color-base-content) 65%,
+    var(--color-base-100)
+  );
+  --seo-accent: var(--color-primary);
+  --seo-soft: var(--color-base-200);
+  --seo-line: var(--color-base-300);
+  --seo-surface: var(--color-base-100);
+  --seo-tint: color-mix(in oklch, var(--seo-accent) 9%, var(--seo-surface));
+  background: var(--seo-surface);
   color: var(--seo-ink);
   font-family: IRANYekanWeb, Tahoma, sans-serif;
   line-height: 1.8;
@@ -13,7 +19,7 @@
   height: 100dvh;
   overflow-x: hidden;
   overflow-y: auto;
-  color-scheme: light;
+  color-scheme: inherit;
 }
 .seo-home * {
   box-sizing: border-box;
@@ -26,7 +32,7 @@
   cursor: pointer;
 }
 .seo-home :focus-visible {
-  outline: 3px solid #2385bf;
+  outline: 3px solid var(--seo-accent);
   outline-offset: 5px;
 }
 .seo-home [id] {
@@ -62,7 +68,7 @@
   position: absolute;
   top: -90px;
   z-index: 50;
-  background: #fff;
+  background: var(--seo-surface);
   padding: 12px;
 }
 .seo-skip:focus {
@@ -73,13 +79,13 @@
   top: 0;
   z-index: 20;
   border-bottom: 1px solid var(--seo-line);
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--seo-surface);
 }
 .seo-nav {
   display: flex;
   align-items: center;
   gap: 40px;
-  min-height: 88px;
+  min-height: 72px;
 }
 .seo-brand {
   display: inline-flex;
@@ -87,22 +93,10 @@
   gap: 10px;
   color: var(--seo-ink);
   font-family: Arial, sans-serif;
-  font-size: 25px;
+  font-size: 21px;
   font-weight: 800;
   letter-spacing: -1px;
   white-space: nowrap;
-}
-.seo-brand > span:last-child > span {
-  font-weight: 400;
-}
-.seo-brand-mark {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--seo-ink);
-  color: #fff;
 }
 .seo-desktop-nav {
   display: flex;
@@ -128,17 +122,14 @@
   gap: 18px;
   padding: 15px 24px;
   background: var(--seo-accent);
-  color: #fff;
+  color: var(--color-primary-content);
   font-size: 14px;
   font-weight: 700;
-  border-radius: 9px;
-  transition:
-    background 0.2s,
-    transform 0.2s;
+  border-radius: var(--radius-field);
+  transition: background 0.2s;
 }
 .seo-button:hover {
-  background: #b83d1d;
-  transform: translateY(-2px);
+  background: color-mix(in oklch, var(--seo-accent) 88%, var(--seo-ink));
 }
 .seo-button-small {
   padding: 10px 17px;
@@ -161,13 +152,13 @@
   grid-template-columns: 0.9fr 1.15fr;
   gap: 55px;
   align-items: center;
-  padding-block: 100px 78px;
+  padding-block: 64px;
 }
 .seo-hero h1 {
-  font-size: clamp(38px, 4.1vw, 60px);
+  font-size: clamp(34px, 3.5vw, 50px);
   font-weight: 800;
   line-height: 1.55;
-  letter-spacing: -2.8px;
+  letter-spacing: -1.5px;
 }
 .seo-hero h1 span {
   color: var(--seo-accent);
@@ -213,21 +204,12 @@
   position: relative;
   padding-block: 22px;
 }
-.seo-hero-visual:before {
-  content: "";
-  position: absolute;
-  inset: -15px -20px 0;
-  background-image: radial-gradient(#cdd7df 0.8px, transparent 0.8px);
-  background-size: 17px 17px;
-  mask-image: linear-gradient(to bottom, #000, transparent);
-  pointer-events: none;
-}
 .seo-preview {
   position: relative;
-  background: #fff;
+  background: var(--seo-surface);
   border: 1px solid var(--seo-line);
-  border-radius: 16px;
-  box-shadow: 0 20px 70px -30px #182c4040;
+  border-radius: var(--radius-box);
+  box-shadow: 0 4px 18px color-mix(in oklch, var(--seo-ink) 6%, transparent);
   overflow: hidden;
 }
 .seo-preview-bar {
@@ -235,7 +217,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 17px 20px;
-  background: #f8fafb;
+  background: var(--seo-soft);
   border-bottom: 1px solid var(--seo-line);
   font-size: 11px;
 }
@@ -243,12 +225,6 @@
   display: flex;
   align-items: center;
   gap: 7px;
-}
-.seo-live-dot {
-  height: 7px;
-  width: 7px;
-  background: #237867;
-  border-radius: 50%;
 }
 .seo-example {
   color: var(--seo-muted);
@@ -262,6 +238,11 @@
 }
 .seo-preview-tabs button {
   flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   border: 0;
   border-radius: 6px;
   padding: 8px;
@@ -271,9 +252,10 @@
   font-size: 11px;
 }
 .seo-preview-tabs button[aria-pressed="true"] {
-  background: #fff0e9;
-  color: #a9361c;
+  background: var(--seo-tint);
+  color: var(--seo-accent);
   font-weight: 700;
+  box-shadow: inset 0 -2px var(--seo-accent);
 }
 .seo-preview-body {
   padding: 22px;
@@ -302,7 +284,7 @@
     to bottom,
     transparent,
     transparent 39px,
-    #edf0f3 40px
+    var(--seo-line) 40px
   );
 }
 .seo-chart-label {
@@ -332,12 +314,12 @@
 .seo-preview th {
   font-weight: 400;
   color: var(--seo-muted);
-  background: #f7f9fb;
+  background: var(--seo-soft);
 }
 .seo-preview th,
 .seo-preview td {
   padding: 10px 6px;
-  border-bottom: 1px solid #edf0f3;
+  border-bottom: 1px solid var(--seo-line);
 }
 .seo-table-tag {
   background: #edf6f3;
@@ -372,7 +354,7 @@
 }
 .seo-context-strip {
   border-block: 1px solid var(--seo-line);
-  background: #fafbfc;
+  background: var(--seo-soft);
 }
 .seo-context-strip > .seo-container {
   display: flex;
@@ -401,7 +383,7 @@
 }
 .seo-context-strip .seo-container > div > svg {
   width: 14px;
-  color: #aab5c0;
+  color: var(--seo-muted);
 }
 .seo-section {
   padding-block: 95px;
@@ -432,7 +414,7 @@
     box-shadow 0.2s;
 }
 .seo-feature:hover {
-  border-color: #cc8b73;
+  border-color: var(--seo-accent);
   box-shadow: 0 9px 28px #182c4008;
 }
 .seo-feature-top {
@@ -465,8 +447,9 @@
   margin-top: 21px !important;
 }
 .seo-ai-section {
-  background: #183347;
-  color: #fff;
+  background: var(--seo-soft);
+  color: var(--seo-ink);
+  border-block: 1px solid var(--seo-line);
   padding-block: 80px;
 }
 .seo-ai-layout {
@@ -476,13 +459,13 @@
   align-items: center;
 }
 .seo-ai-section .seo-eyebrow {
-  color: #ffb89c;
+  color: var(--seo-accent);
 }
 .seo-ai-section h2 {
   font-size: clamp(28px, 3vw, 39px);
 }
 .seo-ai-section p {
-  color: #ccdae4;
+  color: var(--seo-muted);
   font-size: 13px;
   line-height: 2.2;
   margin-top: 20px;
@@ -494,7 +477,7 @@
   display: grid;
   gap: 12px;
   font-size: 12px;
-  color: #e2ebf1;
+  color: var(--seo-ink);
 }
 .seo-ai-section li {
   display: flex;
@@ -503,28 +486,28 @@
 }
 .seo-ai-section li svg {
   width: 15px;
-  color: #ffb89c;
+  color: var(--seo-accent);
 }
 .seo-button-light {
-  background: #fff;
+  background: var(--seo-surface);
   color: var(--seo-ink);
 }
 .seo-button-light:hover {
-  background: #f9dfd2;
+  background: var(--seo-tint);
 }
 .seo-ai-section small {
   display: block;
   font-size: 10px;
-  color: #b5c8d6;
+  color: var(--seo-muted);
   margin-top: 16px;
   max-width: 400px;
 }
 .seo-chat {
-  border: 1px solid #486074;
-  border-radius: 14px;
-  background: #203e53;
+  border: 1px solid var(--seo-line);
+  border-radius: var(--radius-box);
+  background: var(--seo-surface);
   padding: 22px;
-  box-shadow: 0 20px 50px #071c2c30;
+  box-shadow: none;
 }
 .seo-chat-header {
   display: flex;
@@ -532,7 +515,7 @@
   gap: 15px;
   font-size: 11px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #486074;
+  border-bottom: 1px solid var(--seo-line);
 }
 .seo-chat-header span {
   display: flex;
@@ -541,10 +524,10 @@
 }
 .seo-chat-header > span:last-child {
   font-size: 10px;
-  color: #b5c8d6;
+  color: var(--seo-muted);
 }
 .seo-chat-user {
-  background: #345064;
+  background: var(--seo-tint);
   padding: 15px;
   border-radius: 9px 9px 0 9px;
   font-size: 12px;
@@ -558,8 +541,8 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  background: #ffb89c;
-  color: #183347;
+  background: var(--seo-accent);
+  color: var(--color-primary-content);
   width: 30px;
   height: 30px;
   border-radius: 9px;
@@ -571,8 +554,8 @@
 .seo-outline {
   display: grid;
   gap: 10px;
-  background: #173247;
-  border: 1px solid #405a6d;
+  background: var(--seo-soft);
+  border: 1px solid var(--seo-line);
   padding: 16px;
   border-radius: 8px;
   margin-bottom: 13px;
@@ -582,19 +565,19 @@
   justify-content: space-between;
   gap: 16px;
   font-size: 10px;
-  color: #acbfcd;
+  color: var(--seo-muted);
 }
 .seo-outline b {
   font-weight: 500;
-  color: #fff;
+  color: var(--seo-ink);
 }
 .seo-chat-footer {
   display: flex;
   align-items: center;
   gap: 7px;
   font-size: 9px;
-  color: #b9cbd7;
-  border-top: 1px solid #486074;
+  color: var(--seo-muted);
+  border-top: 1px solid var(--seo-line);
   padding-top: 16px;
   margin-top: 14px;
 }
@@ -641,9 +624,9 @@
   gap: 22px;
 }
 .seo-integration-grid article {
-  background: #fff;
+  background: var(--seo-surface);
   border: 1px solid var(--seo-line);
-  border-radius: 13px;
+  border-radius: var(--radius-box);
   padding: 32px;
 }
 .seo-service-icon {
@@ -739,7 +722,7 @@
 }
 .seo-faq-section {
   padding-block: 75px;
-  background: #fafbfc;
+  background: var(--seo-soft);
   border-block: 1px solid var(--seo-line);
 }
 .seo-faq-layout {
@@ -781,9 +764,9 @@
   text-align: center;
   padding: 72px 30px;
   margin-block: 70px;
-  background: #fcefe8;
-  border: 1px solid #f1d6c8;
-  border-radius: 20px;
+  background: var(--seo-tint);
+  border: 1px solid var(--seo-line);
+  border-radius: var(--radius-box);
   overflow: hidden;
 }
 .seo-final-cta .seo-eyebrow {
@@ -806,7 +789,7 @@
   position: absolute;
   left: 6%;
   bottom: -25px;
-  color: #efc1a940;
+  color: var(--seo-line);
   pointer-events: none;
 }
 .seo-cta-decoration svg {
@@ -902,6 +885,10 @@
     position: relative;
   }
   .seo-mobile-nav summary {
+    min-width: 32px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
     list-style: none;
     display: flex;
   }
@@ -913,7 +900,7 @@
     display: grid;
     gap: 14px;
     padding: 20px;
-    background: #fff;
+    background: var(--seo-surface);
     border: 1px solid var(--seo-line);
     border-radius: 10px;
     box-shadow: 0 10px 25px #182c4010;
@@ -933,7 +920,7 @@
     justify-content: center;
   }
   .seo-hero h1 {
-    font-size: 49px;
+    font-size: 44px;
   }
   .seo-hero-copy > p {
     margin-inline: auto;
@@ -998,11 +985,6 @@
     font-size: 22px;
     gap: 7px;
   }
-  .seo-brand-mark {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
-  }
   .seo-nav-actions {
     gap: 13px;
   }
@@ -1017,7 +999,7 @@
     font-size: 12px;
   }
   .seo-hero h1 {
-    font-size: 39px;
+    font-size: 34px;
     letter-spacing: -1.8px;
   }
   .seo-hero-copy > p {
@@ -1049,6 +1031,7 @@
   }
   .seo-preview-tabs button {
     font-size: 10px;
+    flex-direction: column;
   }
   .seo-preview table {
     font-size: 9px;
@@ -1066,9 +1049,6 @@
   .seo-preview th,
   .seo-preview td {
     padding: 10px 5px;
-  }
-  .seo-hero-visual:before {
-    inset: 0 -10px;
   }
   .seo-context-strip .seo-container > div {
     display: grid;
@@ -1187,8 +1167,8 @@
   font-size: 12px;
 }
 .seo-preview-guide {
-  background: #fff3ed;
-  color: #963516;
+  background: var(--seo-tint);
+  color: var(--seo-accent);
 }
 .seo-preview-guide svg {
   animation: seo-tab-hint 1s ease-in-out 3;
@@ -1206,7 +1186,7 @@
   padding: 8px 12px;
   border: 1px solid var(--seo-line);
   border-radius: 8px;
-  background: white;
+  background: var(--seo-surface);
   color: var(--seo-ink);
   font: inherit;
 }

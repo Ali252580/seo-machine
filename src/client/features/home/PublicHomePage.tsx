@@ -5,7 +5,6 @@ import {
   ChevronDown,
   Compass,
   FileText,
-  Layers3,
   Link2,
   Search,
   ShieldCheck,
@@ -86,12 +85,7 @@ const questions = [
 function Brand() {
   return (
     <a className="seo-brand" href="/" aria-label="OpenSEO، صفحهٔ اصلی">
-      <span className="seo-brand-mark">
-        <Layers3 size={23} />
-      </span>
-      <span dir="ltr">
-        Open<span>SEO</span>
-      </span>
+      <span dir="ltr">OpenSEO</span>
     </a>
   );
 }

@@ -49,7 +49,7 @@ export function HomeDetails() {
           <div className="seo-chat">
             <div className="seo-chat-header">
               <span>
-                <Sparkles size={18} /> دستیار OpenSEO
+                <Sparkles size={18} /> عامل هوشمند SAM
               </span>
               <span>نمونهٔ گفت‌وگو</span>
             </div>
