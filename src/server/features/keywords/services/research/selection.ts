@@ -6,7 +6,7 @@ export type KeywordMode = "auto" | KeywordSource;
  * Where research rows actually came from. "google_ads" is not requestable as
  * a mode; it's the automatic source for countries Labs doesn't support.
  */
-export type ResearchSource = KeywordSource | "google_ads";
+export type ResearchSource = KeywordSource | "google_ads" | "google_suggest";
 
 export const AUTO_KEYWORD_SOURCES: KeywordSource[] = [
   "related",

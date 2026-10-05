@@ -10,6 +10,7 @@ import {
 import { useSamAccess } from "./useSamAccess";
 import { SamSetupGate } from "./SamSetupGate";
 import { SamConversation } from "./SamConversation";
+import { SamVercelConversation } from "./SamVercelConversation";
 
 /**
  * The SAM route's content: the active conversation, full-width. The chat
@@ -118,11 +119,19 @@ export function SamChat({
               </div>
             }
           >
-            <SamConversation
-              key={activeSessionId}
-              projectId={projectId}
-              sessionId={activeSessionId}
-            />
+            {access.runtime === "vercel" ? (
+              <SamVercelConversation
+                key={activeSessionId}
+                projectId={projectId}
+                sessionId={activeSessionId}
+              />
+            ) : (
+              <SamConversation
+                key={activeSessionId}
+                projectId={projectId}
+                sessionId={activeSessionId}
+              />
+            )}
           </Suspense>
         </div>
       </div>

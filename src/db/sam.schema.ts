@@ -29,12 +29,39 @@ export const samSessions = sqliteTable(
     // Soft-delete marker: null = active. Archived sessions disappear from the
     // list but keep their registry row and DO transcript for a future unarchive.
     archivedAt: text("archived_at"),
+    // A short-lived claim prevents two Vercel requests from advancing the
+    // same transcript at once. A stale claim can be recovered after a crash.
+    activeTurnId: text("active_turn_id"),
+    activeTurnAt: text("active_turn_at"),
   },
   (table) => [
     // The side-panel lists a project's sessions newest-first.
     index("sam_sessions_project_updated_idx").on(
       table.projectId,
       table.updatedAt,
+    ),
+  ],
+);
+
+// Vercel stores SAM turns in the shared database; the Cloudflare agent keeps
+// using its own Durable Object transcript. Both runtimes share session IDs.
+export const samMessages = sqliteTable(
+  "sam_messages",
+  {
+    id: text("id").primaryKey(),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => samSessions.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["user", "assistant"] }).notNull(),
+    content: text("content").notNull(),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(current_timestamp)`),
+  },
+  (table) => [
+    index("sam_messages_session_created_idx").on(
+      table.sessionId,
+      table.createdAt,
     ),
   ],
 );

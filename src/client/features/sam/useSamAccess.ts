@@ -7,8 +7,9 @@ type SamAccess = {
   isChecking: boolean;
   showSetupGate: boolean;
   errorMessage: string | null;
-  reason: "missing_key" | "unsupported_runtime" | null;
+  reason: "missing_key" | "missing_database" | null;
   hasApiKey: boolean | null;
+  runtime: "vercel" | "cloudflare" | null;
   isRefetching: boolean;
   onRetry: () => void;
 };
@@ -38,6 +39,7 @@ export function useSamAccess(projectId: string): SamAccess {
         : null),
     reason: data?.reason ?? null,
     hasApiKey: data?.hasApiKey ?? null,
+    runtime: data?.runtime ?? null,
     isRefetching,
     onRetry,
   };

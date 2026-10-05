@@ -59,9 +59,10 @@ function OpenrouterApiKeyHelpPage() {
               <li>یک Deployment تازه بسازید تا متغیر جدید به سرور برسد.</li>
             </ol>
             <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm leading-7">
-              موتور فعلی گفت‌وگوی SAM بر پایهٔ Cloudflare Durable Objects و
-              WebSocket است. در استقرار فعلی Vercel، ثبت کلید به‌تنهایی گفت‌وگو
-              را فعال نمی‌کند؛ این بخش به پیاده‌سازی جداگانهٔ Vercel نیاز دارد.
+              گفت‌وگوی SAM در Vercel از PostgreSQL برای تاریخچه استفاده می‌کند.
+              علاوه بر کلید OpenRouter، متغیر{" "}
+              <code dir="ltr">DATABASE_URL</code>
+              باید تنظیم شود و migrationهای پروژه در ساخت تازه اجرا شوند.
             </p>
           </div>
         </section>
