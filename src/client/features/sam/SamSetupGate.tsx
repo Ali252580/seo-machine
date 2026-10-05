@@ -1,12 +1,21 @@
 import { ShieldAlert } from "lucide-react";
 
 export function SamSetupGate({
+  reason,
   isRefetching,
   onRetry,
 }: {
+  reason: "missing_key" | "missing_database" | null;
   isRefetching: boolean;
   onRetry: () => void;
 }) {
+  const errorCode =
+    reason === "missing_key"
+      ? "SAM-KEY"
+      : reason === "missing_database"
+        ? "SAM-DB"
+        : "SAM-CHECK";
+
   return (
     <section
       dir="rtl"
@@ -22,6 +31,9 @@ export function SamSetupGate({
           <p className="text-sm leading-7 text-base-content/70">
             لطفاً کمی بعد دوباره تلاش کنید. برای استفاده از SAM نیازی به تنظیم
             کلید یا اتصال حساب جداگانه ندارید.
+          </p>
+          <p className="text-xs text-base-content/50" dir="ltr">
+            {errorCode}
           </p>
         </div>
       </div>

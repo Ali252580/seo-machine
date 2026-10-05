@@ -75,6 +75,7 @@ export function SamChat({
       <div className="overflow-auto px-4 py-4 md:px-6 md:py-6">
         <div className="mx-auto max-w-3xl">
           <SamSetupGate
+            reason={access.reason}
             isRefetching={access.isRefetching}
             onRetry={access.onRetry}
           />
