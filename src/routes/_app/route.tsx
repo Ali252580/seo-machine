@@ -17,7 +17,14 @@ function AppRouteLayout() {
 
   if (!authGate.canRenderAuthenticatedContent) {
     if (isPublicHomepage) return <Outlet />;
-    return null;
+    return (
+      <main
+        className="flex min-h-screen items-center justify-center p-6"
+        dir="rtl"
+      >
+        <p>در حال بررسی ورود شما…</p>
+      </main>
+    );
   }
 
   return (

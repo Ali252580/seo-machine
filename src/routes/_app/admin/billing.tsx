@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { getAdminBillingOverview } from "@/serverFunctions/admin-billing";
+import {
+  getAdminBillingOverview,
+  getPlatformAdminAccess,
+} from "@/serverFunctions/admin-billing";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { billingUsageCsv } from "@/client/features/billing/admin-export";
+import { useSession } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_app/admin/billing")({
   component: AdminBillingPage,
@@ -14,17 +18,57 @@ const date = (value: string | Date) =>
   new Date(value).toLocaleString("fa-IR", { dateStyle: "medium" });
 
 function AdminBillingPage() {
+  const { data: session } = useSession();
   const [range, setRange] = useState(() => ({
     from: new Date(Date.now() - 29 * 86_400_000).toISOString().slice(0, 10),
     to: new Date().toISOString().slice(0, 10),
   }));
   const [draft, setDraft] = useState(range);
   const [search, setSearch] = useState("");
+  const access = useQuery({
+    queryKey: ["platform-admin-access"],
+    queryFn: () => getPlatformAdminAccess(),
+    retry: false,
+  });
   const query = useQuery({
     queryKey: ["platform-admin-billing", range],
     queryFn: () => getAdminBillingOverview({ data: range }),
+    enabled: access.data === true,
     retry: false,
   });
+
+  if (access.isPending) {
+    return (
+      <div className="p-8" dir="rtl">
+        در حال بررسی دسترسی مدیر…
+      </div>
+    );
+  }
+  if (access.isError || !access.data) {
+    return (
+      <main className="m-6 space-y-3" dir="rtl">
+        <h1 className="text-xl font-semibold">
+          دسترسی به مدیریت مالی برقرار نیست
+        </h1>
+        <p>
+          {access.isError
+            ? getStandardErrorMessage(access.error, "بررسی دسترسی ناموفق بود.")
+            : "ایمیل حساب فعلی در PLATFORM_ADMIN_EMAILS این استقرار ثبت نشده است."}
+        </p>
+        {session?.user?.email ? (
+          <p>
+            ایمیل حساب فعلی: <span dir="ltr">{session.user.email}</span>
+          </p>
+        ) : null}
+        <button
+          className="btn btn-primary"
+          onClick={() => void access.refetch()}
+        >
+          بررسی دوباره
+        </button>
+      </main>
+    );
+  }
 
   if (query.isPending) {
     return <div className="p-8">در حال دریافت گزارش مدیریتی…</div>;
