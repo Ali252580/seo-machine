@@ -1,5 +1,7 @@
 export const BILLING_ROUTE = "/billing";
 export const SUBSCRIBE_ROUTE = "/subscribe";
+// One catalog shared by checkout validation, the customer UI and admin sales.
+export const CREDIT_PACKAGES_USD = [10, 25, 50] as const;
 
 export const AUTUMN_PAID_PLAN_ID = "base-plan";
 export const AUTUMN_SEO_DATA_TOP_UP_PLAN_ID = "credit-top-up";

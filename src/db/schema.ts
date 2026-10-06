@@ -113,6 +113,7 @@ export const {
   invitation,
   billingCustomerStatus,
   billingPayments,
+  billingUsage,
   ga4Connections,
   gscConnections,
   telemetryState,

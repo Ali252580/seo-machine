@@ -7,10 +7,13 @@ import {
   getOptionalEnvValue,
   getRequiredEnvValue,
 } from "@/server/lib/runtime-env";
-import { AUTUMN_SEO_DATA_CREDITS_PER_USD } from "@/shared/billing";
+import {
+  AUTUMN_SEO_DATA_CREDITS_PER_USD,
+  CREDIT_PACKAGES_USD,
+} from "@/shared/billing";
 
 const USDT_TRC20_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-const PACKAGES = [10, 25, 50] as const;
+const PACKAGES = CREDIT_PACKAGES_USD;
 
 export function parseCreditPackage(amountUsd: number) {
   if (!PACKAGES.includes(amountUsd as (typeof PACKAGES)[number])) {
@@ -190,9 +193,9 @@ export function isValidUsdtTransfer(
   const receivedMicros = Number(transfer?.value ?? 0) / 10 ** (decimals - 6);
   return Boolean(
     transfer &&
-      transfer.to === wallet &&
-      transfer.token_info?.address === USDT_TRC20_CONTRACT &&
-      receivedMicros >= amountUsd * 1_000_000,
+    transfer.to === wallet &&
+    transfer.token_info?.address === USDT_TRC20_CONTRACT &&
+    receivedMicros >= amountUsd * 1_000_000,
   );
 }
 
