@@ -19,9 +19,9 @@ export function AgentSetupPanel({
             <Package className="size-5 text-base-content/70" />
           </span>
           <div>
-            <p className="text-sm font-medium">افزونه OpenSEO</p>
+            <p className="text-sm font-medium">اتصال OpenSEO</p>
             <p className="mt-1 text-xs text-base-content/55">
-              اتصال MCP و مهارت‌های سئو
+              اتصال MCP و مهارت‌های اختیاری سئو
             </p>
           </div>
         </div>
@@ -37,7 +37,7 @@ export function AgentSetupPanel({
       </div>
       <div className="mt-4 text-center">
         <a
-          href="https://seomachine.ir/docs/agent-setup"
+          href="/ai"
           target="_blank"
           rel="noreferrer"
           className="text-xs text-base-content/60 underline decoration-base-content/25 underline-offset-4 hover:text-base-content"

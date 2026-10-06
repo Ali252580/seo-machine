@@ -1,12 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowUpRight, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { getAuthMode } from "@/lib/auth-mode";
 import { captureClientEvent } from "@/client/lib/posthog";
-import {
-  agentUpdatePrompt,
-  getAgentSetupPrompt,
-} from "@/client/features/ai-mcp/agentSetupPrompt";
+import { agentUpdatePrompt } from "@/client/features/ai-mcp/agentSetupPrompt";
+import { useAgentSetupPrompt } from "@/client/features/ai-mcp/useAgentSetupPrompt";
 import { CopyButton } from "@/client/features/ai-mcp/SetupControls";
 import {
   ClaudeIcon,
@@ -16,28 +14,23 @@ import {
   OpenClawIcon,
 } from "@/client/features/ai-mcp/AgentIcons";
 
-const DOCS_URL = "https://seomachine.ir/docs/agent-setup";
-const COACH_DOCS_URL = "https://seomachine.ir/docs/skills/seo-coach";
 const SKILLS = [
-  ["seo-coach", "Explains where you stand and picks your next step."],
+  ["seo-coach", "وضعیت سایت را توضیح می‌دهد و گام بعدی را پیشنهاد می‌کند."],
+  ["seo-project-setup", "هدف‌ها، رقبا و صفحات مهم پروژه را ثبت می‌کند."],
+  ["seo-audit", "سایت را بررسی می‌کند و یک اقدام مهم را مشخص می‌کند."],
   [
-    "seo-project-setup",
-    "Saves your goals, competitors, and key pages as shared context.",
+    "keyword-research",
+    "فرصت‌های کلمات کلیدی را از موضوع‌های اولیه پیدا می‌کند.",
   ],
-  [
-    "seo-audit",
-    "One-page site audit built around a single do-this-week action.",
-  ],
-  ["keyword-research", "Finds keyword opportunities from a few seed topics."],
-  ["keyword-clustering", "Groups keywords by intent and maps them to pages."],
-  ["competitive-landscape", "Maps who wins in your market and why."],
+  ["keyword-clustering", "کلمات را براساس هدف جست‌وجو گروه‌بندی می‌کند."],
+  ["competitive-landscape", "رقبای بازار و دلیل برتری آن‌ها را مشخص می‌کند."],
   [
     "competitor-analysis",
-    "Studies one competitor's keywords, content, and backlinks.",
+    "کلمات، محتوا و بک‌لینک‌های یک رقیب را بررسی می‌کند.",
   ],
-  ["link-prospecting", "Finds link prospects and drafts outreach."],
-  ["local-seo", "Audits a Google Business Profile and Maps visibility."],
-  ["seo-report", "Saves any of the above as a report on your Reports page."],
+  ["link-prospecting", "فرصت‌های دریافت لینک را پیدا می‌کند."],
+  ["local-seo", "نمایش کسب‌وکار در گوگل‌مپ را بررسی می‌کند."],
+  ["seo-report", "نتیجهٔ کار را در بخش گزارش‌ها ذخیره می‌کند."],
 ];
 const AGENTS = [
   { name: "Claude Code", Icon: ClaudeIcon },
@@ -52,28 +45,30 @@ export const Route = createFileRoute("/_app/ai")({
 });
 
 function AiPage() {
-  const origin =
-    typeof window === "undefined"
-      ? "https://seo-machine-api-lyart.vercel.app"
-      : window.location.origin;
-  const mcpUrl = `${origin}/mcp`;
-  const prompt = getAgentSetupPrompt(origin);
+  const { origin, prompt } = useAgentSetupPrompt();
+  const mcpUrl = origin ? `${origin}/mcp` : "";
   const [tab, setTab] = useState<"setup" | "skills">("setup");
 
   return (
-    <div className="h-full overflow-auto bg-base-100 px-4 py-12 md:px-6 md:py-16 pb-24 md:pb-12">
+    <div
+      dir="rtl"
+      className="h-full overflow-auto bg-base-100 px-4 py-12 pb-24 md:px-6 md:py-16 md:pb-12"
+    >
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-2xl font-semibold tracking-tight">Agent setup</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          راه‌اندازی عامل هوشمند
+        </h1>
         <p className="mt-3 text-pretty text-sm leading-relaxed text-base-content/70">
-          The most powerful way to use OpenSEO is through the AI agent you
-          already use. Set it up once, then ask it anything.
+          عامل هوشمندی را که اکنون استفاده می‌کنید به OpenSEO وصل کنید. یک‌بار
+          راه‌اندازی کنید و سپس دربارهٔ پروژه‌ها و داده‌های سئوی خود از آن
+          بپرسید.
         </p>
 
         <div role="tablist" className="tabs tabs-border mt-8 w-fit">
           {(
             [
-              ["setup", "Set up your agent"],
-              ["skills", "Skills"],
+              ["setup", "اتصال عامل"],
+              ["skills", "مهارت‌ها"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -93,11 +88,11 @@ function AiPage() {
           <>
             <div className="mt-6 space-y-5">
               <section className="rounded-xl border border-base-300 p-5 sm:p-6">
-                <h2 className="text-base font-semibold">Set up your agent</h2>
+                <h2 className="text-base font-semibold">اتصال عامل شما</h2>
                 <p className="mt-2 text-sm leading-relaxed text-base-content/60">
-                  Paste the setup prompt into your agent to connect OpenSEO and
-                  install its SEO skills. It will guide you through any manual
-                  steps.
+                  متن راه‌اندازی را کپی کنید و در عامل مورد استفاده‌تان بفرستید.
+                  عامل، اتصال MCP این سایت را تنظیم می‌کند و مراحل نیازمند اقدام
+                  شما را می‌گوید.
                 </p>
                 <ul className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
                   {AGENTS.map(({ name, Icon }) => (
@@ -110,65 +105,53 @@ function AiPage() {
                     </li>
                   ))}
                   <li className="text-xs text-base-content/45">
-                    or any MCP client
+                    یا هر عامل سازگار با MCP
                   </li>
                 </ul>
                 <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 [&>button]:h-11 [&>button]:gap-2 [&>button]:text-sm">
                   <CopyButton
                     primary
                     value={prompt}
-                    label="Copy setup prompt"
-                    successMessage="Setup prompt copied"
+                    label="کپی متن راه‌اندازی"
+                    copiedLabel="کپی شد"
+                    successMessage="متن راه‌اندازی کپی شد"
                     onCopy={() => captureClientEvent("mcp:setup_prompt_copy")}
                   />
-                  <a
-                    href={`${DOCS_URL}#set-up-your-agent`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-base-content/60 underline decoration-base-content/25 underline-offset-4 hover:text-base-content"
-                  >
-                    Setup instructions
-                    <ArrowUpRight className="size-3.5" />
-                  </a>
                 </div>
-                <p className="mt-5 border-t border-base-300 pt-4 text-sm leading-relaxed text-base-content/60">
-                  Once connected, ask your agent to use{" "}
-                  <a
-                    href={COACH_DOCS_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-base-content underline decoration-base-content/25 underline-offset-4 hover:decoration-base-content"
-                  >
-                    SEO Coach
-                  </a>{" "}
-                  to help you choose what to do next.
+                <ol className="mt-5 list-decimal space-y-2 border-t border-base-300 pt-4 pr-5 text-sm leading-relaxed text-base-content/70">
+                  <li>متن را در گفت‌وگوی عامل خود جای‌گذاری کنید.</li>
+                  <li>
+                    اگر پنجرهٔ ورود باز شد، دسترسی OpenSEO را در مرورگر تأیید
+                    کنید.
+                  </li>
+                  <li>
+                    از عامل بخواهید «پروژه‌های من را فهرست کن» تا اتصال را بررسی
+                    کند.
+                  </li>
+                </ol>
+                <p className="mt-4 text-sm text-base-content/60">
+                  پس از اتصال، می‌توانید بپرسید: «برای سایت من چه فرصت‌های کلمات
+                  کلیدی وجود دارد؟»
                 </p>
               </section>
 
               <section className="rounded-xl border border-base-300 p-5 sm:p-6">
-                <h2 className="text-base font-semibold">Update your skills</h2>
+                <h2 className="text-base font-semibold">
+                  به‌روزرسانی مهارت‌ها
+                </h2>
                 <p className="mt-2 text-sm leading-relaxed text-base-content/60">
-                  Already connected? Paste the update prompt into your agent to
-                  get the latest OpenSEO skills while preserving your connection
-                  settings and personal edits.
+                  اگر عامل را قبلاً متصل کرده‌اید، این متن را برای به‌روزرسانی
+                  مهارت‌ها بفرستید. تنظیم اتصال و تغییرات شخصی شما حفظ می‌شوند.
                 </p>
                 <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 [&>button]:h-11 [&>button]:gap-2 [&>button]:text-sm">
                   <CopyButton
                     primary
                     value={agentUpdatePrompt}
-                    label="Copy update prompt"
-                    successMessage="Update prompt copied"
+                    label="کپی متن به‌روزرسانی"
+                    copiedLabel="کپی شد"
+                    successMessage="متن به‌روزرسانی کپی شد"
                     onCopy={() => captureClientEvent("mcp:update_prompt_copy")}
                   />
-                  <a
-                    href={`${DOCS_URL}#update-your-skills`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-base-content/60 underline decoration-base-content/25 underline-offset-4 hover:text-base-content"
-                  >
-                    Update instructions
-                    <ArrowUpRight className="size-3.5" />
-                  </a>
                 </div>
               </section>
             </div>
@@ -177,29 +160,27 @@ function AiPage() {
               <div className="alert alert-warning mt-8 text-sm" role="alert">
                 <ShieldAlert className="size-4 shrink-0" />
                 <span>
-                  This instance is behind Cloudflare Access. MCP clients cannot
-                  connect until Managed OAuth is enabled on your Access
-                  application.{" "}
-                  <a
-                    href="https://seomachine.ir/docs/self-hosting/cloudflare#connect-the-mcp-server-through-cloudflare-access"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="link font-medium"
-                  >
-                    Setup guide
-                  </a>
+                  این استقرار پشت Cloudflare Access است. برای اتصال عامل بیرونی،
+                  Managed OAuth را در تنظیمات Access فعال کنید.
                 </span>
               </div>
             ) : null}
 
             <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-base-300 pt-5 text-xs text-base-content/55">
               <span>
-                MCP server URL for this instance:{" "}
-                <code className="font-mono text-base-content/80">{mcpUrl}</code>
+                نشانی اتصال MCP این سایت:{" "}
+                <code
+                  dir="ltr"
+                  className="inline-block break-all font-mono text-base-content/80"
+                >
+                  {mcpUrl}
+                </code>
               </span>
               <CopyButton
                 value={mcpUrl}
-                successMessage="MCP URL copied"
+                label="کپی نشانی"
+                copiedLabel="کپی شد"
+                successMessage="نشانی MCP کپی شد"
                 onCopy={() => captureClientEvent("mcp:setup_url_copy")}
               />
             </div>
@@ -207,8 +188,8 @@ function AiPage() {
         ) : (
           <section className="mt-6">
             <p className="text-sm text-base-content/60">
-              The setup prompt installs these. Run one by name when you want a
-              full report instead of a quick answer.
+              این مهارت‌ها را می‌توانید پس از اتصال، در عامل سازگار نصب کنید.
+              برای گزارش کامل، نام مهارت را به عامل بگویید.
             </p>
             <ul className="mt-5 space-y-3 text-sm sm:space-y-2">
               {SKILLS.map(([name, blurb]) => (
@@ -216,14 +197,12 @@ function AiPage() {
                   key={name}
                   className="flex flex-col gap-0.5 sm:flex-row sm:gap-3"
                 >
-                  <a
-                    href={`https://seomachine.ir/docs/skills/${name}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="shrink-0 font-mono text-[13px] text-base-content underline decoration-base-content/25 underline-offset-4 hover:decoration-base-content sm:w-48"
+                  <code
+                    dir="ltr"
+                    className="shrink-0 font-mono text-[13px] text-base-content sm:w-48"
                   >
                     /{name}
-                  </a>
+                  </code>
                   <span className="text-base-content/60">{blurb}</span>
                 </li>
               ))}

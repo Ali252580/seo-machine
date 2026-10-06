@@ -1,7 +1,7 @@
 import { AgentSetupPanel } from "@/client/features/ai-mcp/AgentSetupPanel";
 import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
 import { CopyButton } from "@/client/features/ai-mcp/SetupControls";
-import { getAgentSetupPrompt } from "@/client/features/ai-mcp/agentSetupPrompt";
+import { useAgentSetupPrompt } from "@/client/features/ai-mcp/useAgentSetupPrompt";
 
 export type CompactTreatment = "panel" | "simple" | "preview";
 
@@ -14,7 +14,7 @@ export function CompactAgentPrompt({
   onBack: () => void;
   onFinish: () => void;
 }) {
-  const prompt = getAgentSetupPrompt("https://seo-machine-api-lyart.vercel.app");
+  const { prompt } = useAgentSetupPrompt();
   const copy = (
     <div className="[&>button]:h-11 [&>button]:w-full [&>button]:gap-2 [&>button]:text-sm">
       <CopyButton
@@ -27,7 +27,7 @@ export function CompactAgentPrompt({
   );
   const manual = (
     <a
-      href="https://seomachine.ir/docs/mcp"
+      href="/ai"
       target="_blank"
       rel="noreferrer"
       className="text-xs text-base-content/60 underline decoration-base-content/25 underline-offset-4 hover:text-base-content"
@@ -42,9 +42,9 @@ export function CompactAgentPrompt({
       {treatment === "simple" && (
         <>
           <div className="mb-5 flex items-center justify-between gap-3">
-            <span className="text-sm font-medium">OpenSEO plugin</span>
+            <span className="text-sm font-medium">OpenSEO MCP</span>
             <span className="rounded-md border border-base-300 px-2 py-1 text-xs text-base-content/60">
-              MCP + skills
+              اتصال عامل + مهارت‌های اختیاری
             </span>
           </div>
           {copy}

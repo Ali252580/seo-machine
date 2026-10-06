@@ -3,7 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getAgentSetupPrompt } from "@/client/features/ai-mcp/agentSetupPrompt";
+import { useAgentSetupPrompt } from "@/client/features/ai-mcp/useAgentSetupPrompt";
 import { CopyButton } from "@/client/features/ai-mcp/SetupControls";
 import { SearchConsoleConnectionCard } from "@/client/features/gsc/SearchConsoleConnectionCard";
 import { CreateProjectModal } from "@/client/features/projects/CreateProjectModal";
@@ -36,6 +36,7 @@ export function DashboardSetupAction({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+  const { prompt } = useAgentSetupPrompt();
   const org = useQuery(organizationContextQueryOptions());
   const projects = useQuery({
     queryKey: ["projects"],
@@ -73,19 +74,15 @@ export function DashboardSetupAction({
         </p>
         <div className="flex flex-col gap-4 rounded-lg border border-base-300 bg-base-200/25 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium">OpenSEO plugin</p>
+            <p className="text-sm font-medium">OpenSEO MCP</p>
             <p className="mt-1 text-xs text-base-content/60">
-              MCP connection + SEO skills
+              اتصال عامل + مهارت‌های اختیاری سئو
             </p>
           </div>
           <div className="shrink-0 [&>button]:h-10 [&>button]:w-full [&>button]:gap-2 [&>button]:text-sm">
             <CopyButton
               primary
-              value={getAgentSetupPrompt(
-                typeof window === "undefined"
-                  ? "https://seo-machine-api-lyart.vercel.app"
-                  : window.location.origin,
-              )}
+              value={prompt}
               label="Copy setup prompt"
               successMessage="Setup prompt copied"
               onCopy={() =>
@@ -97,7 +94,7 @@ export function DashboardSetupAction({
           </div>
         </div>
         <a
-          href="https://seomachine.ir/docs/mcp"
+          href="/ai"
           target="_blank"
           rel="noreferrer"
           className="inline-block text-xs text-base-content/60 underline decoration-base-content/25 underline-offset-4 hover:text-base-content"

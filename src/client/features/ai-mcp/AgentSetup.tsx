@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { AgentSetupPanel, AGENT_SETUP_DESCRIPTION } from "./AgentSetupPanel";
-import { getAgentSetupPrompt } from "./agentSetupPrompt";
+import { useAgentSetupPrompt } from "./useAgentSetupPrompt";
 import { captureClientEvent } from "@/client/lib/posthog";
 
 export function AgentSetup({
@@ -18,11 +18,7 @@ export function AgentSetup({
   disabled?: boolean;
 }) {
   const [intent, setIntent] = useState(initialIntent ?? "");
-  const prompt = getAgentSetupPrompt(
-    typeof window === "undefined"
-      ? "https://seo-machine-api-lyart.vercel.app"
-      : window.location.origin,
-  );
+  const { prompt } = useAgentSetupPrompt();
   const Heading = onComplete ? "h1" : "h2";
   const chooseIntent = (answer: "yes" | "no") => {
     if (answer === "yes" || !onComplete) setIntent(answer);

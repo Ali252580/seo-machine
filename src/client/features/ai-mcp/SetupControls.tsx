@@ -6,6 +6,7 @@ export function CopyButton({
   value,
   successMessage,
   label = "Copy",
+  copiedLabel = "Copied",
   iconOnly = false,
   primary = false,
   onCopy,
@@ -13,6 +14,7 @@ export function CopyButton({
   value: string;
   successMessage: string;
   label?: string;
+  copiedLabel?: string;
   iconOnly?: boolean;
   primary?: boolean;
   onCopy?: () => void;
@@ -41,6 +43,7 @@ export function CopyButton({
         type="button"
         onClick={handleCopy}
         aria-label={label}
+        disabled={!value}
         className="flex size-7 items-center justify-center rounded-md text-base-content/60 transition-colors hover:bg-base-200 hover:text-base-content"
       >
         {copied ? (
@@ -56,6 +59,7 @@ export function CopyButton({
     <button
       type="button"
       onClick={handleCopy}
+      disabled={!value}
       className={
         primary
           ? "btn btn-primary"
@@ -67,7 +71,7 @@ export function CopyButton({
       ) : (
         <Copy className="size-3" />
       )}
-      {copied ? "Copied" : label}
+      {copied ? copiedLabel : label}
     </button>
   );
 }
