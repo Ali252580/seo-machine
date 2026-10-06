@@ -4,12 +4,13 @@ import { toast } from "sonner";
 import { useBillingAccount } from "@/client/features/billing/useBillingAccount";
 import { useCanManageBilling } from "@/client/features/team/organizationQueries";
 import { isHostedClientAuthMode } from "@/lib/auth-mode";
+import { CREDIT_PACKAGES_USD } from "@/shared/billing";
 import {
   confirmUsdtTopup,
   createNextPayCheckout,
 } from "@/serverFunctions/billing";
 
-const PACKAGES = [10, 25, 50] as const;
+const PACKAGES = CREDIT_PACKAGES_USD;
 type PackageAmount = (typeof PACKAGES)[number];
 
 export const Route = createFileRoute("/_app/billing")({

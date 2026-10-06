@@ -1,12 +1,10 @@
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { billingCustomerStatus } from "@/db/schema";
+import { billingCustomerStatus, billingUsage } from "@/db/schema";
+import { runBatch } from "@/db/runBatch";
+import { calculateUsageCharge } from "./usage-cost";
 import type { EnsuredUserContext } from "@/middleware/ensure-user/types";
-import {
-  AUTUMN_SEO_DATA_CREDITS_PER_USD,
-  SEO_DATA_COST_MARKUP,
-  roundUsdForBilling,
-} from "@/shared/billing";
+import { AUTUMN_SEO_DATA_CREDITS_PER_USD } from "@/shared/billing";
 import type { CreditFeature } from "@/shared/billing-credit-features";
 import { captureServerEvent } from "@/server/lib/posthog";
 import { AppError } from "@/server/lib/errors";
@@ -90,23 +88,72 @@ export async function trackUsageCreditSpend(args: {
   monthlyRemaining: number;
   properties?: Record<string, unknown>;
 }): Promise<{ monthlyCredits: number; topupCredits: number }> {
-  const totalCostUsd = roundUsdForBilling(args.costUsd * SEO_DATA_COST_MARKUP);
-  const credits = Math.ceil(totalCostUsd * AUTUMN_SEO_DATA_CREDITS_PER_USD);
+  if (args.customerId !== args.customer.organizationId)
+    throw new AppError("FORBIDDEN");
+  const { credits, rawCostMicros } = calculateUsageCharge(args.costUsd);
+  const totalCostUsd = credits / AUTUMN_SEO_DATA_CREDITS_PER_USD;
   if (credits <= 0) return { monthlyCredits: 0, topupCredits: 0 };
 
-  const charged = await db
-    .update(billingCustomerStatus)
-    .set({
-      creditBalance: sql`${billingCustomerStatus.creditBalance} - ${credits}`,
-      updatedAt: new Date().toISOString(),
-    })
-    .where(
-      and(
-        eq(billingCustomerStatus.organizationId, args.customerId),
-        gte(billingCustomerStatus.creditBalance, credits),
+  const chargeId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  // A private marker links the conditional debit to its ledger insert. All
+  // three statements are one transaction; the marker is never committed.
+  // PostgreSQL holds the wallet row lock; D1 serializes the atomic batch.
+  await runBatch((tx) => [
+    tx
+      .update(billingCustomerStatus)
+      .set({
+        creditBalance: sql`${billingCustomerStatus.creditBalance} - ${credits}`,
+        updatedAt: chargeId,
+      })
+      .where(
+        and(
+          eq(billingCustomerStatus.organizationId, args.customerId),
+          gte(billingCustomerStatus.creditBalance, credits),
+        ),
       ),
-    )
-    .returning({ creditBalance: billingCustomerStatus.creditBalance });
+    tx.insert(billingUsage).select(
+      tx
+        .select({
+          id: sql<string>`${chargeId}`.as("id"),
+          organizationId: billingCustomerStatus.organizationId,
+          userId: sql<string>`${args.customer.userId}`.as("user_id"),
+          projectId: sql<string | null>`${args.customer.projectId ?? null}`.as(
+            "project_id",
+          ),
+          feature: sql<string>`${args.creditFeature}`.as("feature"),
+          provider:
+            sql<string>`${typeof args.properties?.provider === "string" ? args.properties.provider : "unknown"}`.as(
+              "provider",
+            ),
+          rawCostMicros: sql<number>`${rawCostMicros}`.as("raw_cost_micros"),
+          chargedCredits: sql<number>`${credits}`.as("charged_credits"),
+          balanceAfter: billingCustomerStatus.creditBalance,
+          createdAt: sql<string>`${now}`.as("created_at"),
+        })
+        .from(billingCustomerStatus)
+        .where(
+          and(
+            eq(billingCustomerStatus.organizationId, args.customerId),
+            eq(billingCustomerStatus.updatedAt, chargeId),
+          ),
+        ),
+    ),
+    tx
+      .update(billingCustomerStatus)
+      .set({ updatedAt: now })
+      .where(
+        and(
+          eq(billingCustomerStatus.organizationId, args.customerId),
+          eq(billingCustomerStatus.updatedAt, chargeId),
+        ),
+      ),
+  ]);
+  const charged = await db
+    .select({ id: billingUsage.id })
+    .from(billingUsage)
+    .where(eq(billingUsage.id, chargeId))
+    .limit(1);
   if (charged.length === 0) throw new AppError("INSUFFICIENT_CREDITS");
 
   await captureServerEvent({
@@ -122,6 +169,10 @@ export async function trackUsageCreditSpend(args: {
       cost_usd: totalCostUsd,
       ...args.properties,
     },
+  }).catch(() => {
+    // The committed ledger is authoritative. An analytics outage must not
+    // turn a successful debit into a failed request that users repeat.
+    console.warn("billing usage analytics unavailable");
   });
   return { monthlyCredits: credits, topupCredits: 0 };
 }

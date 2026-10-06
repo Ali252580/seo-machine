@@ -10,9 +10,15 @@ import {
 import { getOrCreateOrganizationCustomer } from "@/server/billing/subscription";
 import { getPublicOrigin } from "@/server/mcp/public-origin";
 import { requireAuthenticatedContext } from "@/serverFunctions/middleware";
+import { CREDIT_PACKAGES_USD } from "@/shared/billing";
 
 const packageSchema = z.object({
-  amountUsd: z.union([z.literal(10), z.literal(25), z.literal(50)]),
+  amountUsd: z
+    .number()
+    .refine(
+      (amount) => CREDIT_PACKAGES_USD.some((value) => value === amount),
+      "Invalid credit package",
+    ),
 });
 const billingUsagePropertySchema = z.json();
 

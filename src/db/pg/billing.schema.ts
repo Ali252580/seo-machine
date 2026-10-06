@@ -59,3 +59,27 @@ export const billingPayments = pgTable(
     ),
   ],
 );
+
+export const billingUsage = pgTable(
+  "billing_usage",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    projectId: text("project_id"),
+    feature: text("feature").notNull(),
+    provider: text("provider").notNull(),
+    rawCostMicros: integer("raw_cost_micros").notNull(),
+    chargedCredits: integer("charged_credits").notNull(),
+    balanceAfter: integer("balance_after").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("billing_usage_org_created_idx").on(
+      table.organizationId,
+      table.createdAt,
+    ),
+  ],
+);
