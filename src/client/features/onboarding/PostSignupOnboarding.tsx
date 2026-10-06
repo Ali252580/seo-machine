@@ -12,7 +12,6 @@ import {
   SOURCE_OPTIONS,
   WORK_FOR_OPTIONS,
 } from "@/client/features/onboarding/onboardingModel";
-import { AgentSetup } from "@/client/features/ai-mcp/AgentSetup";
 import { SearchConsoleOnboardingStep } from "@/client/features/onboarding/SearchConsoleOnboardingStep";
 
 type PostSignupOnboardingProps = {
@@ -104,15 +103,32 @@ export function PostSignupOnboarding({
           ) : step === 3 ? (
             <SearchConsoleOnboardingStep />
           ) : (
-            <AgentSetup
-              initialIntent={answers.mcpSetupIntent}
-              onComplete={onFinish}
-              onBack={onBack}
-              disabled={isSaving}
-              onIntentChange={(mcpSetupIntent) =>
-                updateAnswers({ mcpSetupIntent })
-              }
-            />
+            <div dir="rtl" className="space-y-5">
+              <h1 className="text-2xl font-semibold">
+                عامل هوشمند داخل سایت آماده است
+              </h1>
+              <p className="text-sm leading-7 text-base-content/70">
+                بعد از ساخت پروژه، از بخش گفت‌وگو با SAM دربارهٔ کلمات کلیدی،
+                رقبا، رتبه‌ها و داده‌های متصل‌شده بپرسید. مهارت‌های سئو همان‌جا
+                اجرا می‌شوند؛ نیازی به نصب ابزار یا وارد کردن کلید API ندارید.
+              </p>
+              <div className="flex items-center justify-between gap-3 pt-4">
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={onBack}
+                >
+                  <ArrowRight className="size-4" /> بازگشت
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => onFinish()}
+                >
+                  ورود به برنامه <ArrowLeft className="size-4" />
+                </button>
+              </div>
+            </div>
           )}
 
           {step < ONBOARDING_LAST_STEP && (

@@ -127,7 +127,7 @@ function OnboardingFlow({
       work_for: answers.workFor,
       source: answers.source,
     });
-    // The dashboard's onboarding checklist owns MCP coaching now.
+    // SAM is available in the project's Chat tab after project setup.
     void navigate({ to: "/", replace: true });
   };
 
