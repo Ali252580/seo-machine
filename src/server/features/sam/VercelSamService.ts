@@ -1,4 +1,5 @@
-import { generateText, stepCountIs } from "ai";
+import { generateText, stepCountIs, tool } from "ai";
+import { z } from "zod";
 import { AppError } from "@/server/lib/errors";
 import { getOptionalEnvValue } from "@/server/lib/runtime-env";
 import { buildChatAgentModel } from "@/server/lib/openrouter";
@@ -8,6 +9,7 @@ import { SamMessageRepository } from "./SamMessageRepository";
 import { SamSessionRepository } from "./SamSessionRepository";
 import { buildSamMcpTools } from "./samChatTools";
 import { buildSamSystemPrompt } from "./samSystemPrompt";
+import { buildSamSkillSource } from "./samSkills";
 import {
   checkUsageCreditsDepleted,
   trackUsageCreditSpend,
@@ -107,6 +109,10 @@ export async function sendVercelSamMessage(
       clientId: null,
       baseUrl: publicOrigin(),
     };
+    // Vercel does not run Think's built-in skill registry. Expose the same
+    // bundled public skills on demand so the model can follow their steps here.
+    const skillSource = buildSamSkillSource();
+    const skills = await skillSource.list();
     let remaining = balance.monthlyRemaining;
     const result = await generateText({
       model: buildChatAgentModel(
@@ -129,6 +135,7 @@ export async function sendVercelSamMessage(
           },
         ),
         memory ? `project_context:\n${memory}` : "",
+        `Available in-app skills: ${skills.map(({ name, description }) => `${name}: ${description}`).join("; ")}. When a request fits a skill, call activate_skill and follow its instructions using the available tools.`,
       ]
         .filter(Boolean)
         .join("\n\n"),
@@ -136,7 +143,23 @@ export async function sendVercelSamMessage(
         role: message.role,
         content: message.content,
       })),
-      tools: buildSamMcpTools(auth, caller.project, turnId),
+      tools: {
+        ...buildSamMcpTools(auth, caller.project, turnId),
+        activate_skill: tool({
+          description:
+            "Load an in-app SEO skill's workflow instructions before using it.",
+          inputSchema: z.object({ name: z.string().min(1) }),
+          execute: async ({ name }) => {
+            const skill = await skillSource.load(name);
+            return skill
+              ? { name: skill.name, instructions: skill.body }
+              : {
+                  error: "Unknown skill",
+                  available: skills.map((item) => item.name),
+                };
+          },
+        }),
+      },
       stopWhen: stepCountIs(5),
       maxOutputTokens: 2_000,
       abortSignal: AbortSignal.timeout(50_000),

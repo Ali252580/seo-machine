@@ -1,51 +1,11 @@
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { Archive, Loader2, Plus, X } from "lucide-react";
+import { Archive, Loader2, Plus } from "lucide-react";
 import { archiveSamSession, createSamSession } from "@/serverFunctions/sam";
 import {
   invalidateSamSessions,
   samSessionsQueryOptions,
 } from "@/client/features/sam/samQueries";
-
-const BETA_NOTICE_DISMISSED_KEY = "sam-beta-notice-dismissed";
-
-// Beta framing + the MCP power-path nudge, pinned to the bottom of the Chat
-// tab. Dismissible per browser; localStorage is read in an effect so SSR and
-// the first client render stay identical (same pattern as AppShell).
-function BetaNotice() {
-  const [dismissed, setDismissed] = useState(true);
-  useEffect(() => {
-    setDismissed(localStorage.getItem(BETA_NOTICE_DISMISSED_KEY) === "1");
-  }, []);
-  if (dismissed) return null;
-
-  return (
-    <div className="mx-2 mb-2 rounded-lg border border-base-300 bg-base-100 p-3">
-      <div className="flex items-center justify-between">
-        <span className="badge badge-primary badge-sm">Beta</span>
-        <button
-          type="button"
-          aria-label="Dismiss"
-          className="btn btn-ghost btn-xs btn-square text-base-content/40"
-          onClick={() => {
-            localStorage.setItem(BETA_NOTICE_DISMISSED_KEY, "1");
-            setDismissed(true);
-          }}
-        >
-          <X className="size-3.5" />
-        </button>
-      </div>
-      <p className="mt-1.5 text-xs text-base-content/70">
-        For more powerful AI workflows, use the OpenSEO MCP with your own agent
-        like Claude Code or Hermes.
-      </p>
-      <Link to="/ai" className="link link-primary mt-1.5 inline-block text-xs">
-        Set up the MCP →
-      </Link>
-    </div>
-  );
-}
 
 // Compact age label for the session list (PostHog-style "3h" / "12d").
 // Timestamps come back as UTC from both backends: D1 as "YYYY-MM-DD HH:MM:SS"
@@ -124,7 +84,7 @@ export function SamSidebarPanel({
           ) : (
             <Plus className="size-4" />
           )}
-          New chat
+          گفت‌وگوی جدید
         </button>
       </div>
 
@@ -135,7 +95,7 @@ export function SamSidebarPanel({
           </div>
         ) : sessions.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-base-content/50">
-            No chats yet. Start a new one.
+            هنوز گفت‌وگویی ندارید. یکی بسازید.
           </p>
         ) : (
           sessions.map((session) => {
@@ -159,7 +119,7 @@ export function SamSidebarPanel({
                 </span>
                 <button
                   type="button"
-                  aria-label="Archive chat"
+                  aria-label="بایگانی گفت‌وگو"
                   className="btn btn-ghost btn-xs btn-square hidden group-hover:inline-flex"
                   disabled={archiveSession.isPending}
                   onClick={() => archiveSession.mutate(session.id)}
@@ -171,8 +131,6 @@ export function SamSidebarPanel({
           })
         )}
       </div>
-
-      <BetaNotice />
     </div>
   );
 }

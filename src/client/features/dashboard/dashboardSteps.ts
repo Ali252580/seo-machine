@@ -1,4 +1,4 @@
-import { Bot, FolderPlus, Globe, Search, Users } from "lucide-react";
+import { FolderPlus, Globe, Search, Users } from "lucide-react";
 import type { DashboardActivation } from "@/server/features/dashboard/services/DashboardService";
 import type { DashboardSetupStep } from "@/types/schemas/dashboard";
 
@@ -26,12 +26,6 @@ export const setupSteps: {
     label: "یک رقیب را بررسی کنید",
     detail: "موضوع‌ها و لینک‌های ارزشمند را پیدا کنید.",
     icon: Search,
-  },
-  {
-    id: "mcp",
-    label: "عامل هوش مصنوعی خود را وصل کنید",
-    detail: "از OpenSEO در Claude یا عامل دلخواهتان استفاده کنید.",
-    icon: Bot,
   },
   {
     id: "gsc",
