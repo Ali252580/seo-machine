@@ -2,7 +2,7 @@ import { AGENT_SETUP_DESCRIPTION } from "@/client/features/ai-mcp/AgentSetupPane
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Moon, Sun } from "lucide-react";
 import { CopyButton } from "@/client/features/ai-mcp/SetupControls";
-import { getAgentSetupPrompt } from "@/client/features/ai-mcp/agentSetupPrompt";
+import { useAgentSetupPrompt } from "@/client/features/ai-mcp/useAgentSetupPrompt";
 import { SignupPreviewLayout, type PreviewDesign } from "./SignupPreviewLayout";
 import { INTEREST_OPTIONS, ONBOARDING_OPTION_LABELS } from "./onboardingModel";
 import {
@@ -36,6 +36,7 @@ export function SignupPreview({
   const [dark, setDark] = useState(true);
   const [interests, setInterests] = useState<string[]>([]);
   const [other, setOther] = useState("");
+  const { prompt } = useAgentSetupPrompt();
   const go = (next: Screen) => onChange({ design, screen: next, treatment });
   const step = screen === "goal" ? 1 : 2;
   const title =
@@ -175,20 +176,20 @@ export function SignupPreview({
             }
           >
             <div className="mb-4 flex items-center gap-2 text-xs font-medium text-base-content/55">
-              <span>OpenSEO plugin</span>
+              <span>OpenSEO MCP</span>
               <span aria-hidden="true">·</span>
-              <span>MCP + skills</span>
+              <span>اتصال عامل + مهارت‌های اختیاری</span>
             </div>
             <CopyButton
               primary
-              value={getAgentSetupPrompt("https://seo-machine-api-lyart.vercel.app")}
+              value={prompt}
               label="Copy setup prompt"
               successMessage="Setup prompt copied"
             />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-base-300 pt-6">
             <a
-              href="https://seomachine.ir/docs/mcp"
+              href="/ai"
               target="_blank"
               rel="noreferrer"
               className="text-sm text-base-content/60 underline underline-offset-4 hover:text-base-content"
