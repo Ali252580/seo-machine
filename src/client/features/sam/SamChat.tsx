@@ -96,14 +96,23 @@ export function SamChat({
           <span className="truncate text-sm font-medium text-base-content/80">
             {activeTitle ?? "گفت‌وگو"}
           </span>
-          <Link
-            to="/p/$projectId/context"
-            params={{ projectId }}
-            className="flex shrink-0 items-center gap-1.5 text-xs text-base-content/60 transition-colors hover:text-base-content"
-          >
-            <Brain className="size-3.5" />
-            زمینهٔ پروژه
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/p/$projectId/content"
+              params={{ projectId }}
+              className="text-xs text-primary hover:underline"
+            >
+              نگارش مقاله
+            </Link>
+            <Link
+              to="/p/$projectId/context"
+              params={{ projectId }}
+              className="flex shrink-0 items-center gap-1.5 text-xs text-base-content/60 transition-colors hover:text-base-content"
+            >
+              <Brain className="size-3.5" />
+              زمینهٔ پروژه
+            </Link>
+          </div>
         </div>
         <div className="flex min-h-0 flex-1">
           {/* useAgentChat suspends while it fetches the session's history; this

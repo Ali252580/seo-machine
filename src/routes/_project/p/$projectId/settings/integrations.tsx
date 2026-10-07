@@ -6,6 +6,7 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { SearchConsoleConnectionCard } from "@/client/features/gsc/SearchConsoleConnectionCard";
 import { GoogleAnalyticsConnectionCard } from "@/client/features/ga4/GoogleAnalyticsConnectionCard";
+import { WordPressConnectionCard } from "@/client/features/integrations/WordPressConnectionCard";
 
 export const Route = createFileRoute(
   "/_project/p/$projectId/settings/integrations",
@@ -40,6 +41,7 @@ function ProjectIntegrationsRoute() {
           }
         />
       </section>
+      <WordPressConnectionCard projectId={projectId} />
     </div>
   );
 }

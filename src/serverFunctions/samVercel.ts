@@ -29,9 +29,17 @@ export const getSamVercelMessages = createServerFn({ method: "GET" })
 export const sendSamVercelMessage = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
   .validator(
-    sessionSchema.extend({ text: z.string().trim().min(1).max(4_000) }),
+    sessionSchema.extend({
+      text: z.string().trim().min(1).max(4_000),
+      article: z.boolean().optional(),
+    }),
   )
   .handler(async ({ data, context }) => {
     requireVercel();
-    return sendVercelSamMessage(data.sessionId, data.text, context);
+    return sendVercelSamMessage(
+      data.sessionId,
+      data.text,
+      context,
+      data.article,
+    );
   });

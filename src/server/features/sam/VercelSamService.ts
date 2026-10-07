@@ -10,6 +10,11 @@ import { SamSessionRepository } from "./SamSessionRepository";
 import { buildSamMcpTools } from "./samChatTools";
 import { buildSamSystemPrompt } from "./samSystemPrompt";
 import { buildSamSkillSource } from "./samSkills";
+import { hasOrgPermission } from "@/lib/org-permissions";
+import {
+  createWordPressDraft,
+  listWordPressPages,
+} from "@/server/features/wordpress/WordPressService";
 import {
   checkUsageCreditsDepleted,
   trackUsageCreditSpend,
@@ -55,6 +60,7 @@ export async function sendVercelSamMessage(
   sessionId: string,
   text: string,
   caller: Caller,
+  article = false,
 ) {
   const session = await requireSession(sessionId, caller);
   const apiKey = await getOptionalEnvValue("OPENROUTER_API_KEY");
@@ -136,6 +142,9 @@ export async function sendVercelSamMessage(
         ),
         memory ? `project_context:\n${memory}` : "",
         `Available in-app skills: ${skills.map(({ name, description }) => `${name}: ${description}`).join("; ")}. When a request fits a skill, call activate_skill and follow its instructions using the available tools.`,
+        article
+          ? "For this turn, write ONLY the requested article body in Persian HTML. Use only h2, h3, p, ul, ol, li, strong, em, br tags with no attributes. No markdown fences, preface, invented facts, or claims of first-hand experience. Write for the stated commercial search intent and Tehran market. This is an editable in-app draft, not a published page."
+          : "",
       ]
         .filter(Boolean)
         .join("\n\n"),
@@ -145,6 +154,42 @@ export async function sendVercelSamMessage(
       })),
       tools: {
         ...buildSamMcpTools(auth, caller.project, turnId),
+        list_wordpress_pages: tool({
+          description:
+            "Search existing WordPress pages, including drafts, before proposing a new SEO page.",
+          inputSchema: z.object({ search: z.string().min(1).max(100) }),
+          execute: ({ search }) =>
+            listWordPressPages(caller.project.id, search),
+        }),
+        create_wordpress_draft: tool({
+          description:
+            "Create a WordPress page as a DRAFT only, after checking existing pages. Never publish or edit a live page.",
+          inputSchema: z.object({
+            title: z.string().min(5).max(180),
+            slug: z
+              .string()
+              .min(2)
+              .max(180)
+              .regex(/^[\p{L}\p{N}-]+$/u),
+            content: z.string().min(200).max(20_000),
+            kind: z.enum(["page", "post"]).default("page"),
+          }),
+          execute: async ({ title, slug, content, kind }) => {
+            if (!hasOrgPermission(caller.role, { integration: ["manage"] })) {
+              throw new AppError(
+                "FORBIDDEN",
+                "Only a project manager can create WordPress drafts.",
+              );
+            }
+            return createWordPressDraft(
+              caller.project.id,
+              title,
+              content,
+              slug,
+              kind,
+            );
+          },
+        }),
         activate_skill: tool({
           description:
             "Load an in-app SEO skill's workflow instructions before using it.",
@@ -161,7 +206,7 @@ export async function sendVercelSamMessage(
         }),
       },
       stopWhen: stepCountIs(5),
-      maxOutputTokens: 2_000,
+      maxOutputTokens: article ? 4_000 : 2_000,
       abortSignal: AbortSignal.timeout(50_000),
       onStepFinish: async (step) => {
         // Charge every model step before another step can run. Shared MCP
