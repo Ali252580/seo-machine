@@ -79,6 +79,11 @@ function ContentEditor() {
       saveWordPressDraft({ data: { projectId, title, slug, content, kind } }),
   });
   const canWrite = wordpress.data?.canManage === true;
+  const articleText = content
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const wordCount = articleText ? articleText.split(" ").length : 0;
 
   return (
     <main className="h-full overflow-auto p-4 md:p-7" dir="rtl">
@@ -221,6 +226,24 @@ function ContentEditor() {
           </section>
           <section className="rounded-xl border border-base-300 p-4">
             <h2 className="mb-3 font-medium">پیش‌نمایش مقاله</h2>
+            <div className="mb-4 grid gap-1 rounded-lg bg-base-200 p-3 text-xs text-base-content/70">
+              <span>{wordCount.toLocaleString("fa-IR")} واژه</span>
+              <span>
+                {keyword && title.includes(keyword)
+                  ? "✓ کلمهٔ هدف در عنوان است"
+                  : "کلمهٔ هدف را در عنوان بررسی کنید"}
+              </span>
+              <span>
+                {keyword && articleText.includes(keyword)
+                  ? "✓ کلمهٔ هدف در متن است"
+                  : "ارتباط متن با کلمهٔ هدف را بررسی کنید"}
+              </span>
+              <span>
+                {/<h2>/i.test(content)
+                  ? "✓ متن دارای تیتر بخش است"
+                  : "برای بخش‌های مقاله تیتر بگذارید"}
+              </span>
+            </div>
             <iframe
               title="پیش‌نمایش مقاله"
               sandbox=""
