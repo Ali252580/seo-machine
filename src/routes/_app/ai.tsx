@@ -1,4 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { getLastProjectId } from "@/client/lib/active-project";
+import { getProjects } from "@/serverFunctions/projects";
 
 const SKILLS = [
   ["seo-coach", "وضعیت سایت و گام بعدی را توضیح می‌دهد."],
@@ -17,6 +21,23 @@ export const Route = createFileRoute("/_app/ai")({
 });
 
 function AiPage() {
+  const projectsQuery = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => getProjects(),
+  });
+  const projects = projectsQuery.data ?? [];
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+
+  useEffect(() => {
+    if (projects.length === 0) return;
+    setSelectedProjectId((current) =>
+      projects.some((project) => project.id === current)
+        ? current
+        : (projects.find((project) => project.id === getLastProjectId())?.id ??
+          projects[0].id),
+    );
+  }, [projects]);
+
   return (
     <main
       dir="rtl"
@@ -38,13 +59,47 @@ function AiPage() {
         <section className="rounded-xl border border-base-300 p-5 sm:p-6">
           <h2 className="font-semibold">شروع کار با SAM</h2>
           <p className="mt-2 text-sm leading-7 text-base-content/70">
-            پروژه را انتخاب کنید و از منوی «عامل هوشمند داخل سایت» گفت‌وگو را
-            شروع کنید. SAM مهارت مناسب درخواست را خودش فعال می‌کند.
+            پروژه را انتخاب کنید و گفت‌وگو را مستقیم در SAM شروع کنید. مهارت
+            مناسب درخواست شما به‌صورت خودکار فعال می‌شود.
           </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link to="/projects" className="btn btn-primary">
-              انتخاب پروژه و شروع
+          {projectsQuery.isLoading ? (
+            <p className="mt-4 text-sm" role="status">
+              در حال دریافت پروژه‌ها…
+            </p>
+          ) : projectsQuery.isError ? (
+            <p className="mt-4 text-sm text-error" role="alert">
+              دریافت پروژه‌ها ناموفق بود.
+            </p>
+          ) : projects.length === 0 ? (
+            <Link to="/projects" className="btn btn-primary mt-5">
+              ساخت پروژهٔ اول
             </Link>
+          ) : (
+            <div className="mt-5 flex flex-wrap items-end gap-3">
+              <label className="form-control min-w-48 flex-1">
+                <span className="mb-1 block text-sm">پروژه</span>
+                <select
+                  className="select select-bordered w-full"
+                  value={selectedProjectId}
+                  onChange={(event) => setSelectedProjectId(event.target.value)}
+                >
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Link
+                to="/p/$projectId/sam"
+                params={{ projectId: selectedProjectId || projects[0].id }}
+                className="btn btn-primary"
+              >
+                شروع گفت‌وگو
+              </Link>
+            </div>
+          )}
+          <div className="mt-3 flex flex-wrap gap-3">
             <Link to="/billing" className="btn btn-outline">
               اعتبار و بسته‌ها
             </Link>
