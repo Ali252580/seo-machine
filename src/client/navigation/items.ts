@@ -86,16 +86,14 @@ const projectNavItems = [
   },
 ] as const;
 
-// Project-independent. Rendered inside the project "AI" group when a project
-// is selected, and on its own (connectNavGroup) when none is.
+// Project-independent entry for the built-in SAM skills and package guide.
 const aiNavItem = linkOptions({
   to: "/ai" as const,
-  label: "اتصال عامل بیرونی",
+  label: "مهارت‌های عامل هوشمند",
   icon: Bot,
 });
 
-// Shown only when no project is selected; with a project, Agent setup lives in
-// the "AI" group below.
+// Shown on its own when no project is selected.
 export const connectNavGroup = {
   label: "هوش مصنوعی",
   items: [aiNavItem],
