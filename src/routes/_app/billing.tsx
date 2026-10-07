@@ -65,7 +65,9 @@ function BillingPage() {
       <div>
         <h1 className="text-2xl font-semibold">کیف پول و اعتبار</h1>
         <p className="mt-1 text-sm text-base-content/60">
-          هزینه همه ابزارها از یک موجودی مشترک کم می‌شود.
+          هر بسته، دسترسی به SAM و مهارت‌های سئو را داخل سایت فعال می‌کند.
+          هزینهٔ عامل و ابزارها از اعتبار مشترک سازمان کم می‌شود؛ نیازی به کلید
+          API کاربر نیست.
         </p>
       </div>
 
@@ -116,7 +118,7 @@ function BillingPage() {
             </button>
             {!account.data.nextPayEnabled ? (
               <p className="text-xs text-warning">
-                NEXTPAY_API_KEY و BILLING_IRT_PER_USD را در Vercel تنظیم کنید.
+                پرداخت ریالی فعلاً در دسترس نیست.
               </p>
             ) : null}
           </section>
@@ -153,7 +155,7 @@ function BillingPage() {
             </button>
             {!account.data.usdtEnabled ? (
               <p className="text-xs text-warning">
-                USDT_TRC20_WALLET_ADDRESS را در Vercel تنظیم کنید.
+                پرداخت با تتر فعلاً در دسترس نیست.
               </p>
             ) : null}
           </section>
