@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createSamSession } from "@/serverFunctions/sam";
 import { sendSamVercelMessage } from "@/serverFunctions/samVercel";
 import {
+  findWordPressPages,
   getWordPressStatus,
   saveWordPressDraft,
 } from "@/serverFunctions/wordpress";
@@ -29,6 +30,9 @@ function ContentEditor() {
   const [content, setContent] = useState("");
   const [kind, setKind] = useState<"page" | "post">("page");
   const [loaded, setLoaded] = useState(false);
+  const [matchingPages, setMatchingPages] = useState<
+    { id: number; link: string; title: { rendered: string }; status: string }[]
+  >([]);
   const storageKey = `openseo-article-${projectId}`;
   const wordpress = useQuery({
     queryKey: ["wordpress-connection", projectId],
@@ -62,13 +66,20 @@ function ContentEditor() {
 
   const generate = useMutation({
     mutationFn: async () => {
+      // Check the project's own CMS before asking SAM to draft a new page.
+      const pages = wordpress.data?.connection
+        ? await findWordPressPages({
+            data: { projectId, search: keyword.trim() },
+          })
+        : [];
+      setMatchingPages(pages);
       const session = await createSamSession({ data: { projectId } });
       return sendSamVercelMessage({
         data: {
           projectId,
           sessionId: session.id,
           article: true,
-          text: `برای کلمهٔ «${keyword}» و عنوان «${title}» یک مقالهٔ خدماتی دقیق و قابل ویرایش بنویس. پیش از نوشتن سایت پروژه و صفحه‌های موجود مرتبط را بررسی کن. ادعای بدون منبع، قیمت ساختگی و متن عمومی ننویس. فقط HTML مقاله را بده.`,
+          text: `برای کلمهٔ «${keyword}» و عنوان «${title}» یک مقالهٔ خدماتی دقیق و قابل ویرایش بنویس. وضعیت صفحه‌های مرتبط: ${wordpress.data?.connection ? (pages.length ? pages.map((page) => `${page.title.rendered} (${page.link})`).join("؛ ") : "جست‌وجوی وردپرس نتیجه‌ای نداشت") : "وردپرس متصل نیست"}. سایت پروژه و صفحه‌های موجود مرتبط را بررسی کن. اگر صفحه‌ای وجود دارد، متن را برای بهبود همان صفحه بنویس و ادعای بدون منبع، قیمت ساختگی و متن عمومی نیاور. فقط HTML مقاله را بده.`,
         },
       });
     },
@@ -123,7 +134,10 @@ function ContentEditor() {
               <input
                 className="input input-bordered w-full"
                 value={keyword}
-                onChange={(event) => setKeyword(event.target.value)}
+                onChange={(event) => {
+                  setKeyword(event.target.value);
+                  setMatchingPages([]);
+                }}
                 placeholder="مثلاً اجرای روف گاردن در تهران"
               />
             </label>
@@ -175,6 +189,29 @@ function ContentEditor() {
               <p role="alert" className="text-error text-sm">
                 تولید مقاله انجام نشد. اتصال یا اعتبار SAM را بررسی کنید.
               </p>
+            )}
+            {matchingPages.length > 0 && (
+              <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
+                <p className="font-medium">
+                  صفحهٔ مرتبط در وردپرس پیدا شد. پیش از ساخت صفحهٔ تازه بررسی
+                  کنید:
+                </p>
+                <ul className="mt-2 list-inside list-disc space-y-1">
+                  {matchingPages.slice(0, 8).map((page) => (
+                    <li key={page.id}>
+                      <a
+                        href={page.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="link"
+                      >
+                        {page.title.rendered || page.link}
+                      </a>{" "}
+                      ({page.status})
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
             <label className="grid gap-1 text-sm">
               متن مقاله (HTML ساده)

@@ -9,6 +9,7 @@ import {
   createWordPressDraft,
   disconnectWordPress,
   getWordPressConnection,
+  listWordPressPages,
 } from "@/server/features/wordpress/WordPressService";
 
 const scoped = z.object({ projectId: z.string().min(1) });
@@ -20,6 +21,13 @@ export const getWordPressStatus = createServerFn({ method: "POST" })
     connection: await getWordPressConnection(context.projectId),
     canManage: hasOrgPermission(context.role, { integration: ["manage"] }),
   }));
+
+export const findWordPressPages = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(scoped.extend({ search: z.string().trim().min(2).max(100) }))
+  .handler(({ context, data }) =>
+    listWordPressPages(context.projectId, data.search),
+  );
 
 export const saveWordPressConnection = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
