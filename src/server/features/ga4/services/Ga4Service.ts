@@ -59,6 +59,7 @@ async function listPropertiesForUserWithGrantStatus(userId: string) {
           email,
           requiresReconnect: false,
           propertiesUnavailable: false,
+          propertiesError: null,
           properties,
         };
       } catch (error) {
@@ -75,6 +76,11 @@ async function listPropertiesForUserWithGrantStatus(userId: string) {
           email: null,
           requiresReconnect: reconnect,
           propertiesUnavailable: !reconnect,
+          propertiesError: reconnect
+            ? null
+            : error instanceof Ga4AdminApiError
+              ? error.message
+              : "Google Analytics could not load properties. Check the Admin API and try again.",
           properties: [],
         };
       }

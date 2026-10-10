@@ -180,6 +180,7 @@ describe("Ga4Service", () => {
           email: null,
           requiresReconnect: true,
           propertiesUnavailable: false,
+          propertiesError: null,
           properties: [],
         },
         {
@@ -187,6 +188,7 @@ describe("Ga4Service", () => {
           email: null,
           requiresReconnect: false,
           propertiesUnavailable: true,
+          propertiesError: "forbidden",
           properties: [],
         },
       ],

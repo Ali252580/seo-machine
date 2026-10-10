@@ -79,10 +79,28 @@ export function Ga4Card({
     enabled: connected,
   });
 
-  // Not connected (or a dead grant discovered by the report call): the
-  // connection card sells and runs the whole flow itself.
-  if (!connected || (reportQuery.data && !reportQuery.data.connected)) {
+  if (!connected) {
     return <Ga4ConnectCard projectId={projectId} connected={connected} />;
+  }
+
+  // A saved property can outlive its Google grant; show the repair path
+  // instead of a misleading "Connected" card with no report.
+  if (reportQuery.data && !reportQuery.data.connected) {
+    return (
+      <CardShell title="گوگل آنالیتیکس" stamp="نیاز به اتصال مجدد">
+        <p className="text-sm text-base-content/70">
+          دسترسی حساب گوگل منقضی شده یا دسترسی به پراپرتی تغییر کرده است.
+        </p>
+        <Link
+          to="/p/$projectId/settings/integrations"
+          params={{ projectId }}
+          hash="google-analytics"
+          className="btn btn-primary btn-sm mt-3"
+        >
+          بررسی و اتصال مجدد
+        </Link>
+      </CardShell>
+    );
   }
 
   const report = reportQuery.data;
