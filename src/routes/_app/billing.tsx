@@ -74,7 +74,12 @@ function BillingPage() {
       <section className="rounded-xl border border-base-300 bg-base-100 p-5">
         <div className="text-sm text-base-content/60">موجودی فعلی</div>
         <div className="mt-1 text-3xl font-bold tabular-nums" dir="ltr">
-          ${account.data.balanceUsd.toFixed(2)}
+          $
+          {account.data.balanceUsd.toFixed(
+            account.data.balanceUsd > 0 && account.data.balanceUsd < 0.01
+              ? 3
+              : 2,
+          )}
         </div>
         <div className="mt-1 text-xs text-base-content/50 tabular-nums">
           {account.data.credits.toLocaleString("fa-IR")} اعتبار

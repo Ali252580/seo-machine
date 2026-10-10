@@ -15,7 +15,7 @@ export function FreePlanBanner() {
           <span>
             {account.data.balanceUsd <= 0
               ? "اعتبار شما تمام شده است."
-              : `اعتبار باقی‌مانده: ${account.data.balanceUsd.toFixed(2)} دلار.`}{" "}
+              : `اعتبار باقی‌مانده: ${account.data.balanceUsd.toFixed(account.data.balanceUsd < 0.01 ? 3 : 2)} دلار.`}{" "}
             <Link to="/billing" className="link link-primary font-medium">
               شارژ حساب
             </Link>
