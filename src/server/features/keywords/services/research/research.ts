@@ -100,8 +100,9 @@ const cachedResultSchema = z.object({
   }),
 });
 
-// v5 invalidates cached Iran results that may include unrelated Latin ideas.
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 4;
+// Only Iran needs fresh rows after the Persian-language filter changed.
+const IRAN_CACHE_VERSION = 5;
 
 async function fetchRowsFromSource(
   source: KeywordSource,
@@ -305,7 +306,8 @@ async function buildResearchCacheKey(
   billingCustomer: BillingCustomerContext,
 ): Promise<string> {
   return buildCacheKey("kw:research", {
-    cacheVersion: CACHE_VERSION,
+    cacheVersion:
+      input.locationCode === 2364 ? IRAN_CACHE_VERSION : CACHE_VERSION,
     organizationId: billingCustomer.organizationId,
     projectId: input.projectId,
     keywords: normalizedKeywords,
