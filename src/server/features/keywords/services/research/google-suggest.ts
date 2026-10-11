@@ -1,5 +1,5 @@
 import type { EnrichedKeyword } from "./helpers";
-import { normalizeKeyword } from "./helpers";
+import { matchesPersianSeed, normalizeKeyword } from "./helpers";
 
 // Google does not publish search volume or CPC in Autocomplete. This source
 // supplies ideas only; every metric remains null rather than being invented.
@@ -39,7 +39,12 @@ export async function fetchGoogleSuggestRows(
     ),
   ]) {
     const normalized = normalizeKeyword(keyword);
-    if (!normalized || seen.has(normalized)) continue;
+    if (
+      !normalized ||
+      !matchesPersianSeed(seed, normalized) ||
+      seen.has(normalized)
+    )
+      continue;
     seen.add(normalized);
     rows.push({
       keyword: normalized,

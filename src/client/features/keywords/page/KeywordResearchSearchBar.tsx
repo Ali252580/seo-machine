@@ -165,7 +165,7 @@ export function KeywordResearchSearchBar({ controller }: Props) {
                 <Info className="mt-0.5 size-4 shrink-0 text-info" />
                 <span>
                   {locationField.state.value === 2364
-                    ? "برای ایران، ایده‌های Google Suggest در کنار داده‌های Google Ads نمایش داده می‌شوند. پیشنهادهای Suggest آمار حجم جست‌وجو، CPC و سختی ندارند."
+                    ? "برای جست‌وجوی فارسی در ایران، عبارت‌های نامرتبطِ تمام‌لاتین حذف می‌شوند. ایده‌های Google Suggest در کنار داده‌های Google Ads نمایش داده می‌شوند؛ پیشنهادهای Suggest آمار حجم جست‌وجو، CPC و سختی ندارند."
                     : "آمار این کشور از Google Ads می‌آید: حجم جست‌وجو، CPC و روند در دسترس‌اند؛ سختی و هدف جست‌وجو ارائه نمی‌شوند."}
                 </span>
               </div>

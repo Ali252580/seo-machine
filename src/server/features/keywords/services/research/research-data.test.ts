@@ -5,7 +5,12 @@ vi.mock("@/server/lib/dataforseo", () => ({
 }));
 
 import type { AdsKeywordIdeaItem } from "@/server/lib/dataforseo";
-import { mapAdsKeywordItems } from "./research-data";
+import { createDataforseoClient } from "@/server/lib/dataforseo";
+import type { BillingCustomerContext } from "@/server/billing/subscription";
+import {
+  fetchGoogleAdsResearchRows,
+  mapAdsKeywordItems,
+} from "./research-data";
 
 describe("mapAdsKeywordItems", () => {
   it("maps Google Ads items to research rows without KD/intent", () => {
@@ -50,4 +55,31 @@ describe("mapAdsKeywordItems", () => {
       trend: [],
     });
   });
+});
+
+it("keeps Persian Ads ideas for an Iran search without changing other countries", async () => {
+  vi.mocked(createDataforseoClient).mockReturnValue({
+    keywords: {
+      adsIdeas: vi.fn().mockResolvedValue([
+        { keyword: "اجرای روف گاردن", search_volume: 500 },
+        { keyword: "Rooftop Bar Melbourne", search_volume: 900 },
+      ]),
+    },
+  } as unknown as ReturnType<typeof createDataforseoClient>);
+  const input = {
+    seedKeyword: "روف گاردن",
+    locationCode: 2364,
+    languageCode: "fa",
+    resultLimit: 10,
+  };
+  const billingCustomer = {} as BillingCustomerContext;
+
+  const iran = await fetchGoogleAdsResearchRows(input, billingCustomer);
+  expect(iran.map((row) => row.keyword)).toEqual(["اجرای روف گاردن"]);
+
+  const elsewhere = await fetchGoogleAdsResearchRows(
+    { ...input, locationCode: 2840 },
+    billingCustomer,
+  );
+  expect(elsewhere).toHaveLength(2);
 });

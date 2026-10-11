@@ -9,7 +9,10 @@ describe("Google Suggest research rows", () => {
       expect(url.searchParams.get("hl")).toBe("fa");
       expect(url.searchParams.get("gl")).toBe("ir");
       return new Response(
-        JSON.stringify(["سئو", ["سئو سایت", "سئو سایت", "آموزش سئو"]]),
+        JSON.stringify([
+          "سئو",
+          ["سئو سایت", "Melbourne rooftop", "سئو سایت", "آموزش سئو"],
+        ]),
         { status: 200 },
       );
     });

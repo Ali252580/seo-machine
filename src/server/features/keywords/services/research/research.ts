@@ -100,9 +100,8 @@ const cachedResultSchema = z.object({
   }),
 });
 
-// v3: research volumes are no longer clickstream-refined, and Google-Ads-only
-// locations route to keywords_for_keywords.
-const CACHE_VERSION = 4;
+// v5 invalidates cached Iran results that may include unrelated Latin ideas.
+const CACHE_VERSION = 5;
 
 async function fetchRowsFromSource(
   source: KeywordSource,

@@ -6,6 +6,7 @@ import type { BillingCustomerContext } from "@/server/billing/subscription";
 import type { CreditFeature } from "@/shared/billing-credit-features";
 import { createDataforseoClient } from "@/server/lib/dataforseo";
 import {
+  matchesPersianSeed,
   normalizeIntent,
   normalizeKeyword,
   type EnrichedKeyword,
@@ -104,7 +105,7 @@ export async function fetchGoogleAdsResearchRows(
   billingCustomer: BillingCustomerContext,
 ): Promise<EnrichedKeyword[]> {
   const dataforseo = createDataforseoClient(billingCustomer);
-  return mapAdsKeywordItems(
+  const rows = mapAdsKeywordItems(
     await dataforseo.keywords.adsIdeas({
       keyword: params.seedKeyword,
       locationCode: params.locationCode,
@@ -113,6 +114,9 @@ export async function fetchGoogleAdsResearchRows(
       creditFeature: params.creditFeature,
     }),
   );
+  return params.locationCode === 2364
+    ? rows.filter((row) => matchesPersianSeed(params.seedKeyword, row.keyword))
+    : rows;
 }
 
 async function fetchRelatedRows(
