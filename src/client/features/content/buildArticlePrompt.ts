@@ -1,0 +1,53 @@
+import type { researchContentTarget } from "@/serverFunctions/contentResearch";
+import { sort } from "remeda";
+
+type Evidence = Awaited<ReturnType<typeof researchContentTarget>>;
+
+/** Keep observed facts separate from the writing instructions sent to SAM. */
+export function buildArticlePrompt(
+  keyword: string,
+  title: string,
+  evidence: Evidence,
+) {
+  const searchRows =
+    evidence.searchConsole.status === "connected"
+      ? sort(
+          evidence.searchConsole.rows,
+          (a, b) => b.impressions - a.impressions,
+        )
+          .slice(0, 5)
+          .map(
+            (row) =>
+              `${row.keys?.[0] ?? "?"} → ${row.keys?.[1] ?? "?"}: ${row.impressions} نمایش، ${row.clicks} کلیک، جایگاه ${row.position.toFixed(1)}`,
+          )
+          .join("؛ ") || "عبارت مرتبطی ثبت نشده"
+      : `داده در دسترس نیست (${evidence.searchConsole.status})`;
+  const analyticsRows =
+    evidence.analytics.status === "connected"
+      ? evidence.analytics.rows
+          .slice(0, 5)
+          .map(
+            (row) =>
+              `${row.page}: ${row.ga4?.sessions ?? "بدون داده"} نشست ارگانیک، ${row.ga4?.keyEvents ?? "بدون داده"} رویداد کلیدی${row.score === null ? "" : `، امتیاز فرصت ${row.score}`}`,
+          )
+          .join("؛ ") || "برای صفحهٔ هدف دادهٔ منطبق وجود ندارد"
+      : `داده در دسترس نیست (${evidence.analytics.status})`;
+  const cmsRows = evidence.wordpressChecked
+    ? evidence.pages.length
+      ? evidence.pages
+          .slice(0, 3)
+          .map(
+            (page) => `${page.title.rendered} (${page.link}؛ ${page.status})`,
+          )
+          .join("؛ ")
+      : "بررسی شد؛ نتیجه‌ای نداشت"
+    : "وصل نیست؛ نبود محتوای مشابه تأیید نشده";
+  // The server accepts at most 4,000 characters. Bound observed rows, never
+  // the instructions at the end that prohibit unsupported claims and filler.
+  const evidenceSummary =
+    `وردپرس: ${cmsRows}. سرچ کنسول: ${searchRows}. آنالیتیکس: ${analyticsRows}.`.slice(
+      0,
+      2_400,
+    );
+  return `برای کلمهٔ «${keyword}» و عنوان «${title}» یک متن خدماتی دقیق و قابل ویرایش بنویس. شواهد واقعی پیش از نگارش: ${evidenceSummary} ابتدا سایت و محتوای موجود را بررسی کن. اگر صفحه‌ای وجود دارد، فقط بهبود همان صفحه را بنویس و متن تکراری برای صفحهٔ جدید نساز. از نمونه‌های کوچک نتیجهٔ قطعی نگیر و عددی را نساز. متن باید به نیاز مشخص کاربر پاسخ بدهد و نسبت به محتوای موجود ارزش تازه داشته باشد؛ از ادعای بی‌منبع، قیمت ساختگی و پاراگراف‌های کلی پرهیز کن. اگر اطلاعات کافی برای متن مفید نیست، فقط یک توضیح کوتاه دربارهٔ اطلاعات لازم بده. فقط HTML ساده بده.`;
+}

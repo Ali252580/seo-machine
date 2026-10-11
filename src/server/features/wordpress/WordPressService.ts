@@ -5,7 +5,10 @@ import { projects, wordpressConnections } from "@/db/schema";
 import { getAuth } from "@/lib/auth";
 import { normalizeAndValidateStartUrl } from "@/server/lib/audit/url-policy";
 import { AppError } from "@/server/lib/errors";
-import { validateArticleHtml } from "./articleHtml";
+import {
+  validateArticleDraftStructure,
+  validateArticleHtml,
+} from "./articleHtml";
 
 type Page = {
   id: number;
@@ -13,8 +16,20 @@ type Page = {
   slug: string;
   title: { rendered: string };
   status: string;
+  kind?: "page" | "post";
 };
 type Credentials = { siteUrl: string; username: string; password: string };
+
+function comparableTitle(value: string) {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[\u064B-\u065F\u0670\u200C\u200D]/g, "")
+    .replace(/[ي]/g, "ی")
+    .replace(/[ك]/g, "ک")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .toLocaleLowerCase();
+}
 
 function siteHost(domain: string) {
   return new URL(domain.includes("://") ? domain : `https://${domain}`).hostname
@@ -169,10 +184,20 @@ export async function listWordPressPages(projectId: string, search: string) {
   const query = new URLSearchParams({
     context: "edit",
     per_page: "50",
+    status: "any",
     search,
     _fields: "id,link,slug,title,status",
   });
-  return request<Page[]>(credentials, `pages?${query}`);
+  // A competing blog post can be as duplicative as a service page. Include
+  // published and draft content of both kinds in the pre-writing check.
+  const [pages, posts] = await Promise.all([
+    request<Page[]>(credentials, `pages?${query}`),
+    request<Page[]>(credentials, `posts?${query}`),
+  ]);
+  return [
+    ...pages.map((page) => ({ ...page, kind: "page" as const })),
+    ...posts.map((post) => ({ ...post, kind: "post" as const })),
+  ];
 }
 
 export async function createWordPressDraft(
@@ -183,23 +208,38 @@ export async function createWordPressDraft(
   kind: "page" | "post" = "page",
 ) {
   validateArticleHtml(content);
+  validateArticleDraftStructure(content);
   const credentials = await client(projectId);
   const endpoint = kind === "post" ? "posts" : "pages";
-  // Check published and draft content before creating a new target.
+  // Check both kinds before creating a new target. A post with the same topic
+  // as a page is still a duplicate, even if WordPress allows both URLs.
   const query = new URLSearchParams({
     context: "edit",
     slug,
     status: "any",
     _fields: "id,link,slug,title,status",
   });
-  const existing = await request<Page[]>(credentials, `${endpoint}?${query}`);
+  const existing = (
+    await Promise.all([
+      request<Page[]>(credentials, `pages?${query}`),
+      request<Page[]>(credentials, `posts?${query}`),
+    ])
+  ).flat();
   if (existing.length) return { existing: true, page: existing[0] };
-  const byTitle = await request<Page[]>(
-    credentials,
-    `${endpoint}?${new URLSearchParams({ context: "edit", search: title, status: "any", _fields: "id,link,slug,title,status" })}`,
-  );
+  const titleQuery = new URLSearchParams({
+    context: "edit",
+    search: title,
+    status: "any",
+    _fields: "id,link,slug,title,status",
+  });
+  const byTitle = (
+    await Promise.all([
+      request<Page[]>(credentials, `pages?${titleQuery}`),
+      request<Page[]>(credentials, `posts?${titleQuery}`),
+    ])
+  ).flat();
   const duplicate = byTitle.find(
-    (page) => page.title.rendered.trim() === title.trim(),
+    (page) => comparableTitle(page.title.rendered) === comparableTitle(title),
   );
   if (duplicate) return { existing: true, page: duplicate };
   const page = await request<Page>(credentials, endpoint, {

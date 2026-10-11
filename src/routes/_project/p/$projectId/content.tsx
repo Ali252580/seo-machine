@@ -2,10 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
+import { buildArticlePrompt } from "@/client/features/content/buildArticlePrompt";
+import { researchContentTarget } from "@/serverFunctions/contentResearch";
 import { createSamSession } from "@/serverFunctions/sam";
 import { sendSamVercelMessage } from "@/serverFunctions/samVercel";
 import {
-  findWordPressPages,
   getWordPressStatus,
   saveWordPressDraft,
 } from "@/serverFunctions/wordpress";
@@ -30,9 +32,20 @@ function ContentEditor() {
   const [content, setContent] = useState("");
   const [kind, setKind] = useState<"page" | "post">("page");
   const [loaded, setLoaded] = useState(false);
+  const [checkedTarget, setCheckedTarget] = useState<string | null>(null);
+  const [research, setResearch] = useState<
+    Awaited<ReturnType<typeof researchContentTarget>> | undefined
+  >();
   const [matchingPages, setMatchingPages] = useState<
-    { id: number; link: string; title: { rendered: string }; status: string }[]
+    {
+      id: number;
+      link: string;
+      title: { rendered: string };
+      status: string;
+      kind?: "page" | "post";
+    }[]
   >([]);
+  const target = `${keyword.trim()}|${title.trim()}|${slug.trim()}|${kind}`;
   const storageKey = `openseo-article-${projectId}`;
   const wordpress = useQuery({
     queryKey: ["wordpress-connection", projectId],
@@ -66,35 +79,51 @@ function ContentEditor() {
 
   const generate = useMutation({
     mutationFn: async () => {
-      // Check the project's own CMS before asking SAM to draft a new page.
-      const pages = wordpress.data?.connection
-        ? await findWordPressPages({
-            data: { projectId, search: keyword.trim() },
-          })
-        : [];
-      setMatchingPages(pages);
+      setCheckedTarget(null);
+      // Research is a server-side prerequisite, not a claim made by the model.
+      const evidence = await researchContentTarget({
+        data: { projectId, keyword: keyword.trim(), title: title.trim() },
+      });
+      setResearch(evidence);
+      setMatchingPages(evidence.pages);
       const session = await createSamSession({ data: { projectId } });
-      return sendSamVercelMessage({
+      const result = await sendSamVercelMessage({
         data: {
           projectId,
           sessionId: session.id,
           article: true,
-          text: `برای کلمهٔ «${keyword}» و عنوان «${title}» یک مقالهٔ خدماتی دقیق و قابل ویرایش بنویس. وضعیت صفحه‌های مرتبط: ${wordpress.data?.connection ? (pages.length ? pages.map((page) => `${page.title.rendered} (${page.link})`).join("؛ ") : "جست‌وجوی وردپرس نتیجه‌ای نداشت") : "وردپرس متصل نیست"}. سایت پروژه و صفحه‌های موجود مرتبط را بررسی کن. اگر صفحه‌ای وجود دارد، متن را برای بهبود همان صفحه بنویس و ادعای بدون منبع، قیمت ساختگی و متن عمومی نیاور. فقط HTML مقاله را بده.`,
+          text: buildArticlePrompt(keyword, title, evidence),
         },
       });
+      return {
+        result,
+        checkedTarget: evidence.wordpressChecked ? target : null,
+      };
     },
-    onSuccess: (result) => setContent(result.assistantMessage.content),
+    onSuccess: ({ result, checkedTarget: verifiedTarget }) => {
+      setContent(result.assistantMessage.content);
+      setCheckedTarget(verifiedTarget);
+    },
   });
   const save = useMutation({
     mutationFn: () =>
       saveWordPressDraft({ data: { projectId, title, slug, content, kind } }),
   });
   const canWrite = wordpress.data?.canManage === true;
+  // A generated local draft is not clearance to create another CMS item.
+  // Saving requires a current duplicate check with no matching content.
+  const canCreateNewDraft =
+    canWrite && checkedTarget === target && matchingPages.length === 0;
   const articleText = content
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   const wordCount = articleText ? articleText.split(" ").length : 0;
+  const distinctSections = new Set(
+    [...content.matchAll(/<h2>(.*?)<\/h2>/gis)]
+      .map((match) => match[1].replace(/<[^>]*>/g, "").trim())
+      .filter(Boolean),
+  ).size;
 
   return (
     <main className="h-full overflow-auto p-4 md:p-7" dir="rtl">
@@ -133,10 +162,13 @@ function ContentEditor() {
               کلمهٔ کلیدی هدف
               <input
                 className="input input-bordered w-full"
+                disabled={generate.isPending}
                 value={keyword}
                 onChange={(event) => {
                   setKeyword(event.target.value);
                   setMatchingPages([]);
+                  setResearch(undefined);
+                  setCheckedTarget(null);
                 }}
                 placeholder="مثلاً اجرای روف گاردن در تهران"
               />
@@ -145,9 +177,13 @@ function ContentEditor() {
               عنوان صفحه
               <input
                 className="input input-bordered w-full"
+                disabled={generate.isPending}
                 value={title}
                 onChange={(event) => {
                   setTitle(event.target.value);
+                  setMatchingPages([]);
+                  setResearch(undefined);
+                  setCheckedTarget(null);
                   if (!slug)
                     setSlug(event.target.value.trim().replace(/\s+/g, "-"));
                 }}
@@ -158,6 +194,7 @@ function ContentEditor() {
               نشانی کوتاه
               <input
                 className="input input-bordered w-full"
+                disabled={generate.isPending}
                 dir="ltr"
                 value={slug}
                 onChange={(event) => setSlug(event.target.value)}
@@ -168,6 +205,7 @@ function ContentEditor() {
               نوع محتوا
               <select
                 className="select select-bordered w-full"
+                disabled={generate.isPending}
                 value={kind}
                 onChange={(event) =>
                   setKind(event.target.value === "post" ? "post" : "page")
@@ -180,20 +218,27 @@ function ContentEditor() {
             <button
               type="button"
               className="btn btn-primary"
-              disabled={!keyword.trim() || !title.trim() || generate.isPending}
+              disabled={
+                keyword.trim().length < 2 ||
+                title.trim().length < 5 ||
+                generate.isPending
+              }
               onClick={() => generate.mutate()}
             >
               {generate.isPending ? "در حال نگارش…" : "تولید پیش‌نویس با SAM"}
             </button>
             {generate.isError && (
               <p role="alert" className="text-error text-sm">
-                تولید مقاله انجام نشد. اتصال یا اعتبار SAM را بررسی کنید.
+                بررسی شواهد یا نگارش انجام نشد. اتصال وردپرس، ابزارهای گوگل و
+                اعتبار SAM را بررسی کنید.
               </p>
             )}
+            {research && <ArticleResearchSummary evidence={research} />}
             {matchingPages.length > 0 && (
               <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
                 <p className="font-medium">
-                  صفحهٔ مرتبط در وردپرس پیدا شد. پیش از ساخت صفحهٔ تازه بررسی
+                  محتوای مرتبط در وردپرس پیدا شد. ساخت پیش‌نویس تازه برای این
+                  موضوع بسته است؛ متن تولیدشده را برای بهبود صفحهٔ موجود بازبینی
                   کنید:
                 </p>
                 <ul className="mt-2 list-inside list-disc space-y-1">
@@ -207,7 +252,7 @@ function ContentEditor() {
                       >
                         {page.title.rendered || page.link}
                       </a>{" "}
-                      ({page.status})
+                      ({page.kind === "post" ? "نوشته" : "برگه"}، {page.status})
                     </li>
                   ))}
                 </ul>
@@ -225,16 +270,18 @@ function ContentEditor() {
             </label>
             <p className="text-xs text-base-content/60">
               متن روی همین دستگاه ذخیره می‌شود. فقط برچسب‌های سادهٔ مقاله برای
-              وردپرس پذیرفته می‌شوند.
+              وردپرس پذیرفته می‌شوند. ذخیره به دست‌کم ۱۸۰ واژه و دو بخش با تیتر
+              متفاوت نیاز دارد؛ صحت و ارزش افزودهٔ متن را نیز بازبینی کنید.
             </p>
             <button
               type="button"
               className="btn btn-secondary"
               disabled={
-                !canWrite ||
+                !canCreateNewDraft ||
                 !wordpress.data?.connection ||
                 save.isPending ||
-                content.length < 200
+                wordCount < 180 ||
+                distinctSections < 2
               }
               onClick={() => save.mutate()}
             >
