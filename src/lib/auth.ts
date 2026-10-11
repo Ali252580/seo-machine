@@ -361,6 +361,9 @@ function getGoogleSocialProviderConfig() {
   return {
     clientId: googleClientId,
     clientSecret: googleClientSecret,
+    // OpenSEO sign-out cannot clear Google's own session cookie. Always show
+    // Google's account chooser on the next sign-in so users can switch accounts.
+    prompt: "select_account" as const,
     mapProfileToUser: (profile: { name?: string }) => ({
       name: profile.name,
     }),
