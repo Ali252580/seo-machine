@@ -38,24 +38,33 @@ import {
   TableBulkActionButton,
   TableBulkExportMenu,
 } from "@/client/components/table/TableBulkActionBar";
+import type { ResearchSource } from "@/client/features/keywords/keywordResearchTypes";
+
+const SOURCE_LABELS: Record<ResearchSource, string> = {
+  related: "کلمات مرتبط",
+  suggestions: "پیشنهادها",
+  ideas: "ایده‌ها",
+  google_ads: "Google Ads",
+  google_suggest: "Google Suggest",
+};
 
 const MONTH_SHORT_LABELS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "ژانویه",
+  "فوریه",
+  "مارس",
+  "آوریل",
+  "مه",
+  "ژوئن",
+  "ژوئیه",
+  "اوت",
+  "سپتامبر",
+  "اکتبر",
+  "نوامبر",
+  "دسامبر",
 ] as const;
 
 function formatTrendRangeLabel(trend: KeywordResearchRow["trend"]): string {
-  if (trend.length === 0) return "Last 12 available months";
+  if (trend.length === 0) return "۱۲ ماه اخیرِ دارای داده";
 
   const sorted = sortBy(trend, (item) => item.year * 100 + item.month);
   const last12 = sorted.slice(-12);
@@ -63,8 +72,8 @@ function formatTrendRangeLabel(trend: KeywordResearchRow["trend"]): string {
   const end = last12[last12.length - 1];
 
   const toLabel = (month: number, year: number) => {
-    const monthLabel = MONTH_SHORT_LABELS[month - 1] ?? `M${month}`;
-    return `${monthLabel} ${year}`;
+    const monthLabel = MONTH_SHORT_LABELS[month - 1] ?? `ماه ${month}`;
+    return `${monthLabel} ${year.toLocaleString("fa-IR")}`;
   };
 
   const startLabel = toLabel(start.month, start.year);
@@ -100,13 +109,12 @@ function DesktopKeywordPanel({ controller }: Props) {
           className="rounded-lg border border-warning/40 bg-warning/15 px-3 py-2 text-sm text-base-content"
           role="status"
         >
-          No exact match for{" "}
-          <span className="font-medium">"{searchedKeyword}"</span>. Showing
-          closest related keywords instead.
+          برای <span className="font-medium">«{searchedKeyword}»</span> نتیجهٔ
+          دقیق پیدا نشد؛ نزدیک‌ترین کلمات مرتبط نمایش داده می‌شوند.
           {lastUsedFallback ? (
             <span className="text-base-content/75">
               {" "}
-              Source: {lastResultSource} fallback.
+              منبع جایگزین: {SOURCE_LABELS[lastResultSource]}.
             </span>
           ) : null}
         </div>
@@ -133,10 +141,10 @@ function DesktopTableCard({ controller }: Props) {
 
   const keywordCountLabel =
     selectedRows.size > 0
-      ? `${selectedRows.size} of ${filteredRows.length} selected`
+      ? `${selectedRows.size.toLocaleString("fa-IR")} مورد از ${filteredRows.length.toLocaleString("fa-IR")} انتخاب شده`
       : activeFilterCount > 0
-        ? `Showing ${filteredRows.length} of ${rows.length} keywords`
-        : `Showing ${filteredRows.length} keywords`;
+        ? `نمایش ${filteredRows.length.toLocaleString("fa-IR")} مورد از ${rows.length.toLocaleString("fa-IR")} کلمهٔ کلیدی`
+        : `نمایش ${filteredRows.length.toLocaleString("fa-IR")} کلمهٔ کلیدی`;
 
   const canExport = filteredRows.length > 0;
   const selectedExportRows = filteredRows
@@ -174,7 +182,7 @@ function DesktopTableCard({ controller }: Props) {
           title="نمایش یا پنهان‌کردن فیلترهای جدول"
         >
           <SlidersHorizontal className="size-3.5" />
-          Filters
+          فیلترها
           {activeFilterCount > 0 ? (
             <span className="badge badge-xs badge-primary border-0 text-primary-content">
               {activeFilterCount}
@@ -202,13 +210,13 @@ function DesktopTableCard({ controller }: Props) {
             <li>
               <button onClick={handleExportToSheets} disabled={!canExport}>
                 <Sheet className="size-4" />
-                Export to Sheets
+                خروجی به گوگل شیت
               </button>
             </li>
             <li>
               <button onClick={controller.exportCsv} disabled={!canExport}>
                 <FileDown className="size-4" />
-                Export CSV
+                خروجی CSV
               </button>
             </li>
           </ul>
@@ -224,7 +232,7 @@ function DesktopTableCard({ controller }: Props) {
               icon={<Save className="size-3.5" />}
               onClick={controller.handleSaveKeywords}
             >
-              Save Keywords
+              ذخیرهٔ کلمات
             </TableBulkActionButton>
             <TableBulkExportMenu
               actions={[
@@ -277,10 +285,10 @@ function DesktopFilters({ controller }: Props) {
     <div className="shrink-0 border-b border-base-300 bg-gradient-to-b from-base-100 to-base-200/30 px-4 py-3 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold">Refine table results</p>
+          <p className="text-sm font-semibold">فیلتر نتایج جدول</p>
           {activeFilterCount > 0 ? (
             <span className="badge badge-xs badge-primary border-0 text-primary-content">
-              {activeFilterCount} active
+              {activeFilterCount.toLocaleString("fa-IR")} فیلتر فعال
             </span>
           ) : null}
         </div>
@@ -290,7 +298,7 @@ function DesktopFilters({ controller }: Props) {
           disabled={activeFilterCount === 0}
         >
           <RotateCcw className="size-3" />
-          Clear all
+          پاک‌کردن همه
         </button>
       </div>
 
@@ -299,26 +307,26 @@ function DesktopFilters({ controller }: Props) {
           form={filtersForm}
           name="include"
           label="عبارت‌های شامل"
-          placeholder="audit, checker, template"
+          placeholder="مثلاً سئو، طراحی، تهران"
         />
         <FilterTextInput
           form={filtersForm}
           name="exclude"
           label="عبارت‌های حذف‌شده"
-          placeholder="jobs, salary, course"
+          placeholder="مثلاً رایگان، آموزش"
         />
       </div>
 
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
         <FilterRangeInputs
           form={filtersForm}
-          title="Search Volume"
+          title="حجم جست‌وجو"
           minName="minVol"
           maxName="maxVol"
         />
         <FilterRangeInputs
           form={filtersForm}
-          title="CPC (USD)"
+          title="CPC (دلار)"
           minName="minCpc"
           maxName="maxCpc"
           step="0.01"
@@ -340,14 +348,14 @@ function DesktopSerpPanel({ controller }: Props) {
   const { overviewKeyword } = controller;
   const trendRangeLabel = overviewKeyword
     ? formatTrendRangeLabel(overviewKeyword.trend)
-    : "Last 12 available months";
+    : "۱۲ ماه اخیرِ دارای داده";
 
   return (
     <div className="order-1 xl:order-2 flex flex-col min-w-0 gap-2 xl:basis-2/5 xl:overflow-y-auto">
       {overviewKeyword && overviewKeyword.trend.length > 0 ? (
         <div className="shrink-0 overflow-hidden border border-base-300 rounded-xl bg-base-100 px-4 py-3">
           <h4 className="text-sm font-semibold mb-1">
-            Search Trends{" "}
+            روند جست‌وجو{" "}
             <span className="font-normal text-base-content/50">
               {trendRangeLabel}
             </span>
@@ -360,7 +368,7 @@ function DesktopSerpPanel({ controller }: Props) {
         <div className="shrink-0 px-4 py-3 border-b border-base-300">
           <h3 className="text-sm font-semibold flex items-center gap-1.5">
             <Globe className="size-3.5" />
-            SERP Analysis
+            تحلیل نتایج جست‌وجو
             {controller.activeSerpKeyword ? (
               <span className="font-normal text-base-content/50 truncate">
                 : {controller.activeSerpKeyword}

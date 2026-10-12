@@ -31,18 +31,18 @@ function NoResultsState({
         <Globe className="size-10 mx-auto text-base-content/40" />
         <div className="space-y-2">
           <p className="text-lg font-semibold text-base-content">
-            Not enough keyword data for this query yet
+            هنوز دادهٔ کافی برای این جست‌وجو پیدا نشد
           </p>
           <p className="text-sm text-base-content/70">
-            We could not find keyword opportunities for
+            فرصتی برای عبارت
             <span className="font-medium text-base-content">
               {` "${lastSearchKeyword}" `}
             </span>
-            in
+            در
             <span className="font-medium text-base-content">
-              {` ${LOCATIONS[lastSearchLocationCode] || "this location"}`}
+              {` ${LOCATIONS[lastSearchLocationCode] || "این موقعیت"}`}
             </span>
-            .
+            پیدا نشد.
           </p>
         </div>
       </div>
@@ -71,8 +71,7 @@ function SearchHistoryState({
             <div className="flex items-center gap-2">
               <History className="size-4 text-base-content/45" />
               <span className="text-sm text-base-content/60">
-                {history.length} recent search
-                {history.length !== 1 ? "es" : ""}
+                {history.length.toLocaleString("fa-IR")} جست‌وجوی اخیر
               </span>
             </div>
           </div>
@@ -105,13 +104,14 @@ function SearchHistoryState({
                 </Link>
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="text-xs text-base-content/40">
-                    {new Date(item.timestamp).toLocaleDateString(undefined, {
+                    {new Date(item.timestamp).toLocaleDateString("fa-IR", {
                       month: "short",
                       day: "numeric",
                     })}
                   </span>
                   <button
                     type="button"
+                    aria-label={`حذف جست‌وجوی ${item.keyword}`}
                     className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 p-1"
                     onClick={() => removeHistoryItem(item.timestamp)}
                   >
@@ -126,11 +126,11 @@ function SearchHistoryState({
         <section className="rounded-2xl border border-dashed border-base-300 bg-base-100/70 p-6 text-center text-base-content/50 space-y-3">
           <Search className="size-10 mx-auto opacity-40" />
           <p className="text-lg font-medium text-base-content/80">
-            Enter a keyword to get started
+            برای شروع یک کلمهٔ کلیدی وارد کنید
           </p>
           <p className="text-sm max-w-md mx-auto">
-            Search for any keyword to see volume, difficulty, CPC, and related
-            keyword ideas.
+            برای دیدن حجم جست‌وجو، سختی، CPC و ایده‌های مرتبط، یک کلمه را
+            جست‌وجو کنید.
           </p>
         </section>
       )}

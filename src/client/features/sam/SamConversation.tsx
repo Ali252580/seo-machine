@@ -16,10 +16,10 @@ import {
 import { useStickToBottom } from "@/client/components/chat/useStickToBottom";
 
 const SUGGESTIONS = [
-  "What keywords should I focus on next?",
-  "Who are my top SERP competitors?",
-  "How is my Search Console traffic trending?",
-  "Find quick-win keywords I already rank for",
+  "روی کدام کلمات کلیدی تمرکز کنم؟",
+  "رقبای اصلی من در نتایج جست‌وجو چه کسانی هستند؟",
+  "روند بازدیدم در سرچ کنسول چگونه است؟",
+  "کلمات کلیدی با فرصت بهبود سریع را پیدا کن",
 ];
 
 export function SamConversation({
@@ -157,7 +157,7 @@ export function SamConversation({
           className="btn btn-ghost btn-xs absolute right-3 top-2 z-10 text-base-content/40"
           onClick={() => clearHistory()}
         >
-          Clear history (dev)
+          پاک‌کردن تاریخچه (توسعه)
         </button>
       ) : null}
       <div
@@ -169,12 +169,11 @@ export function SamConversation({
           {messages.length === 0 ? (
             <div className="space-y-2 text-sm text-base-content/80">
               <p>
-                Hey, I’m SAM — your in-app SEO agent. I can research keywords,
-                size up competitors, read your SERPs, backlinks, rank tracking
-                and Search Console, and turn it into next steps for this
-                project.
+                من SAM، عامل هوشمند سئوی داخل سایت هستم. می‌توانم کلمات کلیدی و
+                رقبا را بررسی کنم، نتایج جست‌وجو، بک‌لینک‌ها، رتبه‌ها و سرچ
+                کنسول را بخوانم و برای این پروژه قدم‌های بعدی پیشنهاد بدهم.
               </p>
-              <p>Ask me anything, or start with one of these:</p>
+              <p>پرسش خود را بنویسید یا با یکی از این موارد شروع کنید:</p>
             </div>
           ) : null}
 
@@ -216,13 +215,13 @@ export function SamConversation({
 
           {isRecovering ? (
             <p className="text-xs text-base-content/50">
-              Saving the reply that got cut off…
+              در حال ذخیرهٔ پاسخ ناتمام…
             </p>
           ) : null}
 
           {status === "error" ? (
             <div className="flex flex-wrap items-center gap-3 text-sm text-error">
-              <span>SAM stopped before finishing this reply.</span>
+              <span>پاسخ SAM پیش از تکمیل متوقف شد.</span>
               {lastUserMessage ? (
                 <button
                   type="button"
@@ -231,7 +230,7 @@ export function SamConversation({
                   onClick={retryLast}
                 >
                   <RotateCcw className="size-3" />
-                  Retry
+                  تلاش دوباره
                 </button>
               ) : null}
             </div>
@@ -260,7 +259,7 @@ export function SamConversation({
             busy={isBusy}
             onSend={sendText}
             onStop={() => void stop()}
-            placeholder="Ask SAM to research, analyze, or track anything…"
+            placeholder="از SAM بخواهید تحقیق، تحلیل یا رتبه‌ها را بررسی کند…"
           />
         </div>
       </div>

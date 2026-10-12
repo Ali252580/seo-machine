@@ -11,7 +11,7 @@ export function ChatComposer({
   busy,
   onSend,
   onStop,
-  placeholder = "Ask Sam about your strategy or OpenSEO…",
+  placeholder = "از SAM دربارهٔ سئوی پروژه بپرسید…",
 }: {
   busy: boolean;
   onSend: (text: string) => void;
@@ -67,7 +67,7 @@ export function ChatComposer({
       {busy && onStop ? (
         <button
           type="button"
-          aria-label="Stop"
+          aria-label="توقف پاسخ"
           onClick={onStop}
           className="btn btn-neutral btn-circle btn-sm"
         >
@@ -76,7 +76,7 @@ export function ChatComposer({
       ) : (
         <button
           type="submit"
-          aria-label="Send message"
+          aria-label="ارسال پیام"
           disabled={busy || !value.trim()}
           className="btn btn-primary btn-circle btn-sm"
         >

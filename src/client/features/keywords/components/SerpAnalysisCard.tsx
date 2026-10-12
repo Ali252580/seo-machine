@@ -40,7 +40,7 @@ export function SerpAnalysisCard({
         <p>{error}</p>
         {onRetry ? (
           <button className="btn btn-xs" onClick={onRetry}>
-            {deepFetchFailed ? "Show top 20" : "Retry"}
+            {deepFetchFailed ? "نمایش ۲۰ نتیجهٔ اول" : "تلاش دوباره"}
           </button>
         ) : null}
       </div>
@@ -52,7 +52,7 @@ export function SerpAnalysisCard({
     <div>
       <div className="flex items-center justify-between mb-3">
         <div className="text-xs text-base-content/50">
-          {items.length} organic results
+          {items.length.toLocaleString("fa-IR")} نتیجهٔ ارگانیک
         </div>
         <ExportToSheetsButton
           headers={["رتبه", "عنوان", "URL", "دامنه"]}
@@ -98,7 +98,7 @@ function SerpAnalysisTable({ items }: { items: SerpResultItem[] }) {
               className="hover:bg-base-200/50"
             >
               <td className="font-mono text-base-content/50 text-xs">
-                {item.rank}
+                {item.rank.toLocaleString("fa-IR")}
               </td>
               <td className="min-w-0 max-w-0">
                 <div className="flex flex-col gap-0.5">
@@ -149,10 +149,11 @@ function SerpAnalysisPagination({
     <div className="flex items-center justify-between mt-3 pt-3 border-t border-base-200">
       <span className="text-xs text-base-content/50">
         {loadingMore ? (
-          "Loading more results…"
+          "در حال بارگیری نتایج بیشتر…"
         ) : (
           <>
-            Page {page + 1} of {totalPages}
+            صفحهٔ {(page + 1).toLocaleString("fa-IR")} از{" "}
+            {totalPages.toLocaleString("fa-IR")}
           </>
         )}
       </span>
@@ -163,14 +164,14 @@ function SerpAnalysisPagination({
           onClick={() => onPageChange(page - 1)}
         >
           <ChevronLeft className="size-3.5" />
-          Prev
+          قبلی
         </button>
         <button
           className="btn btn-ghost btn-xs"
           disabled={loadingMore || (page >= totalPages - 1 && !canLoadMore)}
           onClick={() => onPageChange(page + 1)}
         >
-          {nextBuysDeeperSnapshot ? "Load top 100" : "Next"}
+          {nextBuysDeeperSnapshot ? "بارگیری ۱۰۰ نتیجهٔ اول" : "بعدی"}
           <ChevronRight className="size-3.5" />
         </button>
       </div>
@@ -195,9 +196,9 @@ function SerpAnalysisLoadingState() {
 function SerpAnalysisEmptyState({ keyword }: { keyword?: string | null }) {
   return (
     <div className="text-sm text-base-content/50 text-center py-8">
-      <p>No SERP details available for this keyword yet.</p>
+      <p>هنوز جزئیات نتایج جست‌وجو برای این کلمه در دسترس نیست.</p>
       {keyword ? (
-        <p className="mt-1">Try clicking another keyword to load data.</p>
+        <p className="mt-1">برای دریافت داده، کلمهٔ دیگری را انتخاب کنید.</p>
       ) : null}
     </div>
   );

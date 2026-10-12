@@ -88,7 +88,7 @@ export function KeywordResearchSearchBar({ controller }: Props) {
                 >
                   {RESULT_LIMITS.map((limit) => (
                     <option key={limit} value={limit}>
-                      {limit} results
+                      {limit.toLocaleString("fa-IR")} نتیجه
                     </option>
                   ))}
                 </select>
@@ -116,7 +116,7 @@ export function KeywordResearchSearchBar({ controller }: Props) {
               type="submit"
               className="btn btn-primary w-full px-6 lg:w-auto lg:shrink-0"
             >
-              Search
+              جست‌وجو
             </button>
           </div>
         </form>
@@ -145,12 +145,12 @@ export function KeywordResearchSearchBar({ controller }: Props) {
                         }
                       />
                       <span className="text-sm font-medium text-base-content/80">
-                        Clickstream-refined volumes
+                        حجم جست‌وجوی اصلاح‌شده با دادهٔ کلیک
                       </span>
                     </label>
                     <div
                       className="tooltip tooltip-right"
-                      data-tip="Google reports one combined search volume for similar keywords (e.g. 'seo tool' and 'seo tools'). Turn this on to estimate each keyword's own volume. Costs 2x the credits."
+                      data-tip="گوگل حجم جست‌وجوی عبارت‌های مشابه را با هم گزارش می‌کند. با این گزینه، حجم هر عبارت جداگانه تخمین زده می‌شود و هزینهٔ اعتبار دو برابر است."
                     >
                       <Info className="size-3.5 text-base-content/50" />
                     </div>

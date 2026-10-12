@@ -21,7 +21,7 @@ export function FilterIntentSelect({
         id="keyword-intent-filter-label"
         className="text-[11px] font-semibold uppercase tracking-wide text-base-content/60"
       >
-        Intent
+        هدف جست‌وجو
       </p>
       <form.Field name="intents">
         {(field) => {
@@ -161,11 +161,11 @@ export function EmptyFilterResults({
   return (
     <div className="h-full flex flex-col items-center justify-center text-center px-4 text-base-content/50 gap-3">
       <p className="text-sm font-medium">
-        No keywords match your current filters.
+        هیچ کلمه‌ای با فیلترهای فعلی مطابقت ندارد.
       </p>
       {activeFilterCount > 0 ? (
         <button className="btn btn-ghost btn-sm" onClick={resetFilters}>
-          Clear filters
+          پاک‌کردن فیلترها
         </button>
       ) : null}
     </div>
