@@ -26,6 +26,11 @@ const localDraft = z.object({
 
 function ContentEditor() {
   const { projectId } = Route.useParams();
+  // A project switch must remount the draft state before local storage can write.
+  return <ProjectContentEditor key={projectId} projectId={projectId} />;
+}
+
+function ProjectContentEditor({ projectId }: { projectId: string }) {
   const [keyword, setKeyword] = useState("");
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -170,7 +175,7 @@ function ContentEditor() {
                   setResearch(undefined);
                   setCheckedTarget(null);
                 }}
-                placeholder="مثلاً اجرای روف گاردن در تهران"
+                placeholder="کلمهٔ کلیدی مرتبط با این پروژه"
               />
             </label>
             <label className="grid gap-1 text-sm">
@@ -198,7 +203,7 @@ function ContentEditor() {
                 dir="ltr"
                 value={slug}
                 onChange={(event) => setSlug(event.target.value)}
-                placeholder="ejraye-roof-garden-tehran"
+                placeholder="service-page"
               />
             </label>
             <label className="grid gap-1 text-sm">
