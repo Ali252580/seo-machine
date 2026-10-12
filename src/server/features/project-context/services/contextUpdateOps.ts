@@ -124,6 +124,11 @@ export function resolveContextUpdates(
     }
 
     if ("customSection" in update) {
+      if (update.customSection === "periodic-seo-recommendations")
+        throw new AppError(
+          "VALIDATION_ERROR",
+          "This section is managed by the recommendation scheduler.",
+        );
       const key = `${CUSTOM_SECTION_KEY_PREFIX}${update.customSection}`;
       const content = update.content.trim();
       assertProseFits(content);
@@ -149,6 +154,11 @@ export function resolveContextUpdates(
     }
 
     if ("deleteCustomSection" in update) {
+      if (update.deleteCustomSection === "periodic-seo-recommendations")
+        throw new AppError(
+          "VALIDATION_ERROR",
+          "This section is managed by the recommendation scheduler.",
+        );
       const key = `${CUSTOM_SECTION_KEY_PREFIX}${update.deleteCustomSection}`;
       resolved.push({ kind: "deleteSection", key });
       customKeys.delete(key);

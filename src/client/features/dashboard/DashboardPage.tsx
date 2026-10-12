@@ -8,6 +8,7 @@ import {
   GscCard,
 } from "@/client/features/dashboard/DashboardCards";
 import { Ga4Card } from "@/client/features/dashboard/Ga4Card";
+import { PeriodicRecommendationsCard } from "@/client/features/dashboard/PeriodicRecommendationsCard";
 import { WorkspaceMergeBanner } from "@/client/features/dashboard/WorkspaceMergeBanner";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import {
@@ -143,6 +144,8 @@ export function DashboardPage({ projectId }: { projectId: string }) {
           projectId={projectId}
           activation={activation}
         />
+
+        <PeriodicRecommendationsCard projectId={projectId} />
 
         {/* Every card is half width on large screens (only the checklist spans).
           Cards with data render before setup pitches and empty states. */}

@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "tanstack-start",
-  "buildCommand": "pnpm build:vercel"
+  "buildCommand": "pnpm build:vercel",
+  "crons": [{ "path": "/api/recommendations/tick", "schedule": "0 4 * * *" }]
 }

@@ -27,6 +27,7 @@ import { sweepDubReferredOrganizations } from "@/server/referrals/dub";
 import { maybeSendSelfHostHeartbeat } from "@/server/lib/self-host-telemetry";
 import { handleGdprStorageErasure } from "@/server/gdpr/storage-erasure";
 import { GDPR_STORAGE_ERASURE_PATH } from "@/shared/gdpr-erasure";
+import { runDuePeriodicRecommendations } from "@/server/features/sam/periodicRecommendations";
 
 const startHandler = createStartHandler(defaultStreamHandler);
 
@@ -194,6 +195,11 @@ export default {
     _ctx: ExecutionContext,
   ) {
     if (controller.cron === MCP_OAUTH_PURGE_CRON) {
+      try {
+        await withPgClient(() => runDuePeriodicRecommendations());
+      } catch (err) {
+        console.error("[cron] Periodic recommendations failed:", err);
+      }
       // Only hosted mode runs the OAuth provider (and has OAUTH_KV bound).
       if (isHostedAuthMode(getAuthMode(env.AUTH_MODE))) {
         const result = await openSeoOAuthProvider.purgeExpiredData(

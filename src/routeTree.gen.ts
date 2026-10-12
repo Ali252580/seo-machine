@@ -44,6 +44,7 @@ import { Route as AuthenticatedOnboardingIndexRouteImport } from './routes/_auth
 import { Route as ProjectPProjectIdRouteRouteImport } from './routes/_project/p/$projectId/route'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAutumnSplatRouteImport } from './routes/api/autumn/$'
+import { Route as ApiRecommendationsTickRouteImport } from './routes/api/recommendations/tick'
 import { Route as STokenIndexRouteImport } from './routes/s/$token/index'
 import { Route as STokenRawRouteImport } from './routes/s/$token/raw'
 import { Route as ProjectPProjectIdIndexRouteImport } from './routes/_project/p/$projectId/index'
@@ -248,6 +249,11 @@ const ApiAutumnSplatRoute = ApiAutumnSplatRouteImport.update({
   path: '/api/autumn/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRecommendationsTickRoute = ApiRecommendationsTickRouteImport.update({
+  id: '/api/recommendations/tick',
+  path: '/api/recommendations/tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const STokenIndexRoute = STokenIndexRouteImport.update({
   id: '/s/$token/',
   path: '/s/$token/',
@@ -444,6 +450,7 @@ export interface FileRoutesByFullPath {
   '/settings/organization': typeof AppSettingsOrganizationRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/autumn/$': typeof ApiAutumnSplatRoute
+  '/api/recommendations/tick': typeof ApiRecommendationsTickRoute
   '/s/$token/raw': typeof STokenRawRoute
   '/settings/': typeof AppSettingsIndexRoute
   '/onboarding/': typeof AuthenticatedOnboardingIndexRoute
@@ -504,6 +511,7 @@ export interface FileRoutesByTo {
   '/settings/organization': typeof AppSettingsOrganizationRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/autumn/$': typeof ApiAutumnSplatRoute
+  '/api/recommendations/tick': typeof ApiRecommendationsTickRoute
   '/s/$token/raw': typeof STokenRawRoute
   '/settings': typeof AppSettingsIndexRoute
   '/onboarding': typeof AuthenticatedOnboardingIndexRoute
@@ -568,6 +576,7 @@ export interface FileRoutesById {
   '/_app/settings/organization': typeof AppSettingsOrganizationRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/autumn/$': typeof ApiAutumnSplatRoute
+  '/api/recommendations/tick': typeof ApiRecommendationsTickRoute
   '/s/$token/raw': typeof STokenRawRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
   '/_authenticated/onboarding/': typeof AuthenticatedOnboardingIndexRoute
@@ -632,6 +641,7 @@ export interface FileRouteTypes {
     | '/settings/organization'
     | '/api/auth/$'
     | '/api/autumn/$'
+    | '/api/recommendations/tick'
     | '/s/$token/raw'
     | '/settings/'
     | '/onboarding/'
@@ -692,6 +702,7 @@ export interface FileRouteTypes {
     | '/settings/organization'
     | '/api/auth/$'
     | '/api/autumn/$'
+    | '/api/recommendations/tick'
     | '/s/$token/raw'
     | '/settings'
     | '/onboarding'
@@ -755,6 +766,7 @@ export interface FileRouteTypes {
     | '/_app/settings/organization'
     | '/api/auth/$'
     | '/api/autumn/$'
+    | '/api/recommendations/tick'
     | '/s/$token/raw'
     | '/_app/settings/'
     | '/_authenticated/onboarding/'
@@ -806,6 +818,7 @@ export interface RootRouteChildren {
   RReportIdRoute: typeof RReportIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiAutumnSplatRoute: typeof ApiAutumnSplatRoute
+  ApiRecommendationsTickRoute: typeof ApiRecommendationsTickRoute
   STokenRawRoute: typeof STokenRawRoute
   STokenIndexRoute: typeof STokenIndexRoute
   ApiBillingNextpayCallbackRoute: typeof ApiBillingNextpayCallbackRoute
@@ -1058,6 +1071,13 @@ declare module '@tanstack/react-router' {
       path: '/api/autumn/$'
       fullPath: '/api/autumn/$'
       preLoaderRoute: typeof ApiAutumnSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/recommendations/tick': {
+      id: '/api/recommendations/tick'
+      path: '/api/recommendations/tick'
+      fullPath: '/api/recommendations/tick'
+      preLoaderRoute: typeof ApiRecommendationsTickRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$token/': {
@@ -1474,6 +1494,7 @@ const rootRouteChildren: RootRouteChildren = {
   RReportIdRoute: RReportIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiAutumnSplatRoute: ApiAutumnSplatRoute,
+  ApiRecommendationsTickRoute: ApiRecommendationsTickRoute,
   STokenRawRoute: STokenRawRoute,
   STokenIndexRoute: STokenIndexRoute,
   ApiBillingNextpayCallbackRoute: ApiBillingNextpayCallbackRoute,

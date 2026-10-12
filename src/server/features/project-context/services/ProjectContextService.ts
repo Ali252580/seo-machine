@@ -99,7 +99,11 @@ export async function getProjectContext(
       (key) => !stored.has(key),
     ),
     customSections: sectionRows
-      .filter((row) => row.key.startsWith(CUSTOM_SECTION_KEY_PREFIX))
+      .filter(
+        (row) =>
+          row.key.startsWith(CUSTOM_SECTION_KEY_PREFIX) &&
+          row.key !== "custom:periodic-seo-recommendations",
+      )
       .map((row) => ({
         slug: row.key.slice(CUSTOM_SECTION_KEY_PREFIX.length),
         title: row.title,
@@ -147,7 +151,7 @@ export async function applyContextUpdates(
     customKeys: new Set(
       sectionRows
         .map((row) => row.key)
-        .filter((key) => key.startsWith(CUSTOM_SECTION_KEY_PREFIX)),
+        .filter((key) => key.startsWith(CUSTOM_SECTION_KEY_PREFIX) && key !== "custom:periodic-seo-recommendations"),
     ),
     domains: new Set(competitorRows.map((row) => row.domain)),
     urls: new Set(keyPageRows.map((row) => row.url)),

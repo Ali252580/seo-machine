@@ -3,6 +3,10 @@ import { ActivationRepository } from "@/server/features/activation/repositories/
 import { DashboardService } from "@/server/features/dashboard/services/DashboardService";
 import { requireProjectContext } from "@/serverFunctions/middleware";
 import {
+  getPeriodicRecommendations as readPeriodicRecommendations,
+  refreshPeriodicRecommendations,
+} from "@/server/features/sam/periodicRecommendations";
+import {
   dashboardProjectInputSchema,
   dashboardStepDismissalSchema,
 } from "@/types/schemas/dashboard";
@@ -77,4 +81,19 @@ export const setDashboardStepDismissed = createServerFn({ method: "POST" })
       data.dismissed,
     );
     return { ok: true };
+  });
+
+export const getDashboardRecommendations = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(dashboardProjectInputSchema)
+  .handler(({ context }) => readPeriodicRecommendations(context.projectId));
+
+export const refreshDashboardRecommendations = createServerFn({
+  method: "POST",
+})
+  .middleware(requireProjectContext)
+  .validator(dashboardProjectInputSchema)
+  .handler(async ({ context }) => {
+    await refreshPeriodicRecommendations(context.projectId, true);
+    return readPeriodicRecommendations(context.projectId);
   });
