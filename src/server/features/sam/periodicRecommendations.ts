@@ -25,6 +25,7 @@ import {
   trackUsageCreditSpend,
 } from "@/server/billing/subscription";
 import { getOptionalEnvValue } from "@/server/lib/runtime-env";
+import { readPages } from "@/server/lib/scrape";
 import { buildChatAgentModel } from "@/server/lib/openrouter";
 import { openRouterCostUsd } from "@/server/lib/openrouter-cost";
 import { buildSamSkillSource } from "./samSkills";
@@ -91,7 +92,7 @@ export async function getPeriodicRecommendations(projectId: string) {
   const snapshot = parseSnapshot(row?.content);
   const urls = snapshot.items.flatMap((item) => (item.page ? [item.page] : []));
   if (!urls.length) return snapshot;
-  // Only this project's crawled titles are used; the UI labels the URL fallback explicitly.
+  // Prefer titles already collected by this project's site audits.
   const pages = await db
     .select({ url: auditPages.url, title: auditPages.title })
     .from(auditPages)
@@ -104,15 +105,75 @@ export async function getPeriodicRecommendations(projectId: string) {
       ),
     )
     .orderBy(desc(audits.startedAt));
-  return {
+  const auditTitles = new Map(
+    pages
+      .filter((page) => page.title?.trim())
+      .map((page) => [page.url, page.title]),
+  );
+  const missing = snapshot.items.filter(
+    (item) =>
+      item.page && item.pageTitle === undefined && !auditTitles.has(item.page),
+  );
+  const [project] = missing.length
+    ? await db
+        .select({ domain: projects.domain })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .limit(1)
+    : [];
+  let siteHost: string | null = null;
+  try {
+    if (project?.domain) {
+      siteHost = new URL(
+        project.domain.includes("://")
+          ? project.domain
+          : `https://${project.domain}`,
+      ).hostname.replace(/^www\./, "");
+    }
+  } catch {
+    /* Invalid project domains cannot be used to fetch page titles. */
+  }
+  // A public page read is limited to URLs on the selected project's domain.
+  const titleUrls = missing.flatMap((item) => {
+    try {
+      const url = new URL(item.page!);
+      return siteHost && url.hostname.replace(/^www\./, "") === siteHost
+        ? [url.href]
+        : [];
+    } catch {
+      return [];
+    }
+  });
+  const livePages = titleUrls.length
+    ? (await readPages([...new Set(titleUrls)], 5)).pages
+    : [];
+  const liveTitles = new Map(livePages.map((page) => [page.url, page.title]));
+  const enriched = {
     ...snapshot,
     items: snapshot.items.map((item) => ({
       ...item,
       pageTitle:
-        pages.find((page) => page.url === item.page && page.title?.trim())
-          ?.title ?? null,
+        item.pageTitle ??
+        (item.page
+          ? (auditTitles.get(item.page) ?? liveTitles.get(item.page))
+          : null) ??
+        null,
     })),
   };
+  // Cache the result, including failures, to avoid fetching pages on every dashboard visit.
+  if (missing.length && row?.content) {
+    await db
+      .update(projectContextSections)
+      .set({ content: JSON.stringify(enriched) })
+      .where(
+        and(
+          eq(projectContextSections.projectId, projectId),
+          eq(projectContextSections.key, SECTION_KEY),
+          eq(projectContextSections.content, row.content),
+        ),
+      );
+  }
+  return enriched;
 }
 
 // Claim with a conditional write so overlapping cron calls cannot bill twice.
