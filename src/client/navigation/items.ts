@@ -25,6 +25,11 @@ const projectNavItems = [
     activeOptions: { exact: true, includeSearch: false },
   },
   {
+    to: "/p/$projectId/recommendations" as const,
+    label: "پیشنهادهای دوره‌ای سئو",
+    icon: Sparkles,
+  },
+  {
     to: "/p/$projectId/keywords" as const,
     label: "تحقیق کلمات کلیدی",
     icon: Search,
@@ -144,6 +149,7 @@ export function getProjectNavGroups(projectId: string) {
       label: "هوش مصنوعی",
       items: [
         byPath("/p/$projectId/sam"),
+        byPath("/p/$projectId/recommendations"),
         byPath("/p/$projectId/reports"),
         byPath("/p/$projectId/context"),
         aiNavItem,

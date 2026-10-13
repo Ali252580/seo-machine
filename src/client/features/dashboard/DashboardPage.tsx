@@ -8,7 +8,7 @@ import {
   GscCard,
 } from "@/client/features/dashboard/DashboardCards";
 import { Ga4Card } from "@/client/features/dashboard/Ga4Card";
-import { PeriodicRecommendationsCard } from "@/client/features/dashboard/PeriodicRecommendationsCard";
+import { Link } from "@tanstack/react-router";
 import { WorkspaceMergeBanner } from "@/client/features/dashboard/WorkspaceMergeBanner";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import {
@@ -145,7 +145,16 @@ export function DashboardPage({ projectId }: { projectId: string }) {
           activation={activation}
         />
 
-        <PeriodicRecommendationsCard projectId={projectId} />
+        <Link
+          to="/p/$projectId/recommendations"
+          params={{ projectId }}
+          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-base-300 p-4 hover:bg-base-200"
+        >
+          <span className="font-medium">پیشنهادهای دوره‌ای سئو</span>
+          <span className="text-sm text-primary">
+            مشاهدهٔ فرصت‌ها و پیشنهادها
+          </span>
+        </Link>
 
         {/* Every card is half width on large screens (only the checklist spans).
           Cards with data render before setup pitches and empty states. */}

@@ -1,8 +1,25 @@
-import { and, asc, eq, isNotNull, isNull, lt, or } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  inArray,
+  eq,
+  isNotNull,
+  isNull,
+  lt,
+  or,
+} from "drizzle-orm";
 import { generateText } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { member, projectContextSections, projects, user } from "@/db/schema";
+import {
+  auditPages,
+  audits,
+  member,
+  projectContextSections,
+  projects,
+  user,
+} from "@/db/schema";
 import {
   checkUsageCreditsDepleted,
   trackUsageCreditSpend,
@@ -33,6 +50,7 @@ const snapshotSchema = z.object({
       action: z.string(),
       evidence: z.string(),
       page: z.string().nullable(),
+      pageTitle: z.string().nullable().optional(),
     }),
   ),
 });
@@ -70,7 +88,31 @@ export async function getPeriodicRecommendations(projectId: string) {
       ),
     )
     .limit(1);
-  return parseSnapshot(row?.content);
+  const snapshot = parseSnapshot(row?.content);
+  const urls = snapshot.items.flatMap((item) => (item.page ? [item.page] : []));
+  if (!urls.length) return snapshot;
+  // Only this project's crawled titles are used; the UI labels the URL fallback explicitly.
+  const pages = await db
+    .select({ url: auditPages.url, title: auditPages.title })
+    .from(auditPages)
+    .innerJoin(audits, eq(audits.id, auditPages.auditId))
+    .where(
+      and(
+        eq(audits.projectId, projectId),
+        inArray(auditPages.url, urls),
+        isNotNull(auditPages.title),
+      ),
+    )
+    .orderBy(desc(audits.startedAt));
+  return {
+    ...snapshot,
+    items: snapshot.items.map((item) => ({
+      ...item,
+      pageTitle:
+        pages.find((page) => page.url === item.page && page.title?.trim())
+          ?.title ?? null,
+    })),
+  };
 }
 
 // Claim with a conditional write so overlapping cron calls cannot bill twice.
