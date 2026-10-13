@@ -3,7 +3,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
+import { ArticlePreview } from "@/client/features/content/ArticlePreview";
 import { buildArticlePrompt } from "@/client/features/content/buildArticlePrompt";
+import { recommendationPage } from "@/client/features/dashboard/recommendationPage";
 import { researchContentTarget } from "@/serverFunctions/contentResearch";
 import { createSamSession } from "@/serverFunctions/sam";
 import { sendSamVercelMessage } from "@/serverFunctions/samVercel";
@@ -13,6 +15,14 @@ import {
 } from "@/serverFunctions/wordpress";
 
 export const Route = createFileRoute("/_project/p/$projectId/content")({
+  validateSearch: z.object({
+    page: z
+      .string()
+      .url()
+      .refine((value) => /^https?:\/\//i.test(value))
+      .optional(),
+    title: z.string().optional(),
+  }),
   component: ContentEditor,
 });
 
@@ -26,11 +36,27 @@ const localDraft = z.object({
 
 function ContentEditor() {
   const { projectId } = Route.useParams();
+  const { page, title } = Route.useSearch();
   // A project switch must remount the draft state before local storage can write.
-  return <ProjectContentEditor key={projectId} projectId={projectId} />;
+  return (
+    <ProjectContentEditor
+      key={`${projectId}:${page ?? ""}`}
+      projectId={projectId}
+      targetPage={page}
+      suggestedTitle={title}
+    />
+  );
 }
 
-function ProjectContentEditor({ projectId }: { projectId: string }) {
+function ProjectContentEditor({
+  projectId,
+  targetPage,
+  suggestedTitle,
+}: {
+  projectId: string;
+  targetPage?: string;
+  suggestedTitle?: string;
+}) {
   const [keyword, setKeyword] = useState("");
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -51,7 +77,7 @@ function ProjectContentEditor({ projectId }: { projectId: string }) {
     }[]
   >([]);
   const target = `${keyword.trim()}|${title.trim()}|${slug.trim()}|${kind}`;
-  const storageKey = `openseo-article-${projectId}`;
+  const storageKey = `openseo-article-${projectId}${targetPage ? `:${targetPage}` : ""}`;
   const wordpress = useQuery({
     queryKey: ["wordpress-connection", projectId],
     queryFn: () => getWordPressStatus({ data: { projectId } }),
@@ -68,12 +94,20 @@ function ProjectContentEditor({ projectId }: { projectId: string }) {
         setSlug(saved.data.slug);
         setContent(saved.data.content);
         setKind(saved.data.kind ?? "page");
+      } else if (targetPage) {
+        const pageName = recommendationPage(targetPage)?.title ?? "";
+        const proposed = suggestedTitle?.split(/[|｜]/)[0].trim() || pageName;
+        setKeyword(proposed.slice(0, 100));
+        setTitle((suggestedTitle || pageName).slice(0, 180));
+        setSlug(
+          new URL(targetPage).pathname.split("/").filter(Boolean).at(-1) ?? "",
+        );
       }
     } catch {
       /* A damaged local draft should not block the editor. */
     }
     setLoaded(true);
-  }, [storageKey]);
+  }, [storageKey, targetPage, suggestedTitle]);
   useEffect(() => {
     if (loaded)
       localStorage.setItem(
@@ -87,7 +121,12 @@ function ProjectContentEditor({ projectId }: { projectId: string }) {
       setCheckedTarget(null);
       // Research is a server-side prerequisite, not a claim made by the model.
       const evidence = await researchContentTarget({
-        data: { projectId, keyword: keyword.trim(), title: title.trim() },
+        data: {
+          projectId,
+          keyword: keyword.trim(),
+          title: title.trim(),
+          targetPage,
+        },
       });
       setResearch(evidence);
       setMatchingPages(evidence.pages);
@@ -118,7 +157,10 @@ function ProjectContentEditor({ projectId }: { projectId: string }) {
   // A generated local draft is not clearance to create another CMS item.
   // Saving requires a current duplicate check with no matching content.
   const canCreateNewDraft =
-    canWrite && checkedTarget === target && matchingPages.length === 0;
+    !targetPage &&
+    canWrite &&
+    checkedTarget === target &&
+    matchingPages.length === 0;
   const articleText = content
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
@@ -133,21 +175,7 @@ function ProjectContentEditor({ projectId }: { projectId: string }) {
   return (
     <main className="h-full overflow-auto p-4 md:p-7" dir="rtl">
       <div className="mx-auto max-w-6xl space-y-5">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold">نگارش محتوا با SAM</h1>
-            <p className="text-sm text-base-content/60">
-              بنویسید، بازبینی کنید و پیش‌نویس را به وردپرس بفرستید.
-            </p>
-          </div>
-          <Link
-            to="/p/$projectId/sam"
-            params={{ projectId }}
-            className="btn btn-outline btn-sm"
-          >
-            گفت‌وگو با SAM
-          </Link>
-        </header>
+        <ContentEditorHeader projectId={projectId} targetPage={targetPage} />
         {!wordpress.data?.connection && (
           <p className="alert alert-info text-sm">
             برای ارسال پیش‌نویس، مدیر پروژه باید{" "}
@@ -230,7 +258,11 @@ function ProjectContentEditor({ projectId }: { projectId: string }) {
               }
               onClick={() => generate.mutate()}
             >
-              {generate.isPending ? "در حال نگارش…" : "تولید پیش‌نویس با SAM"}
+              {generate.isPending
+                ? "در حال بررسی و نگارش…"
+                : targetPage
+                  ? "تحلیل صفحه و نگارش بهبود با SAM"
+                  : "تولید پیش‌نویس با SAM"}
             </button>
             {generate.isError && (
               <p role="alert" className="text-error text-sm">
@@ -278,20 +310,27 @@ function ProjectContentEditor({ projectId }: { projectId: string }) {
               وردپرس پذیرفته می‌شوند. ذخیره به دست‌کم ۱۸۰ واژه و دو بخش با تیتر
               متفاوت نیاز دارد؛ صحت و ارزش افزودهٔ متن را نیز بازبینی کنید.
             </p>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              disabled={
-                !canCreateNewDraft ||
-                !wordpress.data?.connection ||
-                save.isPending ||
-                wordCount < 180 ||
-                distinctSections < 2
-              }
-              onClick={() => save.mutate()}
-            >
-              {save.isPending ? "در حال ذخیره…" : "ذخیرهٔ پیش‌نویس در وردپرس"}
-            </button>
+            {targetPage ? (
+              <p className="text-sm text-base-content/70">
+                متن پیشنهادی را بازبینی کنید و در ویرایشگر همان صفحهٔ وردپرس
+                جای‌گذاری کنید. این بخش صفحهٔ تازه‌ای منتشر نمی‌کند.
+              </p>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={
+                  !canCreateNewDraft ||
+                  !wordpress.data?.connection ||
+                  save.isPending ||
+                  wordCount < 180 ||
+                  distinctSections < 2
+                }
+                onClick={() => save.mutate()}
+              >
+                {save.isPending ? "در حال ذخیره…" : "ذخیرهٔ پیش‌نویس در وردپرس"}
+              </button>
+            )}
             {save.isSuccess && (
               <p role="status" className="text-sm">
                 {save.data.existing
@@ -313,35 +352,61 @@ function ProjectContentEditor({ projectId }: { projectId: string }) {
               </p>
             )}
           </section>
-          <section className="rounded-xl border border-base-300 p-4">
-            <h2 className="mb-3 font-medium">پیش‌نمایش مقاله</h2>
-            <div className="mb-4 grid gap-1 rounded-lg bg-base-200 p-3 text-xs text-base-content/70">
-              <span>{wordCount.toLocaleString("fa-IR")} واژه</span>
-              <span>
-                {keyword && title.includes(keyword)
-                  ? "✓ کلمهٔ هدف در عنوان است"
-                  : "کلمهٔ هدف را در عنوان بررسی کنید"}
-              </span>
-              <span>
-                {keyword && articleText.includes(keyword)
-                  ? "✓ کلمهٔ هدف در متن است"
-                  : "ارتباط متن با کلمهٔ هدف را بررسی کنید"}
-              </span>
-              <span>
-                {/<h2>/i.test(content)
-                  ? "✓ متن دارای تیتر بخش است"
-                  : "برای بخش‌های مقاله تیتر بگذارید"}
-              </span>
-            </div>
-            <iframe
-              title="پیش‌نمایش مقاله"
-              sandbox=""
-              className="min-h-[650px] w-full rounded-lg border border-base-300 bg-white"
-              srcDoc={`<html lang="fa" dir="rtl"><meta charset="utf-8"><style>body{font:16px/2 sans-serif;padding:24px;color:#17222f}h2,h3{line-height:1.5}</style>${content}</html>`}
-            />
-          </section>
+          <ArticlePreview
+            content={content}
+            keyword={keyword}
+            title={title}
+            articleText={articleText}
+            wordCount={wordCount}
+          />
         </div>
       </div>
     </main>
+  );
+}
+
+function ContentEditorHeader({
+  projectId,
+  targetPage,
+}: {
+  projectId: string;
+  targetPage?: string;
+}) {
+  return (
+    <>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">نگارش محتوا با SAM</h1>
+          <p className="text-sm text-base-content/60">
+            {targetPage
+              ? "صفحهٔ موجود را با داده‌های جست‌وجو و مهارت‌های SAM بررسی و پیش‌نویس بهبود را بازبینی کنید."
+              : "بنویسید، بازبینی کنید و پیش‌نویس را به وردپرس بفرستید."}
+          </p>
+        </div>
+        <Link
+          to="/p/$projectId/sam"
+          params={{ projectId }}
+          className="btn btn-outline btn-sm"
+        >
+          گفت‌وگو با SAM
+        </Link>
+      </header>
+      {targetPage && (
+        <p className="alert alert-info text-sm">
+          این پیشنهاد برای بهبود یک صفحهٔ موجود است. SAM شواهد و متن همان صفحه
+          را بررسی می‌کند و پیش‌نویس ویرایش می‌سازد؛ صفحهٔ تازه در وردپرس ایجاد
+          نمی‌شود.
+          <a
+            href={targetPage}
+            target="_blank"
+            rel="noreferrer"
+            className="link"
+            dir="ltr"
+          >
+            مشاهدهٔ صفحه
+          </a>
+        </p>
+      )}
+    </>
   );
 }

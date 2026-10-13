@@ -10,6 +10,12 @@ export function ArticleResearchSummary({ evidence }: { evidence: Evidence }) {
         وردپرس: {evidence.wordpressChecked ? "بررسی شد" : "متصل نیست"}؛{" "}
         {evidence.pages.length.toLocaleString("fa-IR")} محتوای مرتبط
       </p>
+      {evidence.existingPage && (
+        <p>
+          صفحهٔ هدف خوانده شد:{" "}
+          {evidence.existingPage.title ?? evidence.existingPage.url}
+        </p>
+      )}
       <p>
         سرچ کنسول:{" "}
         {evidence.searchConsole.status === "connected"

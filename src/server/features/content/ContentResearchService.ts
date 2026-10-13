@@ -5,17 +5,57 @@ import {
   getWordPressConnection,
   listWordPressPages,
 } from "@/server/features/wordpress/WordPressService";
+import { readPages } from "@/server/lib/scrape";
+import { AppError } from "@/server/lib/errors";
+import { db } from "@/db";
+import { projects } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-type Input = { projectId: string; keyword: string; title: string };
+type Input = {
+  projectId: string;
+  keyword: string;
+  title: string;
+  targetPage?: string;
+};
 
 /** First-party evidence collected before asking the model to write anything. */
 async function research(input: Input) {
-  const { projectId, keyword, title } = input;
+  const { projectId, keyword, title, targetPage } = input;
   const [wordpress, gscConnection, ga4Connection] = await Promise.all([
     getWordPressConnection(projectId),
     GscService.getConnection(projectId),
     Ga4ConnectionRepository.getByProjectId(projectId),
   ]);
+
+  let existingPage: { url: string; title: string | null; text: string } | null =
+    null;
+  if (targetPage) {
+    const [project] = await db
+      .select({ domain: projects.domain })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+    const domain = project?.domain;
+    if (!domain)
+      throw new AppError("VALIDATION_ERROR", "دامنهٔ پروژه تنظیم نشده است.");
+    const projectHost = new URL(
+      domain.includes("://") ? domain : `https://${domain}`,
+    ).hostname.replace(/^www\./, "");
+    const requestedHost = new URL(targetPage).hostname.replace(/^www\./, "");
+    if (projectHost !== requestedHost) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "صفحهٔ هدف باید متعلق به همین پروژه باشد.",
+      );
+    }
+    existingPage = (await readPages([targetPage], 1)).pages[0] ?? null;
+    if (!existingPage) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "متن صفحهٔ هدف خوانده نشد؛ نگارش بدون بررسی صفحه انجام نمی‌شود.",
+      );
+    }
+  }
 
   // A failed CMS check must stop generation: claiming that no page exists
   // after an API failure would be worse than delaying a draft.
@@ -54,7 +94,9 @@ async function research(input: Input) {
         dateRange: "last_3_months",
         dimensions: ["query", "page"],
         filters: [
-          { dimension: "query", operator: "contains", expression: keyword },
+          targetPage
+            ? { dimension: "page", operator: "equals", expression: targetPage }
+            : { dimension: "query", operator: "contains", expression: keyword },
         ],
         rowLimit: 100,
         type: "web",
@@ -85,7 +127,10 @@ async function research(input: Input) {
       });
       // The joined report is page-level. Only send rows related to the target
       // or already found CMS content, rather than implying all rows matter.
-      const targetUrls = new Set(pages.map((page) => page.link));
+      const targetUrls = new Set([
+        ...pages.map((page) => page.link),
+        ...(targetPage ? [targetPage] : []),
+      ]);
       const relevant = result.rows.filter(
         (row) =>
           targetUrls.has(row.page) ||
@@ -104,6 +149,7 @@ async function research(input: Input) {
 
   return {
     wordpressChecked: Boolean(wordpress),
+    existingPage,
     pages,
     searchConsole,
     analytics,

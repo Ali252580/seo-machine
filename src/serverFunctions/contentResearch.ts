@@ -10,6 +10,7 @@ export const researchContentTarget = createServerFn({ method: "POST" })
       projectId: z.string().min(1),
       keyword: z.string().trim().min(2).max(100),
       title: z.string().trim().min(5).max(180),
+      targetPage: z.string().url().optional(),
     }),
   )
   .handler(({ context, data }) =>
@@ -17,5 +18,6 @@ export const researchContentTarget = createServerFn({ method: "POST" })
       projectId: context.projectId,
       keyword: data.keyword,
       title: data.title,
+      targetPage: data.targetPage,
     }),
   );

@@ -7,7 +7,20 @@ const mocks = vi.hoisted(() => ({
   getPerformance: vi.fn(),
   getGa4Connection: vi.fn(),
   getOpportunities: vi.fn(),
+  readPages: vi.fn(),
+  projectRows: vi.fn(),
 }));
+
+vi.mock("@/db", () => ({
+  db: {
+    select: () => ({
+      from: () => ({ where: () => ({ limit: mocks.projectRows }) }),
+    }),
+  },
+}));
+vi.mock("@/db/schema", () => ({ projects: { id: "id", domain: "domain" } }));
+vi.mock("drizzle-orm", () => ({ eq: vi.fn() }));
+vi.mock("@/server/lib/scrape", () => ({ readPages: mocks.readPages }));
 
 vi.mock("@/server/features/wordpress/WordPressService", () => ({
   getWordPressConnection: mocks.getWordPressConnection,
@@ -42,6 +55,16 @@ beforeEach(() => {
   mocks.getGscConnection.mockResolvedValue(null);
   mocks.getGa4Connection.mockResolvedValue(null);
   mocks.listWordPressPages.mockResolvedValue([]);
+  mocks.projectRows.mockResolvedValue([{ domain: "site.test" }]);
+  mocks.readPages.mockResolvedValue({
+    pages: [
+      {
+        url: "https://site.test/radiator",
+        title: "نصب رادیاتور",
+        text: "متن کنونی صفحه",
+      },
+    ],
+  });
 });
 
 describe("content research before writing", () => {
@@ -89,5 +112,34 @@ describe("content research before writing", () => {
 
     expect(result.searchConsole).toEqual({ status: "unavailable" });
     expect(result.analytics).toEqual({ status: "unavailable" });
+  });
+
+  it("reads only an existing page on the selected project domain and queries that page", async () => {
+    mocks.getGscConnection.mockResolvedValue({ siteUrl: "https://site.test" });
+    mocks.getPerformance.mockResolvedValue({ rows: [] });
+    const targetPage = "https://site.test/radiator";
+    const result = await ContentResearchService.research({
+      ...input,
+      targetPage,
+    });
+    expect(mocks.readPages).toHaveBeenCalledWith([targetPage], 1);
+    expect(mocks.getPerformance).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: [
+          { dimension: "page", operator: "equals", expression: targetPage },
+        ],
+      }),
+    );
+    expect(result.existingPage?.text).toBe("متن کنونی صفحه");
+  });
+
+  it("rejects a target page from another project before reading it", async () => {
+    await expect(
+      ContentResearchService.research({
+        ...input,
+        targetPage: "https://other.test/radiator",
+      }),
+    ).rejects.toThrow("همین پروژه");
+    expect(mocks.readPages).not.toHaveBeenCalled();
   });
 });

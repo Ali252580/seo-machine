@@ -1,4 +1,5 @@
 import { ExternalLink, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { recommendationPage } from "./recommendationPage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -159,6 +160,19 @@ export function PeriodicRecommendationsCard({
                             />
                           </a>
                         </div>
+                      )}
+                      {page && (
+                        <Link
+                          to="/p/$projectId/content"
+                          params={{ projectId }}
+                          search={{
+                            page: page.href,
+                            title: page.hasTitle ? page.title : "",
+                          }}
+                          className="btn btn-outline btn-sm mt-4"
+                        >
+                          بررسی و نگارش بهبود با SAM
+                        </Link>
                       )}
                     </div>
                     <div className="space-y-4 px-4 py-4 sm:px-6">
