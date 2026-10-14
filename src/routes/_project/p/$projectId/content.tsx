@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
 import { ArticlePreview } from "@/client/features/content/ArticlePreview";
+import { ArticleMediaPanel } from "@/client/features/content/ArticleMediaPanel";
+import { useArticleDraft } from "@/client/features/content/useArticleDraft";
 import { ContentEditorHeader } from "@/client/features/content/ContentEditorHeader";
 import { buildArticlePrompt } from "@/client/features/content/buildArticlePrompt";
-import { recommendationPage } from "@/client/features/dashboard/recommendationPage";
 import { researchContentTarget } from "@/serverFunctions/contentResearch";
 import { createSamSession } from "@/serverFunctions/sam";
 import { sendSamVercelMessage } from "@/serverFunctions/samVercel";
@@ -25,14 +26,6 @@ export const Route = createFileRoute("/_project/p/$projectId/content")({
     title: z.string().optional(),
   }),
   component: ContentEditor,
-});
-
-const localDraft = z.object({
-  keyword: z.string(),
-  title: z.string(),
-  slug: z.string(),
-  content: z.string(),
-  kind: z.enum(["page", "post"]).optional(),
 });
 
 function ContentEditor() {
@@ -58,12 +51,20 @@ function ProjectContentEditor({
   targetPage?: string;
   suggestedTitle?: string;
 }) {
-  const [keyword, setKeyword] = useState("");
-  const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
-  const [content, setContent] = useState("");
-  const [kind, setKind] = useState<"page" | "post">("page");
-  const [loaded, setLoaded] = useState(false);
+  const {
+    keyword,
+    setKeyword,
+    title,
+    setTitle,
+    slug,
+    setSlug,
+    content,
+    setContent,
+    kind,
+    setKind,
+    image,
+    setImage,
+  } = useArticleDraft(projectId, targetPage, suggestedTitle);
   const [checkedTarget, setCheckedTarget] = useState<string | null>(null);
   const [research, setResearch] = useState<
     Awaited<ReturnType<typeof researchContentTarget>> | undefined
@@ -78,47 +79,10 @@ function ProjectContentEditor({
     }[]
   >([]);
   const target = `${keyword.trim()}|${title.trim()}|${slug.trim()}|${kind}`;
-  const storageKey = `openseo-article-${projectId}${targetPage ? `:${targetPage}` : ""}`;
   const wordpress = useQuery({
     queryKey: ["wordpress-connection", projectId],
     queryFn: () => getWordPressStatus({ data: { projectId } }),
   });
-
-  useEffect(() => {
-    try {
-      const saved = localDraft.safeParse(
-        JSON.parse(localStorage.getItem(storageKey) ?? "null"),
-      );
-      if (saved.success) {
-        setKeyword(saved.data.keyword);
-        setTitle(saved.data.title);
-        setSlug(saved.data.slug);
-        setContent(saved.data.content);
-        setKind(saved.data.kind ?? "page");
-      } else if (targetPage) {
-        const pageName = recommendationPage(targetPage)?.title ?? "";
-        const proposed = suggestedTitle?.split(/[|｜]/)[0].trim() || pageName;
-        setKeyword(proposed.slice(0, 100));
-        setTitle((suggestedTitle || pageName).slice(0, 180));
-        setSlug(
-          decodeURIComponent(
-            new URL(targetPage).pathname.split("/").filter(Boolean).at(-1) ??
-              "",
-          ),
-        );
-      }
-    } catch {
-      /* A damaged local draft should not block the editor. */
-    }
-    setLoaded(true);
-  }, [storageKey, targetPage, suggestedTitle]);
-  useEffect(() => {
-    if (loaded)
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({ keyword, title, slug, content, kind }),
-      );
-  }, [loaded, storageKey, keyword, title, slug, content, kind]);
 
   const generate = useMutation({
     mutationFn: async () => {
@@ -180,7 +144,7 @@ function ProjectContentEditor({
     <main className="h-full overflow-auto p-4 md:p-7" dir="rtl">
       <div className="mx-auto max-w-6xl space-y-5">
         <ContentEditorHeader projectId={projectId} targetPage={targetPage} />
-        {!wordpress.data?.connection && (
+        {!targetPage && !wordpress.data?.connection && (
           <p className="alert alert-info text-sm">
             برای ارسال پیش‌نویس، مدیر پروژه باید{" "}
             <Link
@@ -314,6 +278,33 @@ function ProjectContentEditor({
               وردپرس پذیرفته می‌شوند. ذخیره به دست‌کم ۱۸۰ واژه و دو بخش با تیتر
               متفاوت نیاز دارد؛ صحت و ارزش افزودهٔ متن را نیز بازبینی کنید.
             </p>
+            <ArticleMediaPanel
+              projectId={projectId}
+              title={title}
+              keyword={keyword}
+              slug={slug}
+              kind={kind}
+              content={content}
+              image={image}
+              onImage={setImage}
+              canUpload={canWrite && Boolean(wordpress.data?.connection)}
+              onImport={(article) => {
+                setTitle(article.title);
+                setKind(article.kind);
+                setContent(article.content);
+                setImage(
+                  article.image
+                    ? {
+                        ...article.image,
+                        preview: article.image.url,
+                        mediaType: "image/jpeg",
+                        alt: article.title,
+                      }
+                    : null,
+                );
+                setCheckedTarget(null);
+              }}
+            />
             {targetPage ? (
               <p className="text-sm text-base-content/70">
                 {

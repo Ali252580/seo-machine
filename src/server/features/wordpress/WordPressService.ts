@@ -1,5 +1,6 @@
 import { symmetricDecrypt, symmetricEncrypt } from "better-auth/crypto";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/db";
 import { projects, wordpressConnections } from "@/db/schema";
 import { getAuth } from "@/lib/auth";
@@ -19,6 +20,16 @@ type Page = {
   kind?: "page" | "post";
 };
 type Credentials = { siteUrl: string; username: string; password: string };
+
+function authHeader(credentials: Credentials) {
+  return `Basic ${btoa(
+    String.fromCharCode(
+      ...new TextEncoder().encode(
+        `${credentials.username}:${credentials.password}`,
+      ),
+    ),
+  )}`;
+}
 
 function comparableTitle(value: string) {
   return value
@@ -44,19 +55,12 @@ async function request<T>(
 ): Promise<T> {
   await normalizeAndValidateStartUrl(credentials.siteUrl);
   const url = new URL(`/wp-json/wp/v2/${path}`, credentials.siteUrl);
-  const basic = btoa(
-    String.fromCharCode(
-      ...new TextEncoder().encode(
-        `${credentials.username}:${credentials.password}`,
-      ),
-    ),
-  );
   const response = await fetch(url, {
     ...init,
     redirect: "manual", // Credentials must never follow a cross-origin redirect.
     signal: AbortSignal.timeout(10_000),
     headers: {
-      Authorization: `Basic ${basic}`,
+      Authorization: authHeader(credentials),
       "Content-Type": "application/json",
     },
   });
@@ -66,6 +70,46 @@ async function request<T>(
       `WordPress API returned ${response.status}`,
     );
   return response.json();
+}
+
+/** Upload one reviewed generated image to this project's WordPress media library. */
+export async function uploadWordPressArticleImage(
+  projectId: string,
+  bytes: Uint8Array,
+  mediaType: "image/jpeg" | "image/png" | "image/webp",
+  altText: string,
+) {
+  const credentials = await client(projectId);
+  await normalizeAndValidateStartUrl(credentials.siteUrl);
+  const extension =
+    mediaType === "image/jpeg" ? "jpg" : mediaType.split("/")[1];
+  const response = await fetch(
+    new URL("/wp-json/wp/v2/media", credentials.siteUrl),
+    {
+      method: "POST",
+      redirect: "manual",
+      signal: AbortSignal.timeout(30_000),
+      headers: {
+        Authorization: authHeader(credentials),
+        "Content-Type": mediaType,
+        "Content-Disposition": `attachment; filename="openseo-${crypto.randomUUID()}.${extension}"`,
+      },
+      body: new Blob([Uint8Array.from(bytes)], { type: mediaType }),
+    },
+  );
+  if (!response.ok)
+    throw new AppError(
+      "VALIDATION_ERROR",
+      `WordPress media API returned ${response.status}`,
+    );
+  const media = z
+    .object({ id: z.number().int(), source_url: z.string().url() })
+    .parse(await response.json());
+  await request(credentials, `media/${media.id}`, {
+    method: "POST",
+    body: JSON.stringify({ alt_text: altText.slice(0, 250) }),
+  });
+  return { id: media.id, url: media.source_url };
 }
 
 export async function connectWordPress(input: {

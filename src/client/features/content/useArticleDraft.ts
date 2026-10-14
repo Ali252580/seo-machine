@@ -1,0 +1,107 @@
+import { useEffect, useState } from "react";
+import { z } from "zod";
+import { recommendationPage } from "@/client/features/dashboard/recommendationPage";
+import type { ArticleImage } from "./ArticleMediaPanel";
+
+const localDraft = z.object({
+  keyword: z.string(),
+  title: z.string(),
+  slug: z.string(),
+  content: z.string(),
+  kind: z.enum(["page", "post"]).optional(),
+  image: z
+    .object({
+      id: z.number(),
+      url: z.string(),
+      preview: z.string(),
+      mediaType: z.string(),
+      alt: z.string(),
+    })
+    .nullable()
+    .optional(),
+});
+
+/** Keeps article drafts isolated by project and target URL. */
+export function useArticleDraft(
+  projectId: string,
+  targetPage?: string,
+  suggestedTitle?: string,
+) {
+  const [keyword, setKeyword] = useState("");
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [content, setContent] = useState("");
+  const [kind, setKind] = useState<"page" | "post">("page");
+  const [image, setImage] = useState<ArticleImage | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const storageKey = `openseo-article-${projectId}${targetPage ? `:${targetPage}` : ""}`;
+
+  useEffect(() => {
+    try {
+      const saved = localDraft.safeParse(
+        JSON.parse(localStorage.getItem(storageKey) ?? "null"),
+      );
+      if (saved.success) {
+        setKeyword(saved.data.keyword);
+        setTitle(saved.data.title);
+        setSlug(
+          targetPage
+            ? decodeURIComponent(
+                new URL(targetPage).pathname
+                  .split("/")
+                  .filter(Boolean)
+                  .at(-1) ?? "",
+              )
+            : saved.data.slug,
+        );
+        setContent(saved.data.content);
+        setKind(saved.data.kind ?? "page");
+        setImage(saved.data.image?.url ? saved.data.image : null);
+      } else if (targetPage) {
+        const pageName = recommendationPage(targetPage)?.title ?? "";
+        const proposed = suggestedTitle?.split(/[|｜]/)[0].trim() || pageName;
+        setKeyword(proposed.slice(0, 100));
+        setTitle((suggestedTitle || pageName).slice(0, 180));
+        setSlug(
+          decodeURIComponent(
+            new URL(targetPage).pathname.split("/").filter(Boolean).at(-1) ??
+              "",
+          ),
+        );
+      }
+    } catch {
+      /* A damaged local draft should not block the editor. */
+    }
+    setLoaded(true);
+  }, [storageKey, targetPage, suggestedTitle]);
+
+  useEffect(() => {
+    if (loaded)
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          keyword,
+          title,
+          slug,
+          content,
+          kind,
+          image: image?.url ? image : null,
+        }),
+      );
+  }, [loaded, storageKey, keyword, title, slug, content, kind, image]);
+
+  return {
+    keyword,
+    setKeyword,
+    title,
+    setTitle,
+    slug,
+    setSlug,
+    content,
+    setContent,
+    kind,
+    setKind,
+    image,
+    setImage,
+  };
+}
