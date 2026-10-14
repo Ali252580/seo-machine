@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
 import { ArticlePreview } from "@/client/features/content/ArticlePreview";
+import { ContentEditorHeader } from "@/client/features/content/ContentEditorHeader";
 import { buildArticlePrompt } from "@/client/features/content/buildArticlePrompt";
 import { recommendationPage } from "@/client/features/dashboard/recommendationPage";
 import { researchContentTarget } from "@/serverFunctions/contentResearch";
@@ -100,7 +101,10 @@ function ProjectContentEditor({
         setKeyword(proposed.slice(0, 100));
         setTitle((suggestedTitle || pageName).slice(0, 180));
         setSlug(
-          new URL(targetPage).pathname.split("/").filter(Boolean).at(-1) ?? "",
+          decodeURIComponent(
+            new URL(targetPage).pathname.split("/").filter(Boolean).at(-1) ??
+              "",
+          ),
         );
       }
     } catch {
@@ -312,8 +316,9 @@ function ProjectContentEditor({
             </p>
             {targetPage ? (
               <p className="text-sm text-base-content/70">
-                متن پیشنهادی را بازبینی کنید و در ویرایشگر همان صفحهٔ وردپرس
-                جای‌گذاری کنید. این بخش صفحهٔ تازه‌ای منتشر نمی‌کند.
+                {
+                  "متن پیشنهادی را بازبینی کنید و در ویرایشگر همان صفحهٔ وردپرس جای‌گذاری کنید. این بخش صفحهٔ تازه‌ای منتشر نمی‌کند."
+                }
               </p>
             ) : (
               <button
@@ -362,51 +367,5 @@ function ProjectContentEditor({
         </div>
       </div>
     </main>
-  );
-}
-
-function ContentEditorHeader({
-  projectId,
-  targetPage,
-}: {
-  projectId: string;
-  targetPage?: string;
-}) {
-  return (
-    <>
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">نگارش محتوا با SAM</h1>
-          <p className="text-sm text-base-content/60">
-            {targetPage
-              ? "صفحهٔ موجود را با داده‌های جست‌وجو و مهارت‌های SAM بررسی و پیش‌نویس بهبود را بازبینی کنید."
-              : "بنویسید، بازبینی کنید و پیش‌نویس را به وردپرس بفرستید."}
-          </p>
-        </div>
-        <Link
-          to="/p/$projectId/sam"
-          params={{ projectId }}
-          className="btn btn-outline btn-sm"
-        >
-          گفت‌وگو با SAM
-        </Link>
-      </header>
-      {targetPage && (
-        <p className="alert alert-info text-sm">
-          این پیشنهاد برای بهبود یک صفحهٔ موجود است. SAM شواهد و متن همان صفحه
-          را بررسی می‌کند و پیش‌نویس ویرایش می‌سازد؛ صفحهٔ تازه در وردپرس ایجاد
-          نمی‌شود.
-          <a
-            href={targetPage}
-            target="_blank"
-            rel="noreferrer"
-            className="link"
-            dir="ltr"
-          >
-            مشاهدهٔ صفحه
-          </a>
-        </p>
-      )}
-    </>
   );
 }

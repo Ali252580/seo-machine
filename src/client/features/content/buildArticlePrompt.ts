@@ -47,10 +47,23 @@ export function buildArticlePrompt(
   const evidenceSummary =
     `وردپرس: ${cmsRows}. سرچ کنسول: ${searchRows}. آنالیتیکس: ${analyticsRows}.`.slice(
       0,
-      2_400,
+      1_000,
     );
-  const existing = evidence.existingPage
-    ? `صفحهٔ موجود (${evidence.existingPage.url})، عنوان: ${evidence.existingPage.title ?? "نامشخص"}، گزیدهٔ متن فعلی: ${evidence.existingPage.text.slice(0, 3_200)}. این متن را برای همان صفحه بازنویسی و تکمیل کن؛ صفحه یا مقالهٔ جدید پیشنهاد نده.`
+  const intro = `برای کلمهٔ «${keyword}» و عنوان «${title}» یک متن دقیق و قابل ویرایش بنویس. شواهد واقعی پیش از نگارش: ${evidenceSummary} `;
+  const pageIntro = evidence.existingPage
+    ? `صفحهٔ موجود (${evidence.existingPage.url.slice(0, 400)})، عنوان: ${evidence.existingPage.title ?? "نامشخص"}، گزیدهٔ متن فعلی: `
     : "";
-  return `برای کلمهٔ «${keyword}» و عنوان «${title}» یک متن دقیق و قابل ویرایش بنویس. شواهد واقعی پیش از نگارش: ${evidenceSummary} ${existing} از مهارت‌های seo-audit و keyword-research برای سنجش قصد جست‌وجو و کیفیت صفحه استفاده کن. از نمونه‌های کوچک نتیجهٔ قطعی نگیر و عددی را نساز. متن باید به نیاز مشخص کاربر پاسخ بدهد و نسبت به محتوای موجود ارزش تازه داشته باشد؛ از ادعای بی‌منبع، قیمت ساختگی و پاراگراف‌های کلی پرهیز کن. اگر اطلاعات کافی برای متن مفید نیست، فقط یک توضیح کوتاه دربارهٔ اطلاعات لازم بده. فقط HTML ساده بده.`;
+  const pageInstruction = evidence.existingPage
+    ? "این متن را برای همان صفحه بازنویسی و تکمیل کن؛ صفحه یا مقالهٔ جدید پیشنهاد نده."
+    : "اگر صفحهٔ مشابهی وجود دارد، فقط بهبود همان صفحه را پیشنهاد بده و متن تکراری نساز.";
+  const instructions = ` ${pageInstruction} از مهارت‌های seo-audit و keyword-research برای سنجش قصد جست‌وجو و کیفیت صفحه استفاده کن. از نمونه‌های کوچک نتیجهٔ قطعی نگیر و عددی را نساز. متن باید به نیاز مشخص کاربر پاسخ بدهد و نسبت به محتوای موجود ارزش تازه داشته باشد؛ از ادعای بی‌منبع، قیمت ساختگی و پاراگراف‌های کلی پرهیز کن. اگر اطلاعات کافی برای متن مفید نیست، فقط یک توضیح کوتاه دربارهٔ اطلاعات لازم بده. فقط HTML ساده بده.`;
+  const pageText =
+    evidence.existingPage?.text.slice(
+      0,
+      Math.max(
+        0,
+        3_900 - intro.length - pageIntro.length - instructions.length,
+      ),
+    ) ?? "";
+  return `${intro}${pageIntro}${pageText}${instructions}`;
 }
