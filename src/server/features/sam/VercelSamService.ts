@@ -166,15 +166,15 @@ export async function sendVercelSamMessage(
             "Create a WordPress page as a DRAFT only, after checking existing pages. Never publish or edit a live page.",
           inputSchema: z.object({
             title: z.string().min(5).max(180),
-            slug: z
-              .string()
-              .min(2)
-              .max(180)
-              .regex(/^[\p{L}\p{N}-]+$/u),
+            slug: z.string().min(2).max(180),
             content: z.string().min(200).max(20_000),
             kind: z.enum(["page", "post"]).default("page"),
           }),
           execute: async ({ title, slug, content, kind }) => {
+            // OpenRouter rejects Unicode regex in tool schemas; enforce it here.
+            if (!/^[\p{L}\p{N}-]+$/u.test(slug)) {
+              throw new AppError("VALIDATION_ERROR", "نشانی کوتاه معتبر نیست.");
+            }
             if (!hasOrgPermission(caller.role, { integration: ["manage"] })) {
               throw new AppError(
                 "FORBIDDEN",
