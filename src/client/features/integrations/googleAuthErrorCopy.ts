@@ -31,7 +31,7 @@ export function googleAuthErrorCopy(
       return {
         title: "Google account already connected",
         description: providerLabel
-          ? `Sign in to the OpenSEO user that linked it, open the ${providerLabel} property picker, and choose Remove account beside the Google account. Then link it here.`
+          ? `This ${providerLabel} attempt used an older connection flow. Return to your project and choose Add Google account again.`
           : "That Google account is already linked to a different OpenSEO user. Sign in with that user, or contact support for help.",
       };
     default:

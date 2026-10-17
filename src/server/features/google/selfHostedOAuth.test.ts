@@ -232,4 +232,27 @@ describe("self-hosted Google OAuth providers", () => {
       }),
     );
   });
+
+  it("stores a separate grant when another OpenSEO user authorizes the same Google identity", async () => {
+    const idToken = `header.${btoa(JSON.stringify({ sub: "shared-google-account" }))}.signature`;
+    mocks.fetch.mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ access_token: "token", id_token: idToken }), { status: 200 })),
+    );
+    for (const currentUser of [user, { userId: "user-2", userEmail: "other@example.com" }]) {
+      const authorizationUrl = new URL(await createSelfHostedGoogleAuthorizationUrl({
+        integration: GSC_INTEGRATION,
+        user: currentUser,
+        callbackURL,
+        publicOrigin,
+      }));
+      await handleSelfHostedGoogleOAuthCallback({
+        integration: GSC_INTEGRATION,
+        request: callbackRequest(GSC_INTEGRATION, authorizationUrl.searchParams.get("state")!, { code: "code" }),
+        user: currentUser,
+        publicOrigin,
+      });
+    }
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(1, expect.objectContaining({ accountId: "shared-google-account", userId: "user-1" }));
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(2, expect.objectContaining({ accountId: "shared-google-account", userId: "user-2" }));
+  });
 });

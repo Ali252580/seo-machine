@@ -1,14 +1,11 @@
 import { symmetricEncrypt } from "better-auth/crypto";
-import { env } from "cloudflare:workers";
 import { and, eq } from "drizzle-orm";
 import { decodeJwt } from "jose";
 import { z } from "zod";
 import { db } from "@/db";
 import { account } from "@/db/schema";
 import { getAuth } from "@/lib/auth";
-import { getAuthMode, isHostedAuthMode } from "@/lib/auth-mode";
-import { resolveCloudflareAccessContext } from "@/middleware/ensure-user/cloudflareAccess";
-import { resolveLocalNoAuthContext } from "@/middleware/ensure-user/delegated";
+import { resolveUserContextFromHeaders } from "@/middleware/ensure-user/resolve";
 import { AppError } from "@/server/lib/errors";
 import { responseForAppError } from "@/server/lib/http-errors";
 import { getPublicOrigin } from "@/server/mcp/public-origin";
@@ -351,12 +348,18 @@ export async function handleSelfHostedGoogleOAuthCallback(input: {
       },
     );
   }
-  const redirectToCallback = () =>
-    new Response(null, {
+  const redirectToCallback = (error?: string) => {
+    const callback = new URL(state.callbackPath, input.publicOrigin);
+    if (error) {
+      callback.searchParams.set("google_link_error", input.integration === GSC_INTEGRATION ? "gsc" : "ga4");
+      callback.searchParams.set("error", error);
+    }
+    return new Response(null, {
       status: 303,
-      headers: { Location: state.callbackPath },
+      headers: { Location: `${callback.pathname}${callback.search}${callback.hash}` },
     });
-  if (url.searchParams.get("error")) return redirectToCallback();
+  };
+  if (url.searchParams.get("error")) return redirectToCallback("access_denied");
   const code = url.searchParams.get("code");
   if (!code) {
     return new Response(`Missing ${input.integration.displayName} OAuth code`, {
@@ -383,14 +386,7 @@ export async function handleSelfHostedGoogleOAuthCallbackRequest(
   integration: SelfHostedGoogleOAuthIntegration,
 ) {
   try {
-    const authMode = getAuthMode(env.AUTH_MODE);
-    if (isHostedAuthMode(authMode)) {
-      return new Response("Not found", { status: 404 });
-    }
-    const context =
-      authMode === "local_noauth"
-        ? await resolveLocalNoAuthContext()
-        : await resolveCloudflareAccessContext(request.headers);
+    const context = await resolveUserContextFromHeaders(request.headers);
     return await handleSelfHostedGoogleOAuthCallback({
       integration,
       request,
