@@ -8,4 +8,5 @@ it("accepts this project's URL and domain properties but rejects other sites", (
   expect(matches("https://other.example/", "example.com")).toBe(false);
   expect(matches("sc-domain:ample.com", "example.com")).toBe(false);
   expect(matches("not a url", "example.com")).toBe(false);
+  expect(matches("https://example.com/", null)).toBe(false);
 });

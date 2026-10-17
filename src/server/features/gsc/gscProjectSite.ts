@@ -9,7 +9,7 @@ export function gscSiteMatchesProjectDomain(
   siteUrl: string,
   projectDomain: string | null,
 ): boolean {
-  if (!projectDomain) return true;
+  if (!projectDomain) return false;
   try {
     const projectHost = host(projectDomain);
     if (siteUrl.startsWith("sc-domain:")) {
