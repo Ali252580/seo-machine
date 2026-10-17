@@ -6,11 +6,27 @@ import { Ga4ConnectionRepository } from "./Ga4ConnectionRepository";
 
 const mocks = vi.hoisted(() => ({
   insert: vi.fn(),
+  rows: [] as unknown[],
+  listDataStreams: vi.fn(),
   connectedAccountEmail: undefined as SQL | undefined,
 }));
 
 vi.mock("cloudflare:workers", () => ({ env: {} }));
-vi.mock("@/db", () => ({ db: { insert: mocks.insert } }));
+vi.mock("@/server/lib/ga4Client", () => ({
+  createGa4AdminClient: () => ({ listDataStreams: mocks.listDataStreams }),
+}));
+vi.mock("@/db", () => ({
+  db: {
+    insert: mocks.insert,
+    select: () => ({
+      from: () => ({
+        innerJoin: () => ({
+          where: () => ({ limit: async () => mocks.rows }),
+        }),
+      }),
+    }),
+  },
+}));
 
 function evaluateConnectedAccountEmail(expression: SQL): string | null {
   const database = new DatabaseSync(":memory:");
@@ -49,6 +65,8 @@ function evaluateConnectedAccountEmail(expression: SQL): string | null {
 
 describe("Ga4ConnectionRepository", () => {
   beforeEach(() => {
+    mocks.rows = [];
+    mocks.listDataStreams.mockReset();
     mocks.connectedAccountEmail = undefined;
     mocks.insert.mockImplementation(() => {
       const builder = {
@@ -64,6 +82,64 @@ describe("Ga4ConnectionRepository", () => {
         },
       );
       return builder;
+    });
+  });
+
+  it("does not expose another organization's or site's property", async () => {
+    mocks.rows = [
+      {
+        connection: { propertyId: "properties/11", organizationId: "other" },
+        organizationId: "current",
+        domain: "second.example",
+      },
+    ];
+    expect(
+      await Ga4ConnectionRepository.getByProjectId("project-1"),
+    ).toBeNull();
+    mocks.rows = [
+      {
+        connection: {
+          propertyId: "properties/11",
+          organizationId: "current",
+          connectedByUserId: "user",
+          ga4AccountId: "account",
+        },
+        organizationId: "current",
+        domain: "second.example",
+      },
+    ];
+    mocks.listDataStreams.mockResolvedValue([
+      {
+        type: "WEB_DATA_STREAM",
+        webStreamData: { defaultUri: "https://first.example" },
+      },
+    ]);
+    expect(
+      await Ga4ConnectionRepository.getByProjectId("project-1"),
+    ).toBeNull();
+    mocks.listDataStreams.mockResolvedValue([
+      {
+        type: "WEB_DATA_STREAM",
+        webStreamData: { defaultUri: "https://second.example" },
+      },
+      {
+        type: "WEB_DATA_STREAM",
+        webStreamData: { defaultUri: "https://first.example" },
+      },
+    ]);
+    expect(
+      await Ga4ConnectionRepository.getByProjectId("project-1"),
+    ).toBeNull();
+    mocks.listDataStreams.mockResolvedValue([
+      {
+        type: "WEB_DATA_STREAM",
+        webStreamData: { defaultUri: "https://second.example" },
+      },
+    ]);
+    expect(
+      await Ga4ConnectionRepository.getByProjectId("project-1"),
+    ).toMatchObject({
+      propertyId: "properties/11",
     });
   });
 

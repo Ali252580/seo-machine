@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { gscConnections } from "@/db/schema";
+import { gscConnections, projects } from "@/db/schema";
+import { gscSiteMatchesProjectDomain } from "@/server/features/gsc/gscProjectSite";
 
 export type GscConnection = typeof gscConnections.$inferSelect;
 
@@ -8,11 +9,22 @@ async function getByProjectId(
   projectId: string,
 ): Promise<GscConnection | null> {
   const rows = await db
-    .select()
+    .select({
+      connection: gscConnections,
+      domain: projects.domain,
+      organizationId: projects.organizationId,
+    })
     .from(gscConnections)
+    .innerJoin(projects, eq(gscConnections.projectId, projects.id))
     .where(eq(gscConnections.projectId, projectId))
     .limit(1);
-  return rows[0] ?? null;
+  const row = rows[0];
+  // Older connections may have been bound to a different project's property.
+  return row &&
+    row.connection.organizationId === row.organizationId &&
+    gscSiteMatchesProjectDomain(row.connection.siteUrl, row.domain)
+    ? row.connection
+    : null;
 }
 
 async function upsert(input: {

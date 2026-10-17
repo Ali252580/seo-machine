@@ -11,15 +11,17 @@ export function useGooglePickerResume(
 ) {
   // null lets the card derive unfinished setup from the saved authorization.
   // false means the user explicitly closed the picker during this visit.
-  const [picking, setPicking] = useState<boolean | null>(null);
+  const [picker, setPicker] = useState<{ key: string; open: boolean | null }>();
   const linking = useGoogleLinkPending();
   const key = `google-property-picker:${provider}:${projectId}`;
+  const picking = picker?.key === key ? picker.open : null;
+  const setPicking = (open: boolean | null) => setPicker({ key, open });
   useEffect(() => {
-    setPicking(null);
+    setPicker({ key, open: null });
     try {
       if (sessionStorage.getItem(key)) {
         sessionStorage.removeItem(key);
-        setPicking(true);
+        setPicker({ key, open: true });
       }
     } catch {
       /* Storage can be disabled; Connect still opens the picker. */

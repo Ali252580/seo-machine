@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
   };
   const listProperties = vi.fn();
   const getProperty = vi.fn();
+  const listDataStreams = vi.fn();
   const getUserInfoEmail = vi.fn();
   const deleteWhere = vi
     .fn<(condition: SQL) => Promise<void>>()
@@ -17,10 +18,12 @@ const mocks = vi.hoisted(() => {
     state,
     listProperties,
     getProperty,
+    listDataStreams,
     getUserInfoEmail,
     createGa4AdminClient: vi.fn(() => ({
       listProperties,
       getProperty,
+      listDataStreams,
       getUserInfoEmail,
     })),
     dbSelect: vi.fn(() => ({
@@ -59,6 +62,12 @@ vi.mock("@/server/features/ga4/repositories/Ga4ConnectionRepository", () => ({
 describe("Ga4Service", () => {
   beforeEach(() => {
     mocks.state.grants = [{ id: "grant-a", accountId: "sub-a" }];
+    mocks.listDataStreams.mockResolvedValue([
+      {
+        type: "WEB_DATA_STREAM",
+        webStreamData: { defaultUri: "https://example.com" },
+      },
+    ]);
     mocks.deleteByProjectId.mockResolvedValue(undefined);
   });
 
@@ -81,6 +90,7 @@ describe("Ga4Service", () => {
 
     await Ga4Service.setProperty({
       projectId: "p1",
+      projectDomain: "example.com",
       organizationId: "org1",
       propertyId: "properties/11",
       accountId: "sub-a",
@@ -120,6 +130,7 @@ describe("Ga4Service", () => {
 
     await Ga4Service.setProperty({
       projectId: "p1",
+      projectDomain: "example.com",
       organizationId: "org1",
       propertyId: "properties/22",
       accountId: "sub-b",
@@ -135,10 +146,60 @@ describe("Ga4Service", () => {
     );
   });
 
+  it("rejects a GA4 property for another website", async () => {
+    mocks.listProperties.mockResolvedValue([{ propertyId: "properties/11" }]);
+    mocks.getProperty.mockResolvedValue({ name: "properties/11" });
+    mocks.listDataStreams.mockResolvedValue([
+      {
+        type: "WEB_DATA_STREAM",
+        webStreamData: { defaultUri: "https://other.example" },
+      },
+    ]);
+    mocks.upsert.mockClear();
+    await expect(
+      Ga4Service.setProperty({
+        projectId: "p1",
+        projectDomain: "example.com",
+        organizationId: "org1",
+        propertyId: "properties/11",
+        accountId: "sub-a",
+        userId: "u1",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("lists only properties whose web streams belong to this project", async () => {
+    mocks.listProperties.mockResolvedValue([
+      { propertyId: "properties/11", displayName: "First" },
+      { propertyId: "properties/22", displayName: "Second" },
+    ]);
+    mocks.listDataStreams.mockImplementation(async (propertyId: string) => [
+      {
+        type: "WEB_DATA_STREAM",
+        webStreamData: {
+          defaultUri:
+            propertyId === "properties/11"
+              ? "https://first.example"
+              : "https://second.example",
+        },
+      },
+    ]);
+    mocks.getUserInfoEmail.mockResolvedValue("user@example.com");
+    const result = await Ga4Service.listPropertiesForUserWithGrantStatus(
+      "u1",
+      "second.example",
+    );
+    expect(result.accounts[0]?.properties).toEqual([
+      { propertyId: "properties/22", displayName: "Second" },
+    ]);
+  });
+
   it("rejects a property or connector the current user does not own", async () => {
     await expect(
       Ga4Service.setProperty({
         projectId: "p1",
+        projectDomain: "example.com",
         organizationId: "org1",
         propertyId: "properties/11",
         accountId: "foreign-sub",
@@ -150,6 +211,7 @@ describe("Ga4Service", () => {
     await expect(
       Ga4Service.setProperty({
         projectId: "p1",
+        projectDomain: "example.com",
         organizationId: "org1",
         propertyId: "properties/11",
         accountId: "sub-a",
@@ -172,7 +234,7 @@ describe("Ga4Service", () => {
       .mockImplementation(() => undefined);
 
     await expect(
-      Ga4Service.listPropertiesForUserWithGrantStatus("u1"),
+      Ga4Service.listPropertiesForUserWithGrantStatus("u1", "example.com"),
     ).resolves.toEqual({
       accounts: [
         {

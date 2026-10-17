@@ -65,6 +65,7 @@ vi.mock("@/server/features/gsc/repositories/GscConnectionRepository", () => ({
 
 const baseInput = {
   projectId: "p1",
+  projectDomain: "x",
   organizationId: "org1",
   accountId: "sub-a",
   userId: "u1",
@@ -157,6 +158,20 @@ describe("GscService.setSite", () => {
     await expect(
       GscService.setSite({ ...baseInput, siteUrl: "https://not-mine/" }),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("cannot bind another project's site even when the Google grant has access", async () => {
+    mocks.listSites.mockResolvedValue([
+      { siteUrl: "https://other.example/", permissionLevel: "siteOwner" },
+    ]);
+    await expect(
+      GscService.setSite({
+        ...baseInput,
+        projectDomain: "example.com",
+        siteUrl: "https://other.example/",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(mocks.upsert).not.toHaveBeenCalled();
   });
 });

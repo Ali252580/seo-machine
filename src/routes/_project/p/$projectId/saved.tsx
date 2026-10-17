@@ -2,12 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 // Aliased: `SavedKeywordsPage` has a local `sort` const (the saved-keyword
 // sort key) that would otherwise shadow this import at the call site.
 import { sort as sortArray } from "remeda";
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   OnChangeFn,
   RowSelectionState,
@@ -35,6 +30,7 @@ import { useSavedKeywordsExport } from "@/client/features/saved-keywords/useSave
 import { useSavedKeywordsFilters } from "@/client/features/saved-keywords/useSavedKeywordsFilters";
 import { useTagManage } from "@/client/features/saved-keywords/useTagManage";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
+import { keepPreviousProjectData } from "@/client/lib/project-query";
 import { captureClientEvent } from "@/client/lib/posthog";
 import {
   getSavedKeywords,
@@ -115,7 +111,8 @@ function SavedKeywordsPage() {
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["savedKeywords", projectId, queryInput],
     queryFn: () => getSavedKeywords({ data: queryInput }),
-    placeholderData: keepPreviousData,
+    placeholderData: (previous, previousQuery) =>
+      keepPreviousProjectData(projectId, previous, previousQuery),
   });
 
   const savedKeywords = data?.rows ?? [];
@@ -140,7 +137,7 @@ function SavedKeywordsPage() {
 
   useEffect(() => {
     setRowSelection({});
-  }, [page, pageSize, appliedFilters, tagFilterKey, sort, order]);
+  }, [projectId, page, pageSize, appliedFilters, tagFilterKey, sort, order]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);

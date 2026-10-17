@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { account } from "@/db/schema";
 import { GSC_OAUTH_PROVIDER_ID } from "@/shared/gsc";
+import { gscSiteMatchesProjectDomain } from "@/server/features/gsc/gscProjectSite";
 import { AppError } from "@/server/lib/errors";
 import {
   createGscClient,
@@ -142,6 +143,7 @@ async function listSitesForUserWithGrantStatus(
 async function setSite(input: {
   projectId: string;
   organizationId: string;
+  projectDomain: string | null;
   siteUrl: string;
   accountId: string;
   userId: string;
@@ -170,6 +172,12 @@ async function setSite(input: {
     throw new AppError(
       "FORBIDDEN",
       "You don't have verified access to that Search Console property.",
+    );
+  }
+  if (!gscSiteMatchesProjectDomain(input.siteUrl, input.projectDomain)) {
+    throw new AppError(
+      "FORBIDDEN",
+      "That Search Console property belongs to a different project domain.",
     );
   }
   let connectedAccountEmail: string | null = null;

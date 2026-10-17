@@ -3,6 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { waitUntil } from "cloudflare:workers";
 import { z } from "zod";
 import { GscService } from "@/server/features/gsc/services/GscService";
+import { gscSiteMatchesProjectDomain } from "@/server/features/gsc/gscProjectSite";
 import { hasSelfHostedGoogleOAuthConfig } from "@/server/features/google/oauth-config";
 import {
   createSelfHostedGoogleAuthorizationUrl,
@@ -79,19 +80,23 @@ export const listGscSites = createServerFn({ method: "POST" })
         email: grant.email,
         requiresReconnect: grant.requiresReconnect,
         propertiesUnavailable: grant.propertiesUnavailable,
-        sites: grant.sites.map((site) => {
-          const isSelected = connection?.gscAccountId
-            ? connection.gscAccountId === grant.accountId &&
-              connection.siteUrl === site.siteUrl
-            : unambiguousLegacyAccountId === grant.accountId &&
-              connection?.siteUrl === site.siteUrl;
-          return {
-            siteUrl: site.siteUrl,
-            permissionLevel: site.permissionLevel,
-            selectable: site.permissionLevel !== "siteUnverifiedUser",
-            isSelected,
-          };
-        }),
+        sites: grant.sites
+          .filter((site) =>
+            gscSiteMatchesProjectDomain(site.siteUrl, context.project.domain),
+          )
+          .map((site) => {
+            const isSelected = connection?.gscAccountId
+              ? connection.gscAccountId === grant.accountId &&
+                connection.siteUrl === site.siteUrl
+              : unambiguousLegacyAccountId === grant.accountId &&
+                connection?.siteUrl === site.siteUrl;
+            return {
+              siteUrl: site.siteUrl,
+              permissionLevel: site.permissionLevel,
+              selectable: site.permissionLevel !== "siteUnverifiedUser",
+              isSelected,
+            };
+          }),
       })),
     };
   });
@@ -104,6 +109,7 @@ export const setGscSite = createServerFn({ method: "POST" })
     const connection = await GscService.setSite({
       projectId: context.projectId,
       organizationId: context.organizationId,
+      projectDomain: context.project.domain,
       accountId: data.accountId,
       siteUrl: data.siteUrl,
       userId: context.userId,

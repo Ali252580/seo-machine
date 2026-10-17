@@ -145,7 +145,10 @@ export const listGa4Properties = createServerFn({ method: "POST" })
   .validator(projectScopedSchema)
   .handler(async ({ context }) => {
     const [propertyList, connection] = await Promise.all([
-      Ga4Service.listPropertiesForUserWithGrantStatus(context.userId),
+      Ga4Service.listPropertiesForUserWithGrantStatus(
+        context.userId,
+        context.project.domain,
+      ),
       Ga4Service.getConnection(context.projectId),
     ]);
     return {
@@ -168,6 +171,7 @@ export const setGa4Property = createServerFn({ method: "POST" })
     requireOrgPermission(context, { integration: ["manage"] });
     const connection = await Ga4Service.setProperty({
       projectId: context.projectId,
+      projectDomain: context.project.domain,
       organizationId: context.organizationId,
       accountId: data.accountId,
       propertyId: data.propertyId,

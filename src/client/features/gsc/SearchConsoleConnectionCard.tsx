@@ -29,16 +29,22 @@ export function SearchConsoleConnectionCard({
 }) {
   const hosted = isHostedClientAuthMode();
   const queryClient = useQueryClient();
+  const currentProjectId = React.useRef(projectId);
+  currentProjectId.current = projectId;
   const { picking, setPicking, linkAccount, linking } = useGooglePickerResume(
     "gsc",
     projectId,
   );
-  const [selection, setSelection] = React.useState<GscSiteSelection | null>(
-    null,
-  );
+  const [projectSelection, setProjectSelection] = React.useState<{
+    projectId: string;
+    value: GscSiteSelection | null;
+  } | null>(null);
+  const selection =
+    projectSelection?.projectId === projectId ? projectSelection.value : null;
+  const setSelection = (value: GscSiteSelection | null) =>
+    setProjectSelection({ projectId, value });
 
   const connectionOptions = gscConnectionOptions(projectId);
-  const connectionKey = connectionOptions.queryKey;
   const connectionQuery = useQuery(connectionOptions);
   const connection = connectionQuery.data;
   const connected = Boolean(connection?.connected);
@@ -75,70 +81,91 @@ export function SearchConsoleConnectionCard({
     for (const account of accounts) {
       const selectedSite = account.sites.find((site) => site.isSelected);
       if (selectedSite) {
-        setSelection({
-          accountId: account.accountId,
-          siteUrl: selectedSite.siteUrl,
+        setProjectSelection({
+          projectId,
+          value: {
+            accountId: account.accountId,
+            siteUrl: selectedSite.siteUrl,
+          },
         });
         return;
       }
     }
-  }, [accounts, selection, picking, connected]);
+  }, [accounts, selection, picking, connected, projectId]);
 
   const setSiteMutation = useMutation({
-    mutationFn: (selected: GscSiteSelection) =>
-      setGscSite({ data: { projectId, ...selected } }),
-    onSuccess: (saved) => {
-      queryClient.setQueryData(connectionKey, (current: typeof connection) =>
-        current ? { ...current, ...saved } : current,
+    mutationFn: ({
+      projectId: targetProjectId,
+      selected,
+    }: {
+      projectId: string;
+      selected: GscSiteSelection;
+    }) => setGscSite({ data: { projectId: targetProjectId, ...selected } }),
+    onSuccess: (saved, { projectId: savedProjectId }) => {
+      queryClient.setQueryData(
+        gscConnectionOptions(savedProjectId).queryKey,
+        (current: typeof connection) =>
+          current ? { ...current, ...saved } : current,
       );
       captureClientEvent("gsc:property_select");
       toast.success("Search Console connected");
-      queryClient.removeQueries({ queryKey: ["gscSites", projectId] });
-      void queryClient.invalidateQueries({ queryKey: connectionKey });
-      setPicking(false);
+      queryClient.removeQueries({ queryKey: ["gscSites", savedProjectId] });
+      void queryClient.invalidateQueries({
+        queryKey: gscConnectionOptions(savedProjectId).queryKey,
+      });
+      if (currentProjectId.current === savedProjectId) setPicking(false);
       void queryClient.invalidateQueries({ queryKey: GRANT_STATUS_KEY });
       // The Search Performance report caches {connected:false}; refresh it so
       // the page shows data right after connecting instead of the stale card.
       void queryClient.invalidateQueries({
-        queryKey: ["searchPerformance", projectId],
+        queryKey: ["searchPerformance", savedProjectId],
       });
       void queryClient.invalidateQueries({
-        queryKey: ["searchPerformanceTable", projectId],
+        queryKey: ["searchPerformanceTable", savedProjectId],
       });
       // The dashboard embeds this card and swaps it for the Search
       // performance stats card once activation reports the connection.
       void queryClient.invalidateQueries({
-        queryKey: ["dashboardActivation", projectId],
+        queryKey: ["dashboardActivation", savedProjectId],
       });
       void queryClient.invalidateQueries({
-        queryKey: ["dashboardGscReport", projectId],
+        queryKey: ["dashboardGscReport", savedProjectId],
       });
     },
   });
 
   const disconnectMutation = useMutation({
-    mutationFn: () => disconnectGsc({ data: { projectId } }),
-    onSuccess: () => {
+    mutationFn: (targetProjectId: string) =>
+      disconnectGsc({ data: { projectId: targetProjectId } }),
+    onSuccess: (_, disconnectedProjectId) => {
       toast.success("Search Console disconnected from this project");
-      queryClient.setQueryData(connectionKey, (current: typeof connection) =>
-        current ? { ...current, connected: false } : current,
+      queryClient.setQueryData(
+        gscConnectionOptions(disconnectedProjectId).queryKey,
+        (current: typeof connection) =>
+          current ? { ...current, connected: false } : current,
       );
-      queryClient.removeQueries({ queryKey: ["gscSites", projectId] });
-      setPicking(false);
-      setSelection(null);
-      void queryClient.invalidateQueries({ queryKey: connectionKey });
+      queryClient.removeQueries({
+        queryKey: ["gscSites", disconnectedProjectId],
+      });
+      if (currentProjectId.current === disconnectedProjectId) {
+        setPicking(false);
+        setSelection(null);
+      }
+      void queryClient.invalidateQueries({
+        queryKey: gscConnectionOptions(disconnectedProjectId).queryKey,
+      });
       void queryClient.invalidateQueries({ queryKey: GRANT_STATUS_KEY });
       void queryClient.invalidateQueries({
-        queryKey: ["searchPerformance", projectId],
+        queryKey: ["searchPerformance", disconnectedProjectId],
       });
       void queryClient.invalidateQueries({
-        queryKey: ["searchPerformanceTable", projectId],
+        queryKey: ["searchPerformanceTable", disconnectedProjectId],
       });
       void queryClient.invalidateQueries({
-        queryKey: ["dashboardActivation", projectId],
+        queryKey: ["dashboardActivation", disconnectedProjectId],
       });
       void queryClient.invalidateQueries({
-        queryKey: ["dashboardGscReport", projectId],
+        queryKey: ["dashboardGscReport", disconnectedProjectId],
       });
     },
   });
@@ -198,7 +225,7 @@ export function SearchConsoleConnectionCard({
           }}
           onDisconnect={() => {
             setSiteMutation.reset();
-            disconnectMutation.mutate();
+            disconnectMutation.mutate(projectId);
           }}
           disconnecting={disconnectMutation.isPending}
           disabled={linking}
@@ -207,6 +234,7 @@ export function SearchConsoleConnectionCard({
       ) : showPicker ? (
         <fieldset disabled={linking || setSiteMutation.isPending}>
           <SitePicker
+            key={projectId}
             readOnly={!canManage}
             linking={linking}
             loading={sitesQuery.isLoading}
@@ -214,7 +242,10 @@ export function SearchConsoleConnectionCard({
             accounts={accounts}
             selection={selection}
             onSelect={setSelection}
-            onSave={() => selection && setSiteMutation.mutate(selection)}
+            onSave={() =>
+              selection &&
+              setSiteMutation.mutate({ projectId, selected: selection })
+            }
             saving={setSiteMutation.isPending}
             secondaryAction={{
               label: "Cancel",

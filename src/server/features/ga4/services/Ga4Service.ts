@@ -5,6 +5,7 @@ import { AppError } from "@/server/lib/errors";
 import { createGa4AdminClient } from "@/server/lib/ga4Client";
 import { Ga4AdminApiError, Ga4TokenError } from "@/server/lib/ga4Errors";
 import { GA4_OAUTH_PROVIDER_ID } from "@/shared/ga4";
+import { ga4StreamsMatchProjectDomain } from "@/server/features/ga4/ga4ProjectProperty";
 import {
   Ga4ConnectionRepository,
   type Ga4Connection,
@@ -38,7 +39,10 @@ function requiresReconnect(error: unknown): boolean {
   );
 }
 
-async function listPropertiesForUserWithGrantStatus(userId: string) {
+async function listPropertiesForUserWithGrantStatus(
+  userId: string,
+  projectDomain: string | null,
+) {
   const grants = await listGrantsForUser(userId);
   const accounts = await Promise.all(
     grants.map(async (grant) => {
@@ -47,7 +51,20 @@ async function listPropertiesForUserWithGrantStatus(userId: string) {
         ga4AccountId: grant.accountId,
       });
       try {
-        const properties = await client.listProperties();
+        const availableProperties = await client.listProperties();
+        const properties = (
+          await Promise.all(
+            availableProperties.map(async (property) => ({
+              property,
+              matches: ga4StreamsMatchProjectDomain(
+                await client.listDataStreams(property.propertyId),
+                projectDomain,
+              ),
+            })),
+          )
+        )
+          .filter(({ matches }) => matches)
+          .map(({ property }) => property);
         let email: string | null = null;
         try {
           email = await client.getUserInfoEmail();
@@ -91,6 +108,7 @@ async function listPropertiesForUserWithGrantStatus(userId: string) {
 
 async function setProperty(input: {
   projectId: string;
+  projectDomain: string | null;
   organizationId: string;
   propertyId: string;
   accountId: string;
@@ -119,6 +137,17 @@ async function setProperty(input: {
   }
 
   const property = await client.getProperty(input.propertyId);
+  if (
+    !ga4StreamsMatchProjectDomain(
+      await client.listDataStreams(input.propertyId),
+      input.projectDomain,
+    )
+  ) {
+    throw new AppError(
+      "FORBIDDEN",
+      "That Google Analytics property does not exclusively match this project domain.",
+    );
+  }
   let connectedAccountEmail: string | null = null;
   try {
     connectedAccountEmail = await client.getUserInfoEmail();

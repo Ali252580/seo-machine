@@ -1,6 +1,8 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { ga4Connections } from "@/db/schema";
+import { ga4Connections, projects } from "@/db/schema";
+import { ga4StreamsMatchProjectDomain } from "@/server/features/ga4/ga4ProjectProperty";
+import { createGa4AdminClient } from "@/server/lib/ga4Client";
 
 export type Ga4Connection = typeof ga4Connections.$inferSelect;
 
@@ -8,11 +10,35 @@ async function getByProjectId(
   projectId: string,
 ): Promise<Ga4Connection | null> {
   const rows = await db
-    .select()
+    .select({
+      connection: ga4Connections,
+      organizationId: projects.organizationId,
+      domain: projects.domain,
+    })
     .from(ga4Connections)
+    .innerJoin(projects, eq(ga4Connections.projectId, projects.id))
     .where(eq(ga4Connections.projectId, projectId))
     .limit(1);
-  return rows[0] ?? null;
+  const row = rows[0];
+  if (
+    !row ||
+    row.connection.organizationId !== row.organizationId ||
+    !row.domain
+  ) {
+    return null;
+  }
+  try {
+    const streams = await createGa4AdminClient({
+      userId: row.connection.connectedByUserId,
+      ga4AccountId: row.connection.ga4AccountId,
+    }).listDataStreams(row.connection.propertyId);
+    return ga4StreamsMatchProjectDomain(streams, row.domain)
+      ? row.connection
+      : null;
+  } catch {
+    // Fail closed when an expired grant prevents domain verification.
+    return null;
+  }
 }
 
 async function upsert(input: {

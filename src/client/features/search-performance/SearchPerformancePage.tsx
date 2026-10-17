@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  keepPreviousData,
-  queryOptions,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Loader2, Sheet } from "lucide-react";
 import { toast } from "sonner";
 import { TableExportMenu } from "@/client/components/table/TableBulkActionBar";
@@ -23,6 +18,7 @@ import {
   type Tab,
 } from "@/client/features/search-performance/SearchPerformanceParts";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
+import { keepPreviousProjectData } from "@/client/lib/project-query";
 import {
   exportSearchPerformanceTable,
   getSearchPerformanceReport,
@@ -142,7 +138,8 @@ export function SearchPerformancePage({ projectId }: { projectId: string }) {
     queryKey: ["searchPerformance", projectId, range, device, country],
     queryFn: () =>
       getSearchPerformanceReport({ data: { projectId, ...filterInput } }),
-    placeholderData: keepPreviousData,
+    placeholderData: (previous, previousQuery) =>
+      keepPreviousProjectData(projectId, previous, previousQuery),
   });
   const report = reportQuery.data;
 
@@ -151,7 +148,8 @@ export function SearchPerformancePage({ projectId }: { projectId: string }) {
   const tableQuery = useQuery({
     ...tableQueryOptions(projectId, dimension, page, pageSize, filterInput),
     enabled: report?.connected === true && isTableTab,
-    placeholderData: keepPreviousData,
+    placeholderData: (previous, previousQuery) =>
+      keepPreviousProjectData(projectId, previous, previousQuery),
   });
   const tableData = tableQuery.data;
   const tableRows = tableData?.connected ? tableData.rows : [];

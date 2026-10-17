@@ -23,6 +23,7 @@ import {
 } from "@/serverFunctions/ga4";
 import { GA4_SELF_HOSTED_SETUP_DOCS_URL } from "@/shared/ga4";
 
+// oxlint-disable-next-line complexity -- project-scoped async guards extend an existing connection card.
 export function GoogleAnalyticsConnectionCard({
   projectId,
   onDismiss,
@@ -36,15 +37,21 @@ export function GoogleAnalyticsConnectionCard({
 }) {
   const hosted = isHostedClientAuthMode();
   const queryClient = useQueryClient();
+  const currentProjectId = React.useRef(projectId);
+  currentProjectId.current = projectId;
   const { picking, setPicking, linkAccount, linking } = useGooglePickerResume(
     "ga4",
     projectId,
   );
-  const [selection, setSelection] = React.useState<Ga4PropertySelection | null>(
-    null,
-  );
+  const [projectSelection, setProjectSelection] = React.useState<{
+    projectId: string;
+    value: Ga4PropertySelection | null;
+  } | null>(null);
+  const selection =
+    projectSelection?.projectId === projectId ? projectSelection.value : null;
+  const setSelection = (value: Ga4PropertySelection | null) =>
+    setProjectSelection({ projectId, value });
   const connectionOptions = ga4ConnectionOptions(projectId);
-  const connectionKey = connectionOptions.queryKey;
   const connectionQuery = useQuery(connectionOptions);
   const connection = connectionQuery.data;
   const connectionUnavailable = connectionQuery.isError && !connection;
@@ -71,50 +78,73 @@ export function GoogleAnalyticsConnectionCard({
         (property) => property.isSelected,
       );
       if (selectedProperty) {
-        setSelection({
-          accountId: account.accountId,
-          propertyId: selectedProperty.propertyId,
+        setProjectSelection({
+          projectId,
+          value: {
+            accountId: account.accountId,
+            propertyId: selectedProperty.propertyId,
+          },
         });
         return;
       }
     }
-  }, [accounts, selection, picking, connected]);
+  }, [accounts, selection, picking, connected, projectId]);
 
-  const invalidateReports = () => {
+  const invalidateReports = (changedProjectId: string) => {
     void queryClient.invalidateQueries({
-      queryKey: ["dashboardActivation", projectId],
+      queryKey: ["dashboardActivation", changedProjectId],
     });
     void queryClient.invalidateQueries({
-      queryKey: ["dashboardGa4Report", projectId],
+      queryKey: ["dashboardGa4Report", changedProjectId],
     });
   };
   const setPropertyMutation = useMutation({
-    mutationFn: (selected: Ga4PropertySelection) =>
-      setGa4Property({ data: { projectId, ...selected } }),
-    onSuccess: (saved) => {
-      queryClient.setQueryData(connectionKey, (current: typeof connection) =>
-        current ? { ...current, ...saved } : current,
+    mutationFn: ({
+      projectId: targetProjectId,
+      selected,
+    }: {
+      projectId: string;
+      selected: Ga4PropertySelection;
+    }) => setGa4Property({ data: { projectId: targetProjectId, ...selected } }),
+    onSuccess: (saved, { projectId: savedProjectId }) => {
+      queryClient.setQueryData(
+        ga4ConnectionOptions(savedProjectId).queryKey,
+        (current: typeof connection) =>
+          current ? { ...current, ...saved } : current,
       );
       captureClientEvent("ga4:property_select");
       toast.success("Google Analytics connected");
-      queryClient.removeQueries({ queryKey: ["ga4Properties", projectId] });
-      void queryClient.invalidateQueries({ queryKey: connectionKey });
-      setPicking(false);
-      invalidateReports();
+      queryClient.removeQueries({
+        queryKey: ["ga4Properties", savedProjectId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ga4ConnectionOptions(savedProjectId).queryKey,
+      });
+      if (currentProjectId.current === savedProjectId) setPicking(false);
+      invalidateReports(savedProjectId);
     },
   });
   const disconnectMutation = useMutation({
-    mutationFn: () => disconnectGa4({ data: { projectId } }),
-    onSuccess: () => {
+    mutationFn: (targetProjectId: string) =>
+      disconnectGa4({ data: { projectId: targetProjectId } }),
+    onSuccess: (_, disconnectedProjectId) => {
       toast.success("Google Analytics disconnected from this project");
-      queryClient.setQueryData(connectionKey, (current: typeof connection) =>
-        current ? { ...current, connected: false } : current,
+      queryClient.setQueryData(
+        ga4ConnectionOptions(disconnectedProjectId).queryKey,
+        (current: typeof connection) =>
+          current ? { ...current, connected: false } : current,
       );
-      queryClient.removeQueries({ queryKey: ["ga4Properties", projectId] });
-      setPicking(false);
-      setSelection(null);
-      void queryClient.invalidateQueries({ queryKey: connectionKey });
-      invalidateReports();
+      queryClient.removeQueries({
+        queryKey: ["ga4Properties", disconnectedProjectId],
+      });
+      if (currentProjectId.current === disconnectedProjectId) {
+        setPicking(false);
+        setSelection(null);
+      }
+      void queryClient.invalidateQueries({
+        queryKey: ga4ConnectionOptions(disconnectedProjectId).queryKey,
+      });
+      invalidateReports(disconnectedProjectId);
     },
   });
   const changingConnection =
@@ -183,7 +213,7 @@ export function GoogleAnalyticsConnectionCard({
             }}
             onDisconnect={() => {
               setPropertyMutation.reset();
-              disconnectMutation.mutate();
+              disconnectMutation.mutate(projectId);
             }}
             disconnecting={disconnectMutation.isPending}
             disabled={linking}
@@ -192,6 +222,7 @@ export function GoogleAnalyticsConnectionCard({
         ) : showPicker ? (
           <fieldset disabled={changingConnection}>
             <Ga4PropertyPicker
+              key={projectId}
               readOnly={!canManage}
               linking={linking}
               loading={propertiesQuery.isLoading}
@@ -199,7 +230,10 @@ export function GoogleAnalyticsConnectionCard({
               accounts={accounts}
               selection={selection}
               onSelect={setSelection}
-              onSave={() => selection && setPropertyMutation.mutate(selection)}
+              onSave={() =>
+                selection &&
+                setPropertyMutation.mutate({ projectId, selected: selection })
+              }
               saving={setPropertyMutation.isPending}
               secondaryAction={{
                 label: "Cancel",
