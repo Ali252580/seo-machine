@@ -87,19 +87,19 @@ function useTabFilters<T extends FilterValues>(tab: string, emptyValues: T) {
   };
 }
 
-export function useBacklinksFilters() {
+export function useBacklinksFilters(projectId: string) {
   const [showFilters, setShowFilters] = useState(false);
 
   const backlinks = useTabFilters<BacklinksTabFilterValues>(
-    "backlinks",
+    `${projectId}:backlinks`,
     EMPTY_BACKLINKS_FILTERS,
   );
   const domains = useTabFilters<ReferringDomainsFilterValues>(
-    "domains",
+    `${projectId}:domains`,
     EMPTY_REFERRING_DOMAINS_FILTERS,
   );
   const pages = useTabFilters<TopPagesFilterValues>(
-    "pages",
+    `${projectId}:pages`,
     EMPTY_TOP_PAGES_FILTERS,
   );
 

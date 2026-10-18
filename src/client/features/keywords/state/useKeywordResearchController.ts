@@ -56,7 +56,7 @@ export function useKeywordResearchController(
     filtersForm,
     values: filterValues,
     resetFilters,
-  } = useLocalKeywordFilters();
+  } = useLocalKeywordFilters(input.projectId);
   const uiState = useKeywordUiState(
     Object.values(filterValues).some((v) => v.trim() !== ""),
   );

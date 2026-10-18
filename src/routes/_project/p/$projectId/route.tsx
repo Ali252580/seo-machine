@@ -86,6 +86,8 @@ function ProjectLayout() {
 
   return (
     <AuthenticatedAppLayout
+      // Reset forms, selections and pending result state when switching sites.
+      key={projectId}
       projectId={projectId}
       banner={authGate.isHostedMode ? <FreePlanBanner /> : undefined}
     >

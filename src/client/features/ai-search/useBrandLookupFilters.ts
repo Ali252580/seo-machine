@@ -74,15 +74,15 @@ function useTabFilters<T extends FilterValues>(tab: string, emptyValues: T) {
   };
 }
 
-export function useBrandLookupFilters() {
+export function useBrandLookupFilters(projectId: string) {
   const [showFilters, setShowFilters] = useState(false);
 
   const pages = useTabFilters<TopPagesFilterValues>(
-    "pages",
+    `${projectId}:pages`,
     EMPTY_TOP_PAGES_FILTERS,
   );
   const queries = useTabFilters<QueriesFilterValues>(
-    "queries",
+    `${projectId}:queries`,
     EMPTY_QUERIES_FILTERS,
   );
 
