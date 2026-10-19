@@ -187,7 +187,11 @@ export function SearchConsoleConnectionCard({
               : "disconnected"
       }
     >
-      <GoogleLinkErrorAlert provider="gsc" className="mb-4" />
+      <GoogleLinkErrorAlert
+        provider="gsc"
+        projectId={projectId}
+        className="mb-4"
+      />
       {connectionQuery.isPending ? (
         <div
           role="status"

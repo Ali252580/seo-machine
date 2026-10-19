@@ -168,7 +168,11 @@ export function GoogleAnalyticsConnectionCard({
                 : "disconnected"
         }
       >
-        <GoogleLinkErrorAlert provider="ga4" className="mb-4" />
+        <GoogleLinkErrorAlert
+          provider="ga4"
+          projectId={projectId}
+          className="mb-4"
+        />
         {connectionQuery.isPending ? (
           <div
             role="status"

@@ -21,7 +21,7 @@ export function DashboardOnboarding({
 }) {
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<DashboardSetupStep | null>(() =>
-    getGoogleLinkError("gsc") ||
+    getGoogleLinkError("gsc", projectId) ||
     (typeof window !== "undefined" && window.location.hash === "#connect-gsc")
       ? "gsc"
       : null,
@@ -70,7 +70,9 @@ export function DashboardOnboarding({
       className="overflow-hidden rounded-xl border border-base-300 bg-base-100"
     >
       <header className="border-b border-base-300 px-5 py-5 sm:px-6">
-        <h2 className="text-lg font-semibold">فضای کاری خود را راه‌اندازی کنید</h2>
+        <h2 className="text-lg font-semibold">
+          فضای کاری خود را راه‌اندازی کنید
+        </h2>
         <p className="mt-1 text-sm text-base-content/65">
           وب‌سایت را اضافه کنید، ابزارها را وصل کنید و هم‌تیمی‌ها را دعوت کنید.
         </p>

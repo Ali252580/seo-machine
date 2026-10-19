@@ -93,7 +93,7 @@ function MobileKeywordResults({ controller }: Props) {
     showFilters,
   } = controller;
   const { page, pageSize, pageRows, setPage, setPageSize } =
-    useKeywordResearchPagination(filteredRows);
+    useKeywordResearchPagination(filteredRows, controller.projectId);
 
   const keywordCountLabel =
     selectedRows.size > 0

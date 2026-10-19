@@ -136,7 +136,7 @@ function GscConnect({ projectId }: { projectId: string }) {
   if (hasGrant) {
     return (
       <div className="space-y-4">
-        <GoogleLinkErrorAlert provider="gsc" />
+        <GoogleLinkErrorAlert provider="gsc" projectId={projectId} />
         <fieldset disabled={linking}>
           <SitePicker
             linking={linking}
@@ -157,7 +157,7 @@ function GscConnect({ projectId }: { projectId: string }) {
 
   return (
     <div className="space-y-4">
-      <GoogleLinkErrorAlert provider="gsc" />
+      <GoogleLinkErrorAlert provider="gsc" projectId={projectId} />
       <button
         type="button"
         onClick={handleConnect}

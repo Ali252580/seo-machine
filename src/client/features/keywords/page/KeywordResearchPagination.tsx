@@ -89,10 +89,13 @@ function parseKeywordResearchPageSize(value: string): KeywordResearchPageSize {
   );
 }
 
-export function useKeywordResearchPagination(rows: KeywordResearchRow[]) {
+export function useKeywordResearchPagination(
+  rows: KeywordResearchRow[],
+  projectId: string,
+) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<KeywordResearchPageSize>(() =>
-    getStoredKeywordResearchPageSize(),
+    getStoredKeywordResearchPageSize(projectId),
   );
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
 
@@ -116,18 +119,20 @@ export function useKeywordResearchPagination(rows: KeywordResearchRow[]) {
     setPage,
     setPageSize: (nextPageSize: KeywordResearchPageSize) => {
       setPageSize(nextPageSize);
-      persistKeywordResearchPageSize(nextPageSize);
+      persistKeywordResearchPageSize(projectId, nextPageSize);
       setPage(1);
     },
     totalPages,
   };
 }
 
-function getStoredKeywordResearchPageSize(): KeywordResearchPageSize {
+function getStoredKeywordResearchPageSize(
+  projectId: string,
+): KeywordResearchPageSize {
   if (typeof window === "undefined") return DEFAULT_KEYWORD_RESEARCH_PAGE_SIZE;
   try {
     const stored = window.localStorage.getItem(
-      KEYWORD_RESEARCH_PAGE_SIZE_STORAGE_KEY,
+      `${KEYWORD_RESEARCH_PAGE_SIZE_STORAGE_KEY}:${projectId}`,
     );
     return stored
       ? parseKeywordResearchPageSize(stored)
@@ -137,11 +142,14 @@ function getStoredKeywordResearchPageSize(): KeywordResearchPageSize {
   }
 }
 
-function persistKeywordResearchPageSize(pageSize: KeywordResearchPageSize) {
+function persistKeywordResearchPageSize(
+  projectId: string,
+  pageSize: KeywordResearchPageSize,
+) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(
-      KEYWORD_RESEARCH_PAGE_SIZE_STORAGE_KEY,
+      `${KEYWORD_RESEARCH_PAGE_SIZE_STORAGE_KEY}:${projectId}`,
       String(pageSize),
     );
   } catch {

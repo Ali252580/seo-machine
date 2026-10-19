@@ -12,7 +12,13 @@ export type GoogleLinkProvider = "gsc" | "ga4";
 type CapturedLinkError = {
   provider: GoogleLinkProvider;
   code: string;
+  pathname: string;
+  projectId: string | null;
 };
+
+function projectIdFromPath(pathname: string) {
+  return /^\/p\/([^/]+)(?:\/|$)/.exec(pathname)?.[1] ?? null;
+}
 
 /**
  * Read and scrub the error params synchronously at module init, before
@@ -37,7 +43,12 @@ function captureLinkErrorFromLocation(): CapturedLinkError | null {
   // yet started) should never see them. Passing the current history.state
   // through leaves whatever state the browser restored intact.
   window.history.replaceState(window.history.state, "", url);
-  return { provider, code };
+  return {
+    provider,
+    code,
+    pathname: url.pathname,
+    projectId: projectIdFromPath(url.pathname),
+  };
 }
 
 let captured: CapturedLinkError | null = null;
@@ -54,9 +65,18 @@ export function captureGoogleLinkError() {
 /** The captured link failure for this provider, if any survived the redirect. */
 export function getGoogleLinkError(
   provider: GoogleLinkProvider,
+  projectId: string,
 ): { code: string } | null {
   captureGoogleLinkError();
-  return captured?.provider === provider ? { code: captured.code } : null;
+  if (captured?.provider !== provider) return null;
+  // Onboarding has no project in its URL; keep its error on that page only.
+  if (
+    captured.projectId !== null
+      ? captured.projectId !== projectId
+      : captured.pathname !== window.location.pathname
+  )
+    return null;
+  return { code: captured.code };
 }
 
 /** Called on dismiss so SPA navigation doesn't resurrect the alert. */

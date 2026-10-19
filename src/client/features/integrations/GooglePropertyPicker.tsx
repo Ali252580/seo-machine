@@ -85,9 +85,11 @@ export function GooglePropertyPicker({
     }))
     .filter(
       (account) =>
-        !query ||
-        account.properties.length > 0 ||
-        accountLabel(account).toLowerCase().includes(query),
+        (account.properties.length > 0 ||
+          account.accountId === selection?.accountId) &&
+        (!query ||
+          account.properties.length > 0 ||
+          accountLabel(account).toLowerCase().includes(query)),
     );
   const close = () => {
     setOpen(false);

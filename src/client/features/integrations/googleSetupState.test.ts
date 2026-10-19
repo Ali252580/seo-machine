@@ -84,7 +84,7 @@ describe.each(["gsc", "ga4", "onboarding"] as const)(
       const html = renderSetup(surface, false);
       expect(html).not.toContain("Select a property");
       expect(html).toContain(
-        surface === "onboarding" ? "Connect with Google" : "Connect",
+        surface === "onboarding" ? "اتصال با گوگل" : "Connect",
       );
     });
     it("shows the saved connection rather than reopening setup", () => {

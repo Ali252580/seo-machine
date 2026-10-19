@@ -237,6 +237,7 @@ export function useKeywordResearchController(
   };
 
   return {
+    projectId: input.projectId,
     activeFilterCount,
     activeSerpKeyword,
     confirmSave,

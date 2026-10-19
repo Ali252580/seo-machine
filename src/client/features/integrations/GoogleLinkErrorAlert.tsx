@@ -23,12 +23,14 @@ const PROVIDER_LABELS: Record<GoogleLinkProvider, string> = {
  */
 export function GoogleLinkErrorAlert({
   provider,
+  projectId,
   className,
 }: {
   provider: GoogleLinkProvider;
+  projectId: string;
   className?: string;
 }) {
-  const [error] = React.useState(() => getGoogleLinkError(provider));
+  const error = getGoogleLinkError(provider, projectId);
   const [dismissed, setDismissed] = React.useState(false);
 
   React.useEffect(() => {
