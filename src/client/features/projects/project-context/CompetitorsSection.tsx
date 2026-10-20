@@ -55,7 +55,7 @@ export function CompetitorsSection({
     <section className="space-y-3">
       <SectionHeader
         title="رقبا"
-        hint="The sites you measure yourself against."
+        hint="سایت‌هایی که در نتایج جست‌وجو با این پروژه رقابت می‌کنند."
         action={
           <button
             type="button"
@@ -63,7 +63,7 @@ export function CompetitorsSection({
             onClick={() => setAdding(true)}
           >
             <Plus className="size-3.5" />
-            Add competitor
+            افزودن رقیب
           </button>
         }
       />
@@ -81,8 +81,8 @@ export function CompetitorsSection({
       {competitors.length === 0 ? (
         adding ? null : (
           <EmptyState>
-            No competitors yet. Add the sites you compete with, or ask SAM to
-            find them from your rankings and save them here.
+            هنوز رقیبی برای این پروژه ثبت نشده است. می‌توانید سایت‌های رقیب را
+            اضافه کنید یا از SAM بخواهید آن‌ها را بررسی و پیشنهاد کند.
           </EmptyState>
         )
       ) : (

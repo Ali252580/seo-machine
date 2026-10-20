@@ -66,8 +66,8 @@ export function KeyPagesSection({
   return (
     <section className="space-y-3">
       <SectionHeader
-        title="Key pages"
-        hint="A shortlist of the pages that carry the site — not an inventory."
+        title="صفحات مهم"
+        hint="فهرست کوتاهی از صفحات اصلی سایت، نه همهٔ نشانی‌ها."
         action={
           <button
             type="button"
@@ -75,7 +75,7 @@ export function KeyPagesSection({
             onClick={() => setAdding(true)}
           >
             <Plus className="size-3.5" />
-            Add page
+            افزودن صفحه
           </button>
         }
       />
@@ -93,8 +93,8 @@ export function KeyPagesSection({
       {keyPages.length === 0 ? (
         adding ? null : (
           <EmptyState>
-            No key pages yet. Add the handful that has to rank, or let an agent
-            propose them from your last site audit.
+            هنوز صفحهٔ مهمی برای این پروژه ثبت نشده است. صفحات خدمات یا محصولات
+            اصلی را اضافه کنید یا از SAM بخواهید از بررسی سایت پیشنهاد بدهد.
           </EmptyState>
         )
       ) : (

@@ -1,11 +1,11 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { Pencil } from "lucide-react";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { getProjectContext } from "@/serverFunctions/projectContext";
 import {
   PROJECT_CONTEXT_SECTION_KEYS,
-  PROJECT_CONTEXT_SECTION_LABELS,
   PROSE_MAX_CHARS,
   type ProjectContextSectionKey,
 } from "@/types/schemas/projectContext";
@@ -25,21 +25,28 @@ import {
 } from "./shared";
 
 const SECTION_HINTS: Record<ProjectContextSectionKey, string> = {
-  business_overview: "What you sell, who buys it, and where.",
-  current_goal: "What you're pushing for right now, and by when.",
-  positioning: "Why someone picks you over the alternatives.",
-  writing_preferences: "Voice, words to avoid, topics that are off-limits.",
+  business_overview: "خدمات یا محصولات، مخاطبان و محدودهٔ فعالیت سایت.",
+  current_goal: "هدف فعلی سئو، شاخص موفقیت و بازهٔ زمانی آن.",
+  positioning: "دلیل انتخاب شما در مقایسه با گزینه‌های دیگر.",
+  writing_preferences: "لحن متن، واژه‌های نامطلوب و موضوعاتی که نباید پوشش داده شوند.",
+};
+
+const SECTION_LABELS: Record<ProjectContextSectionKey, string> = {
+  business_overview: "معرفی کسب‌وکار",
+  current_goal: "هدف فعلی",
+  positioning: "جایگاه و مزیت برند",
+  writing_preferences: "ترجیحات نگارش",
 };
 
 const SECTION_PLACEHOLDERS: Record<ProjectContextSectionKey, string> = {
   business_overview:
-    "e.g. Booking software for independent restaurants in the US and Canada. Buyers are owner-operators, not marketers.",
+    "مثلاً خدمات اصلی، مشتریان هدف، شهرها و زبان‌های موردنظر را بنویسید.",
   current_goal:
-    "e.g. Double organic signups by Q4. Comparison pages are the current bet.",
+    "مثلاً افزایش سرنخ‌های ارگانیک خدمات اصلی در شش ماه آینده.",
   positioning:
-    "e.g. The only booking tool that sets up in an afternoon. Cheaper than the incumbents, simpler than the DIY stack.",
+    "مثلاً مزیت‌های قابل اثبات، تفاوت خدمات و دلیل انتخاب مشتری را بنویسید.",
   writing_preferences:
-    "e.g. Plain and direct, no hype. Never say 'seamless' or 'game-changing'. Don't write about competitor pricing.",
+    "مثلاً فارسی روان و حرفه‌ای؛ بدون ادعای بی‌منبع یا تکرار؛ واژه‌ها و موضوعات ممنوع را مشخص کنید.",
 };
 
 export function ProjectContextPage({ projectId }: { projectId: string }) {
@@ -78,11 +85,21 @@ export function ProjectContextPage({ projectId }: { projectId: string }) {
     // key remounts the whole page when the project switches under it, so no
     // draft, open form, or edit state can carry over to another project.
     <div key={projectId} className="space-y-8">
-      <p className="text-sm text-base-content/70">
-        What SAM, Claude Code, and any connected MCP client know about this
-        project. They read it before they work and write back what they learn,
-        so correct anything that looks wrong.
-      </p>
+      <div className="space-y-3 rounded-lg border border-base-300 bg-base-200/40 p-4 text-sm">
+        <p>
+          این اطلاعات فقط برای همین پروژه ذخیره می‌شود و SAM هنگام کار از آن
+          استفاده می‌کند. اتصال سرچ کنسول و آنالیتیکس این بخش‌ها را خودکار پر
+          نمی‌کند؛ هدف کسب‌وکار و لحن نگارش را باید شما ثبت یا تأیید کنید.
+        </p>
+        <Link
+          to="/p/$projectId/sam"
+          params={{ projectId }}
+          search={{}}
+          className="link link-primary"
+        >
+          کمک گرفتن از SAM برای آماده‌کردن زمینهٔ همین پروژه
+        </Link>
+      </div>
 
       <ProseSections
         projectId={projectId}
@@ -162,8 +179,9 @@ function ProseSections({
     <form onSubmit={handleSubmit} className="space-y-5">
       {missingSections.length === PROJECT_CONTEXT_SECTION_KEYS.length ? (
         <EmptyState>
-          Nothing written down yet. Fill in what you can — or ask SAM to draft
-          it from your site and confirm what it got right.
+          هنوز برای این پروژه زمینه‌ای ثبت نشده است. اطلاعاتی را که می‌دانید
+          بنویسید؛ برای موارد قابل بررسی نیز از SAM کمک بگیرید و نتیجه را تأیید
+          کنید.
         </EmptyState>
       ) : null}
 
@@ -176,12 +194,14 @@ function ProseSections({
                 htmlFor={`context-${key}`}
                 className="text-sm font-medium text-base-content"
               >
-                {PROJECT_CONTEXT_SECTION_LABELS[key]}
+                {SECTION_LABELS[key]}
               </label>
               {section ? (
                 <Provenance by={section.updatedBy} at={section.updatedAt} />
               ) : (
-                <span className="text-xs text-base-content/40">Empty</span>
+                <span className="text-xs text-base-content/40">
+                  هنوز ثبت نشده
+                </span>
               )}
             </div>
             <p className="text-xs text-base-content/50">{SECTION_HINTS[key]}</p>
@@ -216,7 +236,7 @@ function ProseSections({
           className="btn btn-primary btn-sm"
           disabled={update.isPending || changed.length === 0}
         >
-          Save changes
+          ذخیرهٔ تغییرات
         </button>
       </div>
     </form>
@@ -236,14 +256,14 @@ function CustomSections({
   return (
     <section className="space-y-3">
       <SectionHeader
-        title="Custom sections"
-        hint="Anything an agent wrote down that didn't fit the sections above."
+        title="بخش‌های تکمیلی"
+        hint="اطلاعات پایداری که در بخش‌های بالا جای نمی‌گیرند."
       />
 
       {customSections.length === 0 ? (
         <EmptyState>
-          Nothing here yet. Agents add a section when they learn something
-          important that has nowhere else to live.
+          هنوز بخش تکمیلی برای این پروژه ثبت نشده است. SAM در صورت نیاز می‌تواند
+          آن را اضافه کند.
         </EmptyState>
       ) : (
         <div className="space-y-3">
@@ -364,13 +384,14 @@ function ResearchLog({
   return (
     <section className="space-y-3">
       <SectionHeader
-        title="Research log"
-        hint="What's already been looked up, so nobody buys the same data twice."
+        title="سابقهٔ پژوهش"
+        hint="پژوهش‌های ثبت‌شده برای جلوگیری از خرید دوبارهٔ همان داده."
       />
 
       {researchLog.length === 0 ? (
         <EmptyState>
-          Nothing logged yet. Agents record paid research here as they run it.
+          هنوز پژوهشی ثبت نشده است. عامل‌ها هنگام اجرای پژوهشِ هزینه‌دار، آن را
+          اینجا ثبت می‌کنند.
         </EmptyState>
       ) : (
         <ul className={listClass}>
