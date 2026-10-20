@@ -25,6 +25,7 @@ import {
 } from "@/server/lib/chatAgent";
 import { SamSessionRepository } from "@/server/features/sam/SamSessionRepository";
 import { ProjectContextService } from "@/server/features/project-context/services/ProjectContextService";
+import { needsContextIntake } from "@/server/features/project-context/services/siteContextDraft";
 import { ProjectRepository } from "@/server/features/projects/repositories/ProjectRepository";
 import { buildSamMcpTools } from "@/server/features/sam/samChatTools";
 import { buildSamSkillSource } from "@/server/features/sam/samSkills";
@@ -260,18 +261,14 @@ export class SamChatAgent extends Think {
     return this.samContext;
   }
 
-  // The identity block. Runs through the context-block pipeline like the
-  // project-memory block, so it re-renders (fresh project row, intake mode
-  // on/off) whenever the prompt is refreshed.
+  // Refresh the identity block with the current project and intake state.
   private buildSoulPrompt(): Promise<string> {
     return withPgClient(async () => {
       const ctx = await this.loadSamContext();
       if (!ctx) {
         return "You are SAM, the SEO agent inside OpenSEO. This chat session no longer exists; tell the user to start a new chat.";
       }
-      const context = await ProjectContextService.getProjectContext(
-        ctx.project.id,
-      );
+      const context = await ProjectContextService.getProjectContext(ctx.project.id);
       return buildSamSystemPrompt(
         {
           projectId: ctx.project.id,
@@ -280,8 +277,7 @@ export class SamChatAgent extends Think {
           locationCode: ctx.project.locationCode,
           languageCode: ctx.project.languageCode,
         },
-        // Nothing recorded about the business yet: SAM runs its intake flow.
-        { intakeMode: context.missingSections.includes("business_overview") },
+        { intakeMode: needsContextIntake(context) },
       );
     });
   }

@@ -5,6 +5,7 @@ import { getOptionalEnvValue } from "@/server/lib/runtime-env";
 import { buildChatAgentModel } from "@/server/lib/openrouter";
 import { openRouterCostUsd } from "@/server/lib/openrouter-cost";
 import { ProjectContextService } from "@/server/features/project-context/services/ProjectContextService";
+import { needsContextIntake } from "@/server/features/project-context/services/siteContextDraft";
 import { SamMessageRepository } from "./SamMessageRepository";
 import { SamSessionRepository } from "./SamSessionRepository";
 import { buildSamMcpTools } from "./samChatTools";
@@ -136,8 +137,7 @@ export async function sendVercelSamMessage(
             languageCode: caller.project.languageCode,
           },
           {
-            intakeMode:
-              projectContext.missingSections.includes("business_overview"),
+            intakeMode: needsContextIntake(projectContext),
           },
         ),
         memory ? `project_context:\n${memory}` : "",

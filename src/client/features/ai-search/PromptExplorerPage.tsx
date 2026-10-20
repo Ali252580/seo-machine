@@ -44,18 +44,18 @@ type Props = {
 const PROMPT_EXPLORER_BULLETS = [
   {
     icon: Columns3,
-    title: "Four models side-by-side",
-    body: "Run one prompt across ChatGPT, Claude, Gemini, and Perplexity and compare answers in a single view.",
+    title: "مقایسهٔ هم‌زمان مدل‌ها",
+    body: "یک سؤال را در مدل‌های انتخابی اجرا کنید و پاسخ‌ها را کنار هم ببینید.",
   },
   {
     icon: SearchCheck,
-    title: "See what the models cite",
-    body: "Every answer lists the sources it drew from, so you can audit where each model gets its information.",
+    title: "بررسی منابع پاسخ",
+    body: "منابعی را که هر پاسخ به آن‌ها استناد کرده بررسی کنید.",
   },
   {
     icon: Sparkles,
-    title: "Check brand mentions",
-    body: "Highlight a brand to instantly see whether it shows up in the answer text or the cited sources.",
+    title: "بررسی نام برند",
+    body: "ببینید نام برند شما در متن پاسخ یا منابع ذکر شده است یا نه.",
   },
 ];
 
@@ -161,17 +161,17 @@ function PromptExplorerPageInner({
     event.preventDefault();
     const trimmed = form.prompt.trim();
     if (trimmed.length === 0) {
-      setValidationError("Enter a prompt");
+      setValidationError("یک سؤال وارد کنید.");
       return;
     }
     if (trimmed.length > PROMPT_EXPLORER_MAX_PROMPT_LENGTH) {
       setValidationError(
-        `Keep prompts under ${PROMPT_EXPLORER_MAX_PROMPT_LENGTH} characters`,
+        `سؤال باید کمتر از ${PROMPT_EXPLORER_MAX_PROMPT_LENGTH} نویسه باشد.`,
       );
       return;
     }
     if (form.models.length === 0) {
-      setValidationError("Select at least one model");
+      setValidationError("دست‌کم یک مدل را انتخاب کنید.");
       return;
     }
     setValidationError(null);
@@ -202,15 +202,30 @@ function PromptExplorerPageInner({
         <div>
           <h1 className="text-2xl font-semibold">کاوش پرامپت</h1>
           <p className="text-sm text-base-content/70">
-            Ask any prompt across ChatGPT, Claude, Gemini, and Perplexity
-            side-by-side.
+            یک سؤال واقعی مشتری را هم‌زمان در مدل‌های انتخابی بپرسید و پاسخ‌ها،
+            منابع و حضور برندتان را مقایسه کنید.
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-base-300 bg-base-200/40 p-4 text-sm leading-7">
+          <p className="font-medium">چطور استفاده کنم؟</p>
+          <p>
+            نمونه: «برای خرید [نوع محصول یا خدمت] چه گزینه‌هایی را پیشنهاد
+            می‌کنی و چرا؟» نام برند را برای برجسته‌سازی وارد کنید، مدل‌ها را
+            انتخاب کنید و «اجرای بررسی» را بزنید. برای هر پروژه، سؤال‌های مرتبط
+            با همان سایت را امتحان کنید.
+          </p>
+          <p className="text-xs text-base-content/60">
+            این بررسی از سرویس DataForSEO استفاده می‌کند و ممکن است از اعتبار
+            پکیج مصرف کند. نتیجهٔ یک پرسش، رتبهٔ ثابت یا تضمین دیده‌شدن برند
+            نیست.
           </p>
         </div>
 
         {planGate.isFreePlan ? (
           <AiSearchPaidPlanGate
-            feature="Prompt Explorer"
-            description="Ask one prompt across ChatGPT, Claude, Gemini, and Perplexity at the same time and compare their answers — including which sources each model cites."
+            feature="کاوش پرامپت"
+            description="پاسخ مدل‌های انتخابی، منابع آن‌ها و حضور برند را برای یک سؤال واقعی مشتری مقایسه کنید."
             bullets={PROMPT_EXPLORER_BULLETS}
           />
         ) : (
@@ -255,7 +270,7 @@ function PromptExplorerPageInner({
                     className="btn btn-ghost btn-sm gap-2 px-0 text-base-content/70 hover:bg-transparent"
                   >
                     <ArrowLeft className="size-4" />
-                    Recent searches
+                    جست‌وجوهای اخیر
                   </Link>
                 </div>
                 <PromptExplorerResults result={resultData} />

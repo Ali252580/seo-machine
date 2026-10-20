@@ -82,6 +82,23 @@ function upsertSection(
     });
 }
 
+function insertSectionIfMissing(
+  tx: Tx,
+  params: {
+    projectId: string;
+    key: string;
+    content: string;
+    updatedBy: ContextAuthor;
+  },
+) {
+  return tx
+    .insert(projectContextSections)
+    .values({ ...params, title: null, updatedAt: new Date().toISOString() })
+    .onConflictDoNothing({
+      target: [projectContextSections.projectId, projectContextSections.key],
+    });
+}
+
 function deleteSection(tx: Tx, projectId: string, key: string) {
   return tx
     .delete(projectContextSections)
@@ -269,6 +286,7 @@ function pruneResearchLogBefore(tx: Tx, projectId: string, entryDate: string) {
 export const ProjectContextRepository = {
   listSections,
   upsertSection,
+  insertSectionIfMissing,
   deleteSection,
   listCompetitors,
   upsertCompetitors,

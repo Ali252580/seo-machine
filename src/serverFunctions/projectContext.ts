@@ -13,6 +13,13 @@ export const getProjectContext = createServerFn({ method: "POST" })
     ProjectContextService.getProjectContext(context.projectId),
   );
 
+export const initializeProjectContext = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(getProjectContextSchema)
+  .handler(async ({ context }) =>
+    ProjectContextService.initializeProjectContextFromSite(context.project),
+  );
+
 export const updateProjectContext = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
   .validator(updateProjectContextSchema)

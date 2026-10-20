@@ -11,6 +11,7 @@ import {
 } from "@/client/features/keywords/locations";
 import { ProjectMarketFields } from "@/client/features/projects/ProjectMarketFields";
 import { createProject } from "@/serverFunctions/projects";
+import { initializeProjectContext } from "@/serverFunctions/projectContext";
 
 export function CreateProjectModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
@@ -32,6 +33,14 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
         },
       }),
     onSuccess: async (created) => {
+      if (created.domain) {
+        // Best-effort setup: a blocked website must not prevent project creation.
+        void initializeProjectContext({
+          data: { projectId: created.id },
+        }).catch(() => {
+          // The context page offers a retry when the website cannot be read.
+        });
+      }
       setLastProjectId(created.id);
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
       await queryClient.invalidateQueries({
@@ -98,15 +107,17 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
             className="input input-bordered w-full"
           />
           <span className="text-xs text-base-content/50">
-            پس از ساخت پروژه می‌توانید Search Console را وصل و ردیابی رتبه را تنظیم کنید.
+            پس از ساخت پروژه می‌توانید Search Console را وصل و ردیابی رتبه را
+            تنظیم کنید.
           </span>
         </label>
 
         <div className="flex flex-col gap-1.5">
           <ProjectMarketFields value={market} onChange={setMarket} />
           <span className="text-xs text-base-content/50">
-            داده‌های کلمات کلیدی، نتایج جستجو و دامنه به‌طور پیش‌فرض از این کشور و زبان
-            استفاده می‌کنند. بعداً می‌توانید آن‌ها را در تنظیمات پروژه تغییر دهید.
+            داده‌های کلمات کلیدی، نتایج جستجو و دامنه به‌طور پیش‌فرض از این کشور
+            و زبان استفاده می‌کنند. بعداً می‌توانید آن‌ها را در تنظیمات پروژه
+            تغییر دهید.
           </span>
         </div>
 

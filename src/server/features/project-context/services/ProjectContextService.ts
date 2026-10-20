@@ -1,6 +1,9 @@
 import { runBatch } from "@/db/runBatch";
+import { readPages } from "@/server/lib/scrape";
+import { AppError } from "@/server/lib/errors";
 import { ProjectContextRepository } from "@/server/features/project-context/repositories/ProjectContextRepository";
 import { resolveContextUpdates } from "@/server/features/project-context/services/contextUpdateOps";
+import { siteContextDraft } from "@/server/features/project-context/services/siteContextDraft";
 import { ReportTemplateRepository } from "@/server/features/reports/repositories/ReportTemplateRepository";
 import {
   CUSTOM_SECTION_KEY_PREFIX,
@@ -126,6 +129,53 @@ export async function getProjectContext(
   };
 }
 
+/** Backfill empty fields for this project only, without replacing human edits. */
+export async function initializeProjectContextFromSite(project: {
+  id: string;
+  name: string;
+  domain: string | null;
+  languageCode: string;
+}): Promise<ProjectContext> {
+  if (!project.domain) {
+    throw new AppError("VALIDATION_ERROR", "ابتدا دامنهٔ این پروژه را ثبت کنید.");
+  }
+  const existing = await ProjectContextRepository.listSections(project.id);
+  if (
+    PROJECT_CONTEXT_SECTION_KEYS.every((key) =>
+      existing.some((row) => row.key === key),
+    )
+  ) {
+    return getProjectContext(project.id);
+  }
+
+  const site = await readPages([`https://${project.domain}`], 1);
+  const home = site.pages[0];
+  if (!home) {
+    throw new AppError("VALIDATION_ERROR", "صفحهٔ اصلی سایت قابل خواندن نیست.");
+  }
+  const drafts = siteContextDraft(
+    {
+      name: project.name,
+      domain: project.domain,
+      languageCode: project.languageCode,
+    },
+    home,
+  );
+  await runBatch((tx) =>
+    PROJECT_CONTEXT_SECTION_KEYS.filter(
+      (key) => !existing.some((row) => row.key === key) && drafts[key],
+    ).map((key) =>
+      ProjectContextRepository.insertSectionIfMissing(tx, {
+        projectId: project.id,
+        key,
+        content: drafts[key]!,
+        updatedBy: "sam",
+      }),
+    ),
+  );
+  return getProjectContext(project.id);
+}
+
 function dayStamp(offsetDays = 0): string {
   const date = new Date(Date.now() + offsetDays * 24 * 60 * 60 * 1000);
   return date.toISOString().slice(0, 10);
@@ -151,7 +201,11 @@ export async function applyContextUpdates(
     customKeys: new Set(
       sectionRows
         .map((row) => row.key)
-        .filter((key) => key.startsWith(CUSTOM_SECTION_KEY_PREFIX) && key !== "custom:periodic-seo-recommendations"),
+        .filter(
+          (key) =>
+            key.startsWith(CUSTOM_SECTION_KEY_PREFIX) &&
+            key !== "custom:periodic-seo-recommendations",
+        ),
     ),
     domains: new Set(competitorRows.map((row) => row.domain)),
     urls: new Set(keyPageRows.map((row) => row.url)),
@@ -333,6 +387,7 @@ export function renderProjectContextMarkdown(context: ProjectContext): string {
 
 export const ProjectContextService = {
   getProjectContext,
+  initializeProjectContextFromSite,
   applyContextUpdates,
   renderProjectContextMarkdown,
 } as const;

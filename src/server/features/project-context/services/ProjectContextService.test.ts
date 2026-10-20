@@ -2,12 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applyContextUpdates,
   getProjectContext,
+  initializeProjectContextFromSite,
   renderProjectContextMarkdown,
 } from "./ProjectContextService";
 
 const mocks = vi.hoisted(() => ({
   listSections: vi.fn(),
   upsertSection: vi.fn(),
+  insertSectionIfMissing: vi.fn(),
   deleteSection: vi.fn(),
   listCompetitors: vi.fn(),
   upsertCompetitors: vi.fn(),
@@ -20,6 +22,9 @@ const mocks = vi.hoisted(() => ({
   pruneResearchLogBefore: vi.fn(),
   listTemplates: vi.fn(),
 }));
+
+const scrape = vi.hoisted(() => ({ readPages: vi.fn() }));
+vi.mock("@/server/lib/scrape", () => scrape);
 
 vi.mock(
   "@/server/features/project-context/repositories/ProjectContextRepository",
@@ -62,6 +67,44 @@ describe("project context service", () => {
     mocks.listKeyPages.mockResolvedValue([]);
     mocks.listResearchLog.mockResolvedValue([]);
     mocks.listTemplates.mockResolvedValue([]);
+    scrape.readPages.mockResolvedValue({ pages: [], blocked: true });
+  });
+
+  it("only inserts missing sections for the requested project", async () => {
+    mocks.listSections.mockResolvedValue([
+      section("writing_preferences", "Existing human preference"),
+    ]);
+    scrape.readPages.mockResolvedValue({
+      pages: [
+        {
+          url: "https://sample.ir/",
+          title: "Sample",
+          text: "Sample service",
+        },
+      ],
+      blocked: false,
+    });
+
+    await initializeProjectContextFromSite({
+      id: "project_2",
+      name: "Sample",
+      domain: "sample.ir",
+      languageCode: "fa",
+    });
+
+    expect(scrape.readPages).toHaveBeenCalledWith(["https://sample.ir"], 1);
+    expect(mocks.insertSectionIfMissing).toHaveBeenCalledTimes(3);
+    expect(mocks.insertSectionIfMissing).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        projectId: "project_2",
+        key: "business_overview",
+      }),
+    );
+    expect(mocks.insertSectionIfMissing).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ key: "writing_preferences" }),
+    );
   });
 
   it("splits typed from custom sections and reports the empty typed ones", async () => {

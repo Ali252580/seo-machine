@@ -72,7 +72,7 @@ export function PromptExplorerForm({
             className="block text-sm font-medium"
             htmlFor="prompt-explorer-prompt"
           >
-            Prompt
+            سؤال مشتری
           </label>
           <textarea
             id="prompt-explorer-prompt"
@@ -84,10 +84,13 @@ export function PromptExplorerForm({
             maxLength={PROMPT_EXPLORER_MAX_PROMPT_LENGTH + 50}
             onChange={(event) => onPromptChange(event.target.value)}
             aria-invalid={promptOverLimit ? true : undefined}
+            placeholder="مثلاً برای انتخاب [نوع محصول یا خدمت] چه گزینه‌هایی پیشنهاد می‌کنی؟"
             autoFocus
           />
           <div className="flex items-center justify-between text-xs text-base-content/60">
-            <span>What your customers might ask AI.</span>
+            <span>
+              همان سؤالی را بنویسید که مشتری ممکن است از هوش مصنوعی بپرسد.
+            </span>
             <span
               className={`tabular-nums ${promptOverLimit ? "font-medium text-error" : ""}`}
             >
@@ -102,7 +105,7 @@ export function PromptExplorerForm({
               className="block text-sm font-medium"
               htmlFor="prompt-explorer-brand"
             >
-              Highlight brand (optional)
+              نام برند برای بررسی (اختیاری)
             </label>
             <input
               id="prompt-explorer-brand"
@@ -114,12 +117,12 @@ export function PromptExplorerForm({
               spellCheck={false}
             />
             <p className="text-xs text-base-content/60">
-              We&apos;ll flag whether each model mentions this brand.
+              مشخص می‌شود کدام مدل در پاسخ یا منابع به این برند اشاره کرده است.
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <span className="block text-sm font-medium">Models</span>
+            <span className="block text-sm font-medium">مدل‌ها</span>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1.5">
               {PROMPT_EXPLORER_MODELS.map((model) => {
                 const isActive = form.models.includes(model);
@@ -152,7 +155,7 @@ export function PromptExplorerForm({
                 onChange={(event) => onWebSearchChange(event.target.checked)}
               />
               <span className="text-sm">
-                Allow web search (more current answers)
+                جست‌وجوی وب فعال باشد (برای پاسخ‌های به‌روزتر)
               </span>
             </label>
             <select
@@ -177,7 +180,7 @@ export function PromptExplorerForm({
             className="btn btn-primary shrink-0 px-6"
             disabled={isLoading || form.models.length === 0}
           >
-            {isLoading ? "Running…" : "Run"}
+            {isLoading ? "در حال بررسی…" : "اجرای بررسی"}
           </button>
         </div>
 
