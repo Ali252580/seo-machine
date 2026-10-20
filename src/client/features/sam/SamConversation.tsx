@@ -181,6 +181,7 @@ export function SamConversation({
             <ChatMessage
               key={message.id}
               message={message}
+              projectId={projectId}
               // SAM exposes the full MCP tool surface (~19 tools), too many to
               // hand-label, so tool names are humanized generically rather
               // than kept in a curated label map.

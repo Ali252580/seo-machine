@@ -2,6 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Markdown } from "@/client/components/Markdown";
+import {
+  ArticleChatPreview,
+  ArticleRequest,
+} from "@/client/features/content/ArticleChatContent";
+import {
+  articlePreviewHtml,
+  articleRequestSummary,
+} from "@/client/features/content/articleChatUtils";
 import { ChatComposer } from "./ChatComposer";
 import {
   getSamVercelMessages,
@@ -99,7 +107,18 @@ export function SamVercelConversation({
               }
             >
               {message.role === "user" ? (
-                <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                articleRequestSummary(message.content) ? (
+                  <ArticleRequest text={message.content} />
+                ) : (
+                  <p className="whitespace-pre-wrap break-words text-sm">
+                    {message.content}
+                  </p>
+                )
+              ) : articlePreviewHtml(message.content) ? (
+                <ArticleChatPreview
+                  text={message.content}
+                  projectId={projectId}
+                />
               ) : (
                 <Markdown>{message.content}</Markdown>
               )}
@@ -107,9 +126,13 @@ export function SamVercelConversation({
           ))}
           {pendingText && (
             <div className="space-y-3" role="status">
-              <p className="mr-auto max-w-[85%] rounded-2xl bg-primary p-3 text-sm text-primary-content">
-                {pendingText}
-              </p>
+              <div className="mr-auto max-w-[85%] rounded-2xl bg-primary p-3 text-sm text-primary-content">
+                {articleRequestSummary(pendingText) ? (
+                  <ArticleRequest text={pendingText} />
+                ) : (
+                  pendingText
+                )}
+              </div>
               <p className="flex items-center gap-2 text-sm text-base-content/60">
                 <Loader2 className="size-4 animate-spin" />
                 SAM در حال بررسی است…

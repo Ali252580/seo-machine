@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
 import { ArticlePreview } from "@/client/features/content/ArticlePreview";
@@ -8,6 +8,7 @@ import { ArticleMediaPanel } from "@/client/features/content/ArticleMediaPanel";
 import { useArticleDraft } from "@/client/features/content/useArticleDraft";
 import { ContentEditorHeader } from "@/client/features/content/ContentEditorHeader";
 import { buildArticlePrompt } from "@/client/features/content/buildArticlePrompt";
+import { articleHtml } from "@/client/features/content/articleChatUtils";
 import { researchContentTarget } from "@/serverFunctions/contentResearch";
 import { createSamSession } from "@/serverFunctions/sam";
 import { sendSamVercelMessage } from "@/serverFunctions/samVercel";
@@ -65,6 +66,13 @@ function ProjectContentEditor({
     image,
     setImage,
   } = useArticleDraft(projectId, targetPage, suggestedTitle);
+  useEffect(() => {
+    const key = `openseo-article-import-${projectId}`;
+    const imported = sessionStorage.getItem(key);
+    if (!imported) return;
+    sessionStorage.removeItem(key);
+    setContent(imported);
+  }, [projectId, setContent]);
   const [checkedTarget, setCheckedTarget] = useState<string | null>(null);
   const [research, setResearch] = useState<
     Awaited<ReturnType<typeof researchContentTarget>> | undefined
@@ -113,7 +121,10 @@ function ProjectContentEditor({
       };
     },
     onSuccess: ({ result, checkedTarget: verifiedTarget }) => {
-      setContent(result.assistantMessage.content);
+      setContent(
+        articleHtml(result.assistantMessage.content) ??
+          result.assistantMessage.content,
+      );
       setCheckedTarget(verifiedTarget);
     },
   });

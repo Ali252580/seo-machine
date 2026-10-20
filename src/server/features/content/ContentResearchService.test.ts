@@ -133,6 +133,34 @@ describe("content research before writing", () => {
     expect(result.existingPage?.text).toBe("متن کنونی صفحه");
   });
 
+  it("requests the article trend for the selected project and target page", async () => {
+    mocks.getGscConnection.mockResolvedValue({ siteUrl: "https://site.test" });
+    mocks.getPerformance.mockResolvedValue({
+      rows: [{ keys: ["2026-10-01"], clicks: 3 }],
+    });
+    const result = await ContentResearchService.research({
+      ...input,
+      targetPage: "https://site.test/radiator",
+    });
+    expect(mocks.getPerformance).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: "project_1",
+        dimensions: ["date"],
+        filters: [
+          {
+            dimension: "page",
+            operator: "equals",
+            expression: "https://site.test/radiator",
+          },
+        ],
+      }),
+    );
+    expect(result.searchConsole).toMatchObject({
+      status: "connected",
+      trendRows: [{ clicks: 3 }],
+    });
+  });
+
   it("rejects a target page from another project before reading it", async () => {
     await expect(
       ContentResearchService.research({

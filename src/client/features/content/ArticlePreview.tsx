@@ -36,7 +36,7 @@ export function ArticlePreview({
         title="پیش‌نمایش مقاله"
         sandbox=""
         className="min-h-[650px] w-full rounded-lg border border-base-300 bg-white"
-        srcDoc={`<html lang="fa" dir="rtl"><meta charset="utf-8"><style>body{font:16px/2 sans-serif;padding:24px;color:#17222f}h2,h3{line-height:1.5}</style>${content}</html>`}
+        srcDoc={`<html lang="fa" dir="rtl"><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><style>body{font:16px/2 sans-serif;padding:24px;color:#17222f}h2,h3{line-height:1.5}</style>${content}</html>`}
       />
     </section>
   );

@@ -83,26 +83,54 @@ async function research(input: Input) {
     | {
         status: "connected";
         rows: Awaited<ReturnType<typeof GscService.getPerformance>>["rows"];
+        trendRows: Awaited<
+          ReturnType<typeof GscService.getPerformance>
+        >["rows"];
       }
     | { status: "not_connected" | "unavailable" } = {
     status: "not_connected",
   };
   if (gscConnection) {
     try {
-      const result = await GscService.getPerformance({
-        projectId,
-        dateRange: "last_3_months",
-        dimensions: ["query", "page"],
-        filters: [
-          targetPage
-            ? { dimension: "page", operator: "equals", expression: targetPage }
-            : { dimension: "query", operator: "contains", expression: keyword },
-        ],
-        rowLimit: 100,
-        type: "web",
-        dataState: "final",
-      });
-      searchConsole = { status: "connected", rows: result.rows };
+      const filters = [
+        targetPage
+          ? {
+              dimension: "page" as const,
+              operator: "equals" as const,
+              expression: targetPage,
+            }
+          : {
+              dimension: "query" as const,
+              operator: "contains" as const,
+              expression: keyword,
+            },
+      ];
+      const [result, trend] = await Promise.allSettled([
+        GscService.getPerformance({
+          projectId,
+          dateRange: "last_3_months",
+          dimensions: ["query", "page"],
+          filters,
+          rowLimit: 100,
+          type: "web",
+          dataState: "final",
+        }),
+        GscService.getPerformance({
+          projectId,
+          dateRange: "last_28_days",
+          dimensions: ["date"],
+          filters,
+          rowLimit: 32,
+          type: "web",
+          dataState: "final",
+        }),
+      ]);
+      if (result.status === "rejected") throw result.reason;
+      searchConsole = {
+        status: "connected",
+        rows: result.value.rows,
+        trendRows: trend.status === "fulfilled" ? trend.value.rows : [],
+      };
     } catch {
       searchConsole = { status: "unavailable" };
     }

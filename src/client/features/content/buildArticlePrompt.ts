@@ -22,6 +22,11 @@ export function buildArticlePrompt(
           )
           .join("؛ ") || "عبارت مرتبطی ثبت نشده"
       : `داده در دسترس نیست (${evidence.searchConsole.status})`;
+  const searchTrend =
+    evidence.searchConsole.status === "connected" &&
+    evidence.searchConsole.trendRows.length > 0
+      ? `۲۸ روز اخیر: ${evidence.searchConsole.trendRows.length} روز گزارش، ${evidence.searchConsole.trendRows.reduce((sum, row) => sum + row.clicks, 0)} کلیک و ${evidence.searchConsole.trendRows.reduce((sum, row) => sum + row.impressions, 0)} نمایش`
+      : "روند روزانه در دسترس نیست";
   const analyticsRows =
     evidence.analytics.status === "connected"
       ? evidence.analytics.rows
@@ -45,7 +50,7 @@ export function buildArticlePrompt(
   // The server accepts at most 4,000 characters. Bound observed rows, never
   // the instructions at the end that prohibit unsupported claims and filler.
   const evidenceSummary =
-    `وردپرس: ${cmsRows}. سرچ کنسول: ${searchRows}. آنالیتیکس: ${analyticsRows}.`.slice(
+    `وردپرس: ${cmsRows}. سرچ کنسول: ${searchRows}. ${searchTrend}. آنالیتیکس: ${analyticsRows}.`.slice(
       0,
       1_000,
     );
@@ -56,7 +61,7 @@ export function buildArticlePrompt(
   const pageInstruction = evidence.existingPage
     ? "این متن را برای همان صفحه بازنویسی و تکمیل کن؛ صفحه یا مقالهٔ جدید پیشنهاد نده."
     : "اگر صفحهٔ مشابهی وجود دارد، فقط بهبود همان صفحه را پیشنهاد بده و متن تکراری نساز.";
-  const instructions = ` ${pageInstruction} از مهارت‌های seo-audit و keyword-research برای سنجش قصد جست‌وجو و کیفیت صفحه استفاده کن. از نمونه‌های کوچک نتیجهٔ قطعی نگیر و عددی را نساز. متن باید به نیاز مشخص کاربر پاسخ بدهد و نسبت به محتوای موجود ارزش تازه داشته باشد؛ از ادعای بی‌منبع، قیمت ساختگی و پاراگراف‌های کلی پرهیز کن. اگر اطلاعات کافی برای متن مفید نیست، فقط یک توضیح کوتاه دربارهٔ اطلاعات لازم بده. فقط HTML ساده بده.`;
+  const instructions = ` ${pageInstruction} از مهارت‌های seo-audit و keyword-research برای سنجش قصد جست‌وجو و کیفیت صفحه استفاده کن. از نمونه‌های کوچک نتیجهٔ قطعی نگیر و عددی را نساز. متن باید به نیاز مشخص کاربر پاسخ بدهد و نسبت به محتوای موجود ارزش تازه داشته باشد؛ از ادعای بی‌منبع، قیمت ساختگی و پاراگراف‌های کلی پرهیز کن. اگر اطلاعات کافی برای متن مفید نیست، فقط یک توضیح کوتاه دربارهٔ اطلاعات لازم بده. فقط HTML ساده بده. فقط از h2، h3، p، ul، ol، li، strong، em و br بدون ویژگی استفاده کن؛ کدبلاک و Markdown نده.`;
   const pageText =
     evidence.existingPage?.text.slice(
       0,

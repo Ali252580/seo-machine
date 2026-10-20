@@ -5,7 +5,7 @@ it("keeps a researched existing-page prompt within SAM's 4,000-character limit",
   const evidence = {
     wordpressChecked: false,
     pages: [],
-    searchConsole: { status: "connected", rows: [] },
+    searchConsole: { status: "connected", rows: [], trendRows: [] },
     analytics: { status: "connected", rows: [] },
     existingPage: {
       url: `https://example.com/${"a".repeat(500)}`,

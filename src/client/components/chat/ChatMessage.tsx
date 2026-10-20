@@ -10,6 +10,14 @@ import {
   Undo2,
 } from "lucide-react";
 import { Markdown } from "@/client/components/Markdown";
+import {
+  ArticleChatPreview,
+  ArticleRequest,
+} from "@/client/features/content/ArticleChatContent";
+import {
+  articlePreviewHtml,
+  articleRequestSummary,
+} from "@/client/features/content/articleChatUtils";
 
 // Shared chat-message rendering. A chat supplies which tools are available and
 // how tool names become labels (resolveToolLabel) plus which message actions
@@ -227,12 +235,14 @@ function ToolBadge({
  */
 export function ChatMessage({
   message,
+  projectId,
   resolveToolLabel,
   streaming,
   onUndo,
   onEdit,
 }: {
   message: UIMessage;
+  projectId: string;
   resolveToolLabel: ResolveToolLabel;
   /** True while this message is still being generated: reasoning spinners
    * stay live and the hover actions (copy) are held back until it settles. */
@@ -291,9 +301,13 @@ export function ChatMessage({
           <div className="rounded-box rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-content">
             {message.parts.map((part, index) =>
               part.type === "text" ? (
-                <span key={index} className="whitespace-pre-wrap">
-                  {part.text}
-                </span>
+                articleRequestSummary(part.text) ? (
+                  <ArticleRequest key={index} text={part.text} />
+                ) : (
+                  <span key={index} className="whitespace-pre-wrap break-words">
+                    {part.text}
+                  </span>
+                )
               ) : null,
             )}
           </div>
@@ -329,7 +343,15 @@ export function ChatMessage({
           }
           if (part.type === "text") {
             return part.text.trim() ? (
-              <Markdown key={index}>{part.text}</Markdown>
+              articlePreviewHtml(part.text) ? (
+                <ArticleChatPreview
+                  key={index}
+                  text={part.text}
+                  projectId={projectId}
+                />
+              ) : (
+                <Markdown key={index}>{part.text}</Markdown>
+              )
             ) : null;
           }
           if (part.type.startsWith("tool-")) {
