@@ -20,6 +20,7 @@
  * product-wide default via DEFAULT_LOCATION_CODE below.
  */
 export const DEFAULT_LOCATION_CODE = 2840;
+export const IRAN_LOCATION_CODE = 2364;
 
 /**
  * Human-readable form of a canonical DataForSEO location_name, whose segments

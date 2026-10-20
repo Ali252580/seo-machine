@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search } from "lucide-react";
-import { LOCATION_OPTIONS } from "@/shared/keyword-locations";
+import { IRAN_LOCATION_CODE, LOCATION_OPTIONS } from "@/shared/keyword-locations";
 
 type LocationOption = (typeof LOCATION_OPTIONS)[number];
 
@@ -17,9 +17,14 @@ function matches(option: LocationOption, query: string): boolean {
   const needle = query.trim().toLowerCase();
   if (!needle) return true;
   return (
+    (option.code === IRAN_LOCATION_CODE && "ایران".includes(needle)) ||
     option.label.toLowerCase().includes(needle) ||
     option.shortLabel.toLowerCase().includes(needle)
   );
+}
+
+function displayLabel(option: LocationOption): string {
+  return option.code === IRAN_LOCATION_CODE ? "ایران" : option.label;
 }
 
 /**
@@ -112,7 +117,9 @@ export function LocationSelect({
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span className="truncate">{selected?.label ?? "Select country"}</span>
+        <span className="truncate">
+          {selected ? displayLabel(selected) : "Select country"}
+        </span>
       </button>
 
       {open ? (
@@ -157,7 +164,9 @@ export function LocationSelect({
                       onClick={() => select(option)}
                       onMouseEnter={() => setActiveIndex(index)}
                     >
-                      <span className="flex-1 truncate">{option.label}</span>
+                      <span className="flex-1 truncate">
+                        {displayLabel(option)}
+                      </span>
                       {isSelected ? (
                         <Check className="size-4 shrink-0 text-primary" />
                       ) : null}

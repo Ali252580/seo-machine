@@ -5,13 +5,11 @@ import { toast } from "sonner";
 import { Modal } from "@/client/components/Modal";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { setLastProjectId } from "@/client/lib/active-project";
-import {
-  DEFAULT_LOCATION_CODE,
-  getLanguageCode,
-} from "@/client/features/keywords/locations";
+import { getLanguageCode } from "@/client/features/keywords/locations";
 import { ProjectMarketFields } from "@/client/features/projects/ProjectMarketFields";
 import { createProject } from "@/serverFunctions/projects";
 import { initializeProjectContext } from "@/serverFunctions/projectContext";
+import { IRAN_LOCATION_CODE } from "@/shared/keyword-locations";
 
 export function CreateProjectModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
@@ -19,8 +17,8 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = React.useState("");
   const [domain, setDomain] = React.useState("");
   const [market, setMarket] = React.useState({
-    locationCode: DEFAULT_LOCATION_CODE,
-    languageCode: getLanguageCode(DEFAULT_LOCATION_CODE),
+    locationCode: IRAN_LOCATION_CODE,
+    languageCode: getLanguageCode(IRAN_LOCATION_CODE),
   });
 
   const createMutation = useMutation({
