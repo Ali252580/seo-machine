@@ -2,6 +2,10 @@ import { and, count, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { projects } from "@/db/schema";
 import { AppError } from "@/server/lib/errors";
+import {
+  getLanguageCode,
+  IRAN_LOCATION_CODE,
+} from "@/shared/keyword-locations";
 
 async function listProjects(organizationId: string) {
   return db.query.projects.findMany({
@@ -157,6 +161,8 @@ async function tryCreateDefaultProject(organizationId: string) {
       organizationId,
       name: "Default",
       domain: null,
+      locationCode: IRAN_LOCATION_CODE,
+      languageCode: getLanguageCode(IRAN_LOCATION_CODE),
     })
     .onConflictDoNothing()
     .returning({ id: projects.id });
