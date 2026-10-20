@@ -10,6 +10,7 @@ import {
 import { CompetitorsSection } from "./CompetitorsSection";
 import { ProseSections } from "./ProseSections";
 import { KeyPagesSection } from "./KeyPagesSection";
+import { ImportantPagesFromGsc } from "./ImportantPagesFromGsc";
 import {
   ConfirmDeleteButton,
   EmptyState,
@@ -96,7 +97,8 @@ export function ProjectContextPage({ projectId }: { projectId: string }) {
         ) : null}
         {initializationError ? (
           <p className="text-error">
-            خواندن سایت ناموفق بود: {getStandardErrorMessage(initializationFailure)}
+            خواندن سایت ناموفق بود:{" "}
+            {getStandardErrorMessage(initializationFailure)}
           </p>
         ) : null}
         {context.missingSections.length > 0 && !initializationPending ? (
@@ -121,7 +123,15 @@ export function ProjectContextPage({ projectId }: { projectId: string }) {
         competitors={context.competitors}
       />
 
-      <KeyPagesSection projectId={projectId} keyPages={context.keyPages} />
+      <ImportantPagesFromGsc projectId={projectId} />
+      <details className="rounded-lg border border-base-300 p-4">
+        <summary className="cursor-pointer text-sm font-medium">
+          ویرایش صفحات ثبت‌شده در زمینهٔ پروژه ({context.keyPages.length})
+        </summary>
+        <div className="mt-4">
+          <KeyPagesSection projectId={projectId} keyPages={context.keyPages} />
+        </div>
+      </details>
 
       <CustomSections
         projectId={projectId}

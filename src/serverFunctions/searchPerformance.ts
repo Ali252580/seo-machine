@@ -1,4 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { readPages } from "@/server/lib/scrape";
+import { AppError } from "@/server/lib/errors";
+import { selectImportantPages } from "@/server/features/gsc/selectImportantPages";
 import {
   GscNotConnectedError,
   GscService,
@@ -20,6 +23,7 @@ import {
   searchPerformanceTableExportInputSchema,
   searchPerformanceTableInputSchema,
 } from "@/types/schemas/search-performance";
+import { getProjectContextSchema } from "@/types/schemas/projectContext";
 
 // query x page fan-out needs more rows to find the 5..20 band.
 const STRIKING_DISTANCE_FETCH_LIMIT = 1000;
@@ -29,6 +33,45 @@ const COUNTRY_ROW_LIMIT = 25;
 // Export pulls the whole dimension in one shot, capped at GSC's per-call max
 // (GSC_MAX_ROW_LIMIT). Large stores get everything up to this ceiling.
 const EXPORT_ROW_LIMIT = 1000;
+
+/** A bounded, project-scoped shortlist for the Context page. GSC supplies
+ * metrics; public page titles are read separately because GSC has no title. */
+export const getImportantPages = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(getProjectContextSchema)
+  .handler(async ({ context }) => {
+    const domain = context.project.domain;
+    if (!domain) {
+      throw new AppError("VALIDATION_ERROR", "دامنهٔ پروژه ثبت نشده است.");
+    }
+    try {
+      const result = await GscService.getPerformance({
+        projectId: context.projectId,
+        dimensions: ["page"],
+        dateRange: "last_3_months",
+        rowLimit: 100,
+      });
+      const selected = selectImportantPages(
+        toDimensionRows(result.rows),
+        domain,
+      );
+      const pages = await Promise.all(
+        selected.map(async (page) => {
+          const site = await readPages([page.key], 1);
+          return {
+            ...page,
+            title: site.pages[0]?.title?.slice(0, 160) ?? null,
+          };
+        }),
+      );
+      return { connected: true as const, pages };
+    } catch (error) {
+      if (isExpectedConnectionFailure(error)) {
+        return { connected: false as const, pages: [] };
+      }
+      throw error;
+    }
+  });
 
 /** Build GSC filter groups shared by every call. Device applies everywhere;
  *  country applies everywhere except the country breakdown itself (so the

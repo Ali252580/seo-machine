@@ -66,8 +66,8 @@ export function KeyPagesSection({
   return (
     <section className="space-y-3">
       <SectionHeader
-        title="صفحات مهم"
-        hint="فهرست کوتاهی از صفحات اصلی سایت، نه همهٔ نشانی‌ها."
+        title="صفحات ثبت‌شده"
+        hint="این صفحات به‌عنوان زمینهٔ پروژه برای SAM ذخیره شده‌اند."
         action={
           <button
             type="button"
