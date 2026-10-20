@@ -1,6 +1,5 @@
 import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { Pencil } from "lucide-react";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { PROSE_MAX_CHARS } from "@/types/schemas/projectContext";
@@ -89,8 +88,8 @@ export function ProjectContextPage({ projectId }: { projectId: string }) {
       <div className="space-y-3 rounded-lg border border-base-300 bg-base-200/40 p-4 text-sm">
         <p>
           این اطلاعات فقط برای همین پروژه ذخیره می‌شود و SAM هنگام کار از آن
-          استفاده می‌کند. خانه‌های خالی از صفحهٔ اصلی همین سایت با عنوان
-          «پیش‌نویس» پر می‌شوند. هدف و لحن اختصاصی را بازبینی و تأیید کنید.
+          استفاده می‌کند. خانه‌های خالی به‌طور خودکار از سایت همین پروژه پر
+          می‌شوند. موارد استنباطی با عنوان «پیش‌نویس» مشخص‌اند.
         </p>
         {initializationPending ? (
           <p>در حال خواندن سایت و آماده‌کردن پیش‌نویس…</p>
@@ -109,14 +108,6 @@ export function ProjectContextPage({ projectId }: { projectId: string }) {
             تلاش دوباره برای تکمیل از سایت
           </button>
         ) : null}
-        <Link
-          to="/p/$projectId/sam"
-          params={{ projectId }}
-          search={{}}
-          className="link link-primary"
-        >
-          کمک گرفتن از SAM برای آماده‌کردن زمینهٔ همین پروژه
-        </Link>
       </div>
 
       <ProseSections
