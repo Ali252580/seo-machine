@@ -44,6 +44,7 @@ function SiteAuditPage() {
   if (!auditId) {
     return (
       <LaunchView
+        key={projectId}
         projectId={projectId}
         onAuditStarted={(id) => setSearchParams({ auditId: id })}
       />

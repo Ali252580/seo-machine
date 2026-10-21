@@ -25,6 +25,7 @@ import {
   parseCompetitorList,
 } from "@/types/schemas/ai-search";
 import { detectTarget } from "@/shared/targetDetection";
+import { useProjectMarket } from "@/client/features/projects/useProjectMarket";
 import {
   parseResearchTarget,
   toScopeSearchParam,
@@ -79,7 +80,8 @@ function BrandLookupPageInner({
   onSearchChange,
   planGate,
 }: Props & { planGate: HostedPlanGateState }) {
-  const [query, setQuery] = useState(initialQuery);
+  const projectDomain = useProjectMarket(projectId)?.domain;
+  const [query, setQuery] = useState(initialQuery || projectDomain || "");
   // The user's explicit scope pick, or undefined to follow the input's default.
   const [scopeChoice, setScopeChoice] = useState<ResearchScope | undefined>(
     initialScope,
@@ -243,11 +245,11 @@ function BrandLookupPageInner({
   // string (not the fresh-each-render `initialCompetitors` array) so typing in
   // the competitor field isn't clobbered on every render.
   useEffect(() => {
-    setQuery(initialQuery);
+    setQuery(initialQuery || projectDomain || "");
     setCompetitorsInput(competitorKey.split(",").join(", "));
     setScopeChoice(initialScope);
     setValidationError(null);
-  }, [initialQuery, competitorKey, initialScope]);
+  }, [initialQuery, competitorKey, initialScope, projectDomain]);
 
   const isLoading = hasActiveQuery && lookupQuery.isPending;
   const errorMessage =

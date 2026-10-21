@@ -1,21 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getWordPressStatus,
   removeWordPressConnection,
   saveWordPressConnection,
 } from "@/serverFunctions/wordpress";
+import { useProjectMarket } from "@/client/features/projects/useProjectMarket";
 
 export function WordPressConnectionCard({ projectId }: { projectId: string }) {
+  const projectDomain = useProjectMarket(projectId)?.domain;
   const queryClient = useQueryClient();
   const key = ["wordpress-connection", projectId];
   const status = useQuery({
     queryKey: key,
     queryFn: () => getWordPressStatus({ data: { projectId } }),
   });
-  const [siteUrl, setSiteUrl] = useState("");
+  const [siteUrl, setSiteUrl] = useState(
+    projectDomain ? `https://${projectDomain}` : "",
+  );
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  useEffect(() => {
+    if (projectDomain) {
+      setSiteUrl((current) => current || `https://${projectDomain}`);
+    }
+  }, [projectDomain]);
   const save = useMutation({
     mutationFn: () =>
       saveWordPressConnection({

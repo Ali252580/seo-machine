@@ -60,6 +60,7 @@ export function RankTrackingConfigModal({
       projectId={projectId}
       existingConfig={existingConfig}
       initialMarket={existingConfig ?? projectMarket!}
+      initialDomain={existingConfig?.domain ?? projectMarket?.domain ?? ""}
       onClose={onClose}
       onSaved={onSaved}
       onConfigCreated={onConfigCreated}
@@ -71,13 +72,14 @@ function RankTrackingConfigModalContent({
   projectId,
   existingConfig,
   initialMarket,
+  initialDomain,
   onClose,
   onSaved,
   onConfigCreated,
-}: Props & { initialMarket: ProjectMarket }) {
+}: Props & { initialMarket: ProjectMarket; initialDomain: string }) {
   const isEdit = !!existingConfig;
   const [step, setStep] = useState<"config" | "keywords">("config");
-  const [domain, setDomain] = useState(existingConfig?.domain ?? "");
+  const [domain, setDomain] = useState(initialDomain);
   const [devices, setDevices] = useState<"both" | "desktop" | "mobile">(
     existingConfig?.devices ?? "mobile",
   );

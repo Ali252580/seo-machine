@@ -57,6 +57,7 @@ import type {
 
 type Props = {
   projectId: string;
+  projectDomain?: string;
   routeState: DomainOverviewRouteState;
   navigate: (args: {
     search: (prev: Record<string, unknown>) => Record<string, unknown>;
@@ -184,10 +185,12 @@ function useDomainOverviewState({
   navigate,
   routeState,
   projectId,
+  projectDomain,
 }: {
   navigate: DomainNavigate;
   routeState: DomainOverviewRouteState;
   projectId: string;
+  projectDomain?: string;
 }) {
   const lastTrackedKey = useRef<string>("");
   // While editing the domain input, the scope tracks the input's default until
@@ -284,7 +287,7 @@ function useDomainOverviewState({
 
   const controlsForm = useForm({
     defaultValues: {
-      domain: routeState.domain,
+      domain: routeState.domain || projectDomain || "",
       scope: routeState.scope,
       sort: routeState.sort,
       locationCode: routeState.locationCode,
@@ -321,13 +324,14 @@ function useDomainOverviewState({
   useEffect(() => {
     userPickedScope.current = false;
     controlsForm.reset({
-      domain: routeState.domain,
+      domain: routeState.domain || projectDomain || "",
       scope: routeState.scope,
       sort: routeState.sort,
       locationCode: routeState.locationCode,
     });
   }, [
     controlsForm,
+    projectDomain,
     routeState.domain,
     routeState.locationCode,
     routeState.scope,
@@ -452,6 +456,7 @@ export type DomainOverviewControlsForm = ReturnType<
 
 export function DomainOverviewPage({
   projectId,
+  projectDomain,
   routeState,
   navigate,
   onShowRecentSearches,
@@ -460,6 +465,7 @@ export function DomainOverviewPage({
     navigate,
     routeState,
     projectId,
+    projectDomain,
   });
   const urlTabInput = useMemo<SearchTabInput | null>(() => {
     if (routeState.domain.trim() === "") return null;

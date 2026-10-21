@@ -28,6 +28,7 @@ function BacklinksRoute() {
 
   return (
     <BacklinksPage
+      key={projectId}
       projectId={projectId}
       navigate={navigate}
       searchState={{

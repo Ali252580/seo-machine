@@ -55,7 +55,9 @@ function DomainOverviewRoute() {
 
   return (
     <DomainOverviewPage
+      key={projectId}
       projectId={projectId}
+      projectDomain={projectMarket?.domain ?? undefined}
       onShowRecentSearches={() => {
         void navigate({
           search: () => ({}),

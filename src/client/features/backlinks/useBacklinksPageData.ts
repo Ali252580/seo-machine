@@ -28,6 +28,7 @@ import {
 } from "./backlinksFilterTypes";
 import type { BacklinksFiltersState } from "./useBacklinksFilters";
 import { toScopeSearchParam } from "@/shared/researchScope";
+import { useProjectMarket } from "@/client/features/projects/useProjectMarket";
 
 type UseBacklinksPageDataArgs = {
   projectId: string;
@@ -74,12 +75,13 @@ export function useBacklinksPageData({
   searchState,
   filters,
 }: UseBacklinksPageDataArgs) {
+  const projectDomain = useProjectMarket(projectId)?.domain;
   const searchCardInitialValues = useMemo(
     () => ({
-      target: searchState.target,
+      target: searchState.target || projectDomain || "",
       scope: searchState.scope,
     }),
-    [searchState.scope, searchState.target],
+    [projectDomain, searchState.scope, searchState.target],
   );
 
   const { target, scope, tab, page, pageSize, sort, order, view } = searchState;

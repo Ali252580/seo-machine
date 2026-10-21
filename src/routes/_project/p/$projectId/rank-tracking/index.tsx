@@ -32,6 +32,7 @@ function RankTrackingIndex() {
 
       {showConfigModal && (
         <RankTrackingConfigModal
+          key={projectId}
           projectId={projectId}
           existingConfig={null}
           onClose={() => setShowConfigModal(false)}

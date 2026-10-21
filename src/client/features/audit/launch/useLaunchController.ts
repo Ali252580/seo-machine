@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ import {
   shouldValidateFieldOnChange,
 } from "@/client/lib/forms";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
+import { useProjectMarket } from "@/client/features/projects/useProjectMarket";
 
 function getLaunchValidationErrors(
   value: LaunchFormValues,
@@ -46,6 +48,8 @@ export function useLaunchController({
   isFreePlan: boolean;
   onAuditStarted: (auditId: string) => void;
 }) {
+  const projectDomain = useProjectMarket(projectId)?.domain;
+  const defaultUrl = projectDomain ? `https://${projectDomain}` : "";
   const maxPagesLimit = getMaxPagesLimit(isFreePlan);
   const historyQuery = useQuery({
     queryKey: ["audit-history", projectId],
@@ -57,7 +61,7 @@ export function useLaunchController({
   });
 
   const launchForm = useForm({
-    defaultValues: DEFAULT_LAUNCH_FORM_VALUES,
+    defaultValues: { ...DEFAULT_LAUNCH_FORM_VALUES, url: defaultUrl },
     validators: {
       onChange: ({ formApi, value }) =>
         getLaunchValidationErrors(
@@ -97,6 +101,12 @@ export function useLaunchController({
       }
     },
   });
+
+  useEffect(() => {
+    if (defaultUrl && !launchForm.getFieldValue("url")) {
+      launchForm.setFieldValue("url", defaultUrl);
+    }
+  }, [defaultUrl, launchForm]);
 
   return {
     launchForm,

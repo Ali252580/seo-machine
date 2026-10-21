@@ -15,6 +15,7 @@ function BrandLookupRoute() {
 
   return (
     <BrandLookupPage
+      key={projectId}
       projectId={projectId}
       initialQuery={q}
       initialCompetitors={c}

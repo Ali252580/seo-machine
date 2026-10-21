@@ -41,7 +41,7 @@ function ProjectIntegrationsRoute() {
           }
         />
       </section>
-      <WordPressConnectionCard projectId={projectId} />
+      <WordPressConnectionCard key={projectId} projectId={projectId} />
     </div>
   );
 }
