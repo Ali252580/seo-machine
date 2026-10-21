@@ -7,6 +7,7 @@ import {
   formatPosition,
 } from "@/client/features/search-performance/SearchPerformanceColumns";
 import { getImportantPages } from "@/serverFunctions/searchPerformance";
+import { keyPageUrlKey } from "./keyPageUrlKey";
 import {
   EmptyState,
   SectionHeader,
@@ -27,9 +28,11 @@ function pagePath(url: string): string {
 export function ImportantPagesFromGsc({
   projectId,
   keyPages,
+  onEditPage,
 }: {
   projectId: string;
   keyPages: ContextKeyPage[];
+  onEditPage: (pageId: string) => void;
 }) {
   const update = useContextUpdate(projectId);
   const query = useQuery({
@@ -39,8 +42,8 @@ export function ImportantPagesFromGsc({
   });
   const pages = query.data?.pages ?? [];
   const maxClicks = Math.max(1, ...pages.map((page) => page.clicks));
-  const registeredUrls = new Set(
-    keyPages.map((page) => page.url.replace(/\/$/, "")),
+  const registeredPages = new Map(
+    keyPages.map((page) => [keyPageUrlKey(page.url), page]),
   );
 
   return (
@@ -150,16 +153,17 @@ export function ImportantPagesFromGsc({
               <button
                 type="button"
                 className="btn btn-outline btn-xs mt-3"
-                disabled={
-                  update.isPending ||
-                  registeredUrls.has(page.key.replace(/\/$/, ""))
-                }
-                onClick={() =>
-                  update.mutate([{ addKeyPages: [{ url: page.key }] }])
-                }
+                disabled={update.isPending}
+                onClick={() => {
+                  const registered = registeredPages.get(
+                    keyPageUrlKey(page.key),
+                  );
+                  if (registered) onEditPage(registered.id);
+                  else update.mutate([{ addKeyPages: [{ url: page.key }] }]);
+                }}
               >
-                {registeredUrls.has(page.key.replace(/\/$/, ""))
-                  ? "ثبت‌شده در زمینهٔ پروژه"
+                {registeredPages.has(keyPageUrlKey(page.key))
+                  ? "ویرایش صفحهٔ ثبت‌شده"
                   : "افزودن به زمینهٔ پروژه"}
               </button>
             </li>

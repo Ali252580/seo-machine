@@ -27,6 +27,7 @@ import {
 export function ProjectContextPage({ projectId }: { projectId: string }) {
   const queryClient = useQueryClient();
   const attempted = React.useRef(new Set<string>());
+  const [editingPageId, setEditingPageId] = React.useState<string | null>(null);
   const contextQuery = useQuery({
     queryKey: projectContextQueryKey(projectId),
     queryFn: () => getProjectContext({ data: { projectId } }),
@@ -58,6 +59,8 @@ export function ProjectContextPage({ projectId }: { projectId: string }) {
     attempted.current.add(projectId);
     initializeContext(projectId);
   }, [projectId, contextQuery.data?.missingSections.length, initializeContext]);
+
+  React.useEffect(() => setEditingPageId(null), [projectId]);
 
   if (contextQuery.isPending) {
     return (
@@ -126,9 +129,24 @@ export function ProjectContextPage({ projectId }: { projectId: string }) {
       <ImportantPagesFromGsc
         projectId={projectId}
         keyPages={context.keyPages}
+        onEditPage={(pageId) => {
+          setEditingPageId(pageId);
+          document.getElementById("project-key-pages")?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }}
       />
-      <div className="rounded-lg border border-base-300 p-4">
-        <KeyPagesSection projectId={projectId} keyPages={context.keyPages} />
+      <div
+        id="project-key-pages"
+        className="scroll-mt-6 rounded-lg border border-base-300 p-4"
+      >
+        <KeyPagesSection
+          projectId={projectId}
+          keyPages={context.keyPages}
+          editingId={editingPageId}
+          onEditingIdChange={setEditingPageId}
+        />
       </div>
 
       <CustomSections

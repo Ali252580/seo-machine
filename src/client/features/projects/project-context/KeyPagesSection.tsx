@@ -27,13 +27,16 @@ const ROLE_LABELS: Record<KeyPageRole, string> = {
 export function KeyPagesSection({
   projectId,
   keyPages,
+  editingId,
+  onEditingIdChange,
 }: {
   projectId: string;
   keyPages: ContextKeyPage[];
+  editingId: string | null;
+  onEditingIdChange: (id: string | null) => void;
 }) {
   const update = useContextUpdate(projectId);
   const [adding, setAdding] = React.useState(false);
-  const [editingId, setEditingId] = React.useState<string | null>(null);
 
   const save = (previousUrl: string | null, draft: KeyPageDraft) => {
     const ops: ProjectContextUpdate[] = [];
@@ -58,7 +61,7 @@ export function KeyPagesSection({
     update.mutate(ops, {
       onSuccess: () => {
         setAdding(false);
-        setEditingId(null);
+        onEditingIdChange(null);
       },
     });
   };
@@ -105,7 +108,7 @@ export function KeyPagesSection({
                 <KeyPageForm
                   initial={page}
                   pending={update.isPending}
-                  onCancel={() => setEditingId(null)}
+                  onCancel={() => onEditingIdChange(null)}
                   onSave={(draft) => save(page.url, draft)}
                 />
               </li>
@@ -138,7 +141,7 @@ export function KeyPagesSection({
                     type="button"
                     className="btn btn-ghost btn-xs"
                     aria-label={`ویرایش ${page.url}`}
-                    onClick={() => setEditingId(page.id)}
+                    onClick={() => onEditingIdChange(page.id)}
                   >
                     <Pencil className="size-3.5" />
                     ویرایش
