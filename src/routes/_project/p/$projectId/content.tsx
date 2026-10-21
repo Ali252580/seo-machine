@@ -155,6 +155,41 @@ function ProjectContentEditor({
     <main className="h-full overflow-auto p-4 md:p-7" dir="rtl">
       <div className="mx-auto max-w-6xl space-y-5">
         <ContentEditorHeader projectId={projectId} targetPage={targetPage} />
+        <section
+          className="rounded-xl border border-base-300 bg-base-200/40 p-4 text-sm"
+          aria-label="راهنمای تصمیم‌گیری نگارش محتوا"
+        >
+          <h2 className="text-base font-semibold">
+            چه زمانی مقالهٔ تازه می‌نویسیم و چه زمانی صفحه را بهبود می‌دهیم؟
+          </h2>
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            <div>
+              <p className="font-medium">۱. شواهد را جمع می‌کنیم</p>
+              <p className="mt-1 text-base-content/70">
+                صفحه‌های موجود وردپرس، عبارت‌ها و کلیک‌های سرچ کنسول، رتبهٔ
+                ثبت‌شدهٔ کلمه و نتیجهٔ صفحه در آنالیتیکس بررسی می‌شوند. هر منبعی
+                که وصل نباشد، ناموجود نشان داده می‌شود.
+              </p>
+            </div>
+            <div>
+              <p className="font-medium">۲. نوع اقدام را مشخص می‌کنیم</p>
+              <p className="mt-1 text-base-content/70">
+                اگر صفحهٔ مرتبط وجود داشته باشد، ابتدا کمبودهای همان صفحه و قصد
+                جست‌وجو را بررسی می‌کنیم. برای موضوع بدون صفحه، پیش‌نویس تازه
+                تنها پس از بررسی هم‌پوشانی پیشنهاد می‌شود. افت رتبه به‌تنهایی
+                دلیل بازنویسی نیست.
+              </p>
+            </div>
+            <div>
+              <p className="font-medium">۳. پیش‌نویس را بازبینی می‌کنید</p>
+              <p className="mt-1 text-base-content/70">
+                SAM با راهنمای مهارت‌های سئو متن قابل ویرایش می‌نویسد. پس از
+                نگارش، دلیل پیشنهاد و عددهای پشت آن پایین فرم دیده می‌شود؛ متن
+                بدون بررسی شما منتشر نمی‌شود.
+              </p>
+            </div>
+          </div>
+        </section>
         {!targetPage && !wordpress.data?.connection && (
           <p className="alert alert-info text-sm">
             برای ارسال پیش‌نویس، مدیر پروژه باید{" "}

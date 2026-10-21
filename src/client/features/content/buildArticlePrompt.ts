@@ -37,6 +37,16 @@ export function buildArticlePrompt(
           )
           .join("؛ ") || "برای صفحهٔ هدف دادهٔ منطبق وجود ندارد"
       : `داده در دسترس نیست (${evidence.analytics.status})`;
+  const rankRows =
+    evidence.rankTracking.status === "connected"
+      ? evidence.rankTracking.rows
+          .slice(0, 3)
+          .map(
+            (row) =>
+              `${row.device === "mobile" ? "موبایل" : "دسکتاپ"}${row.location ? `/${row.location}` : ""}: رتبه ${row.position ?? "نامشخص"}، رتبهٔ مرجع مقایسه ${row.previousPosition ?? "نامشخص"}، نشانی رتبه‌گرفته ${row.rankingUrl ?? "نامشخص"}`,
+          )
+          .join("؛ ")
+      : `داده در دسترس نیست (${evidence.rankTracking.status})`;
   const cmsRows = evidence.wordpressChecked
     ? evidence.pages.length
       ? evidence.pages
@@ -50,9 +60,9 @@ export function buildArticlePrompt(
   // The server accepts at most 4,000 characters. Bound observed rows, never
   // the instructions at the end that prohibit unsupported claims and filler.
   const evidenceSummary =
-    `وردپرس: ${cmsRows}. سرچ کنسول: ${searchRows}. ${searchTrend}. آنالیتیکس: ${analyticsRows}.`.slice(
+    `وردپرس: ${cmsRows.slice(0, 250)}. سرچ کنسول: ${searchRows.slice(0, 400)}. ردیابی رتبه: ${rankRows.slice(0, 250)}. ${searchTrend.slice(0, 120)}. آنالیتیکس: ${analyticsRows.slice(0, 250)}.`.slice(
       0,
-      1_000,
+      1_400,
     );
   const intro = `برای کلمهٔ «${keyword}» و عنوان «${title}» یک متن دقیق و قابل ویرایش بنویس. شواهد واقعی پیش از نگارش: ${evidenceSummary} `;
   const pageIntro = evidence.existingPage
@@ -61,7 +71,7 @@ export function buildArticlePrompt(
   const pageInstruction = evidence.existingPage
     ? "این متن را برای همان صفحه بازنویسی و تکمیل کن؛ صفحه یا مقالهٔ جدید پیشنهاد نده."
     : "اگر صفحهٔ مشابهی وجود دارد، فقط بهبود همان صفحه را پیشنهاد بده و متن تکراری نساز.";
-  const instructions = ` ${pageInstruction} از مهارت‌های seo-audit و keyword-research برای سنجش قصد جست‌وجو و کیفیت صفحه استفاده کن. از نمونه‌های کوچک نتیجهٔ قطعی نگیر و عددی را نساز. متن باید به نیاز مشخص کاربر پاسخ بدهد و نسبت به محتوای موجود ارزش تازه داشته باشد؛ از ادعای بی‌منبع، قیمت ساختگی و پاراگراف‌های کلی پرهیز کن. اگر اطلاعات کافی برای متن مفید نیست، فقط یک توضیح کوتاه دربارهٔ اطلاعات لازم بده. فقط HTML ساده بده. فقط از h2، h3، p، ul، ol، li، strong، em و br بدون ویژگی استفاده کن؛ کدبلاک و Markdown نده.`;
+  const instructions = ` ${pageInstruction} از مهارت‌های seo-audit و keyword-research برای سنجش قصد جست‌وجو و کیفیت صفحه استفاده کن. افت رتبه یا نمایش بالا به‌تنهایی دلیل بازنویسی نیست؛ علت را از شواهد بررسی کن. از نمونه‌های کوچک نتیجهٔ قطعی نگیر و عددی را نساز. متن باید به نیاز مشخص کاربر پاسخ بدهد و نسبت به محتوای موجود ارزش تازه داشته باشد؛ از ادعای بی‌منبع، قیمت ساختگی و پاراگراف‌های کلی پرهیز کن. اگر اطلاعات کافی برای متن مفید نیست، فقط یک توضیح کوتاه دربارهٔ اطلاعات لازم بده. فقط HTML ساده بده. فقط از h2، h3، p، ul، ol، li، strong، em و br بدون ویژگی استفاده کن؛ کدبلاک و Markdown نده.`;
   const pageText =
     evidence.existingPage?.text.slice(
       0,

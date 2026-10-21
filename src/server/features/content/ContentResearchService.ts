@@ -1,6 +1,8 @@
 import { Ga4ConnectionRepository } from "@/server/features/ga4/repositories/Ga4ConnectionRepository";
 import { SearchOpportunityService } from "@/server/features/ga4/services/SearchOpportunityService";
 import { GscService } from "@/server/features/gsc/services/GscService";
+import { RankTrackingRepository } from "@/server/features/rank-tracking/repositories/RankTrackingRepository";
+import { getLatestResults } from "@/server/features/rank-tracking/services/rankTrackingResults";
 import {
   getWordPressConnection,
   listWordPressPages,
@@ -175,12 +177,76 @@ async function research(input: Input) {
     }
   }
 
+  // Rank snapshots are project-scoped and already stored; reading them does
+  // not start a paid rank check. Ignore stale runs rather than implying a
+  // historical position is the current one.
+  let rankTracking:
+    | {
+        status: "connected";
+        rows: {
+          device: "desktop" | "mobile";
+          location: string | null;
+          position: number | null;
+          previousPosition: number | null;
+          rankingUrl: string | null;
+        }[];
+      }
+    | { status: "not_tracked" | "unavailable" } = { status: "not_tracked" };
+  try {
+    const configs =
+      await RankTrackingRepository.getConfigsForProject(projectId);
+    const results = await Promise.allSettled(
+      configs.map((config) =>
+        getLatestResults(config.id, projectId, "7d").then((result) => ({
+          config,
+          result,
+        })),
+      ),
+    );
+    const normalizedKeyword = keyword.trim().replace(/\s+/g, " ").toLowerCase();
+    const rows = results.flatMap((item) => {
+      if (item.status !== "fulfilled") return [];
+      const { config, result } = item.value;
+      const checkedAt = result.run?.lastCheckedAt;
+      if (
+        !checkedAt ||
+        Date.now() - new Date(checkedAt).getTime() > 30 * 24 * 60 * 60 * 1000
+      )
+        return [];
+      return result.rows
+        .filter(
+          (row) =>
+            row.keyword.trim().replace(/\s+/g, " ").toLowerCase() ===
+            normalizedKeyword,
+        )
+        .flatMap((row) =>
+          (["desktop", "mobile"] as const)
+            .filter((device) => row[device].position !== null)
+            .map((device) => ({
+              device,
+              location: config.locationName,
+              position: row[device].position,
+              previousPosition: row[device].previousPosition,
+              rankingUrl: row[device].rankingUrl,
+            })),
+        );
+    });
+    rankTracking = rows.length
+      ? { status: "connected", rows }
+      : results.some((item) => item.status === "rejected")
+        ? { status: "unavailable" }
+        : { status: "not_tracked" };
+  } catch {
+    rankTracking = { status: "unavailable" };
+  }
+
   return {
     wordpressChecked: Boolean(wordpress),
     existingPage,
     pages,
     searchConsole,
     analytics,
+    rankTracking,
   };
 }
 

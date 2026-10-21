@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   getPerformance: vi.fn(),
   getGa4Connection: vi.fn(),
   getOpportunities: vi.fn(),
+  getRankConfigs: vi.fn(),
+  getLatestRankResults: vi.fn(),
   readPages: vi.fn(),
   projectRows: vi.fn(),
 }));
@@ -38,6 +40,15 @@ vi.mock("@/server/features/ga4/repositories/Ga4ConnectionRepository", () => ({
 vi.mock("@/server/features/ga4/services/SearchOpportunityService", () => ({
   SearchOpportunityService: { getOpportunities: mocks.getOpportunities },
 }));
+vi.mock(
+  "@/server/features/rank-tracking/repositories/RankTrackingRepository",
+  () => ({
+    RankTrackingRepository: { getConfigsForProject: mocks.getRankConfigs },
+  }),
+);
+vi.mock("@/server/features/rank-tracking/services/rankTrackingResults", () => ({
+  getLatestResults: mocks.getLatestRankResults,
+}));
 
 import { ContentResearchService } from "./ContentResearchService";
 
@@ -54,6 +65,7 @@ beforeEach(() => {
   });
   mocks.getGscConnection.mockResolvedValue(null);
   mocks.getGa4Connection.mockResolvedValue(null);
+  mocks.getRankConfigs.mockResolvedValue([]);
   mocks.listWordPressPages.mockResolvedValue([]);
   mocks.projectRows.mockResolvedValue([{ domain: "site.test" }]);
   mocks.readPages.mockResolvedValue({
@@ -169,5 +181,79 @@ describe("content research before writing", () => {
       }),
     ).rejects.toThrow("همین پروژه");
     expect(mocks.readPages).not.toHaveBeenCalled();
+  });
+
+  it("uses only a fresh, exact project keyword rank without starting a paid check", async () => {
+    mocks.getRankConfigs.mockResolvedValue([
+      { id: "rank_1", locationName: "تهران" },
+    ]);
+    mocks.getLatestRankResults.mockResolvedValue({
+      run: { lastCheckedAt: new Date().toISOString() },
+      rows: [
+        {
+          keyword: input.keyword,
+          desktop: {
+            position: 9,
+            previousPosition: 5,
+            rankingUrl: "https://site.test/radiator",
+          },
+          mobile: { position: null, previousPosition: null, rankingUrl: null },
+        },
+        {
+          keyword: "نصب رادیاتور برقی",
+          desktop: {
+            position: 3,
+            previousPosition: 4,
+            rankingUrl: "https://site.test/other",
+          },
+          mobile: { position: null, previousPosition: null, rankingUrl: null },
+        },
+      ],
+    });
+
+    const result = await ContentResearchService.research(input);
+
+    expect(mocks.getRankConfigs).toHaveBeenCalledWith("project_1");
+    expect(mocks.getLatestRankResults).toHaveBeenCalledWith(
+      "rank_1",
+      "project_1",
+      "7d",
+    );
+    expect(result.rankTracking).toEqual({
+      status: "connected",
+      rows: [
+        {
+          device: "desktop",
+          location: "تهران",
+          position: 9,
+          previousPosition: 5,
+          rankingUrl: "https://site.test/radiator",
+        },
+      ],
+    });
+  });
+
+  it("does not present an old rank snapshot as current evidence", async () => {
+    mocks.getRankConfigs.mockResolvedValue([
+      { id: "rank_1", locationName: null },
+    ]);
+    mocks.getLatestRankResults.mockResolvedValue({
+      run: { lastCheckedAt: "2020-01-01T00:00:00.000Z" },
+      rows: [
+        {
+          keyword: input.keyword,
+          desktop: {
+            position: 1,
+            previousPosition: 2,
+            rankingUrl: "https://site.test/radiator",
+          },
+          mobile: { position: null, previousPosition: null, rankingUrl: null },
+        },
+      ],
+    });
+
+    const result = await ContentResearchService.research(input);
+
+    expect(result.rankTracking).toEqual({ status: "not_tracked" });
   });
 });
