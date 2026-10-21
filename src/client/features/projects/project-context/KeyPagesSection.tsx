@@ -18,10 +18,10 @@ import {
 } from "./shared";
 
 const ROLE_LABELS: Record<KeyPageRole, string> = {
-  hub: "Hub page",
-  spoke: "Supporting page",
-  money: "Money page",
-  other: "Other",
+  hub: "صفحهٔ اصلی موضوع",
+  spoke: "صفحهٔ پشتیبان",
+  money: "صفحهٔ خدمات یا محصول",
+  other: "سایر",
 };
 
 export function KeyPagesSection({
@@ -66,8 +66,8 @@ export function KeyPagesSection({
   return (
     <section className="space-y-3">
       <SectionHeader
-        title="صفحات ثبت‌شده"
-        hint="این صفحات به‌عنوان زمینهٔ پروژه برای SAM ذخیره شده‌اند."
+        title={`ویرایش صفحات ثبت‌شده در زمینهٔ پروژه (${keyPages.length})`}
+        hint="از فهرست سرچ کنسول صفحه انتخاب کنید یا نشانی را دستی وارد کنید. برای تغییر نقش، موضوع و یادداشت از دکمهٔ ویرایش استفاده کنید."
         action={
           <button
             type="button"
@@ -116,7 +116,7 @@ export function KeyPagesSection({
               >
                 <div className="min-w-0 space-y-0.5">
                   <div className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="truncate text-sm font-medium">
+                    <span className="break-all text-sm font-medium" dir="ltr">
                       {page.url}
                     </span>
                     <span className="badge badge-ghost badge-sm shrink-0">
@@ -125,7 +125,7 @@ export function KeyPagesSection({
                   </div>
                   {page.topic ? (
                     <p className="text-sm text-base-content/70">
-                      Target: {page.topic}
+                      موضوع هدف: {page.topic}
                     </p>
                   ) : null}
                   {page.notes ? (
@@ -137,10 +137,11 @@ export function KeyPagesSection({
                   <button
                     type="button"
                     className="btn btn-ghost btn-xs"
-                    aria-label={`Edit ${page.url}`}
+                    aria-label={`ویرایش ${page.url}`}
                     onClick={() => setEditingId(page.id)}
                   >
                     <Pencil className="size-3.5" />
+                    ویرایش
                   </button>
                   <ConfirmDeleteButton
                     label={`Remove ${page.url}`}

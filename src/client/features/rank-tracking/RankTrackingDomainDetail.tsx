@@ -224,7 +224,6 @@ export function RankTrackingDomainDetail({
         <RankTrackingDetailHeader
           config={config}
           run={run}
-          costEstimate={costEstimate}
           hasBothDevices={hasBothDevices}
           activeDevice={activeDevice}
           onActiveDeviceChange={setActiveDevice}
@@ -344,7 +343,6 @@ export function RankTrackingDomainDetail({
         <CheckConfirmModal
           keywordCount={pendingCheck.count}
           devices={config.devices}
-          serpDepth={config.serpDepth}
           isPending={isPending}
           onRunNow={() =>
             startCheck({

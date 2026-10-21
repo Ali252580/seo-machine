@@ -157,19 +157,7 @@ export function KeywordResearchSearchBar({ controller }: Props) {
                   </div>
                 )}
               </controlsForm.Field>
-            ) : (
-              <div
-                className="flex items-start gap-2 rounded-lg border border-info/30 bg-info/10 px-3 py-2 text-sm text-base-content/80"
-                role="status"
-              >
-                <Info className="mt-0.5 size-4 shrink-0 text-info" />
-                <span>
-                  {locationField.state.value === 2364
-                    ? "برای جست‌وجوی فارسی در ایران، عبارت‌های نامرتبطِ تمام‌لاتین حذف می‌شوند. ایده‌های Google Suggest در کنار داده‌های Google Ads نمایش داده می‌شوند؛ پیشنهادهای Suggest آمار حجم جست‌وجو، CPC و سختی ندارند."
-                    : "آمار این کشور از Google Ads می‌آید: حجم جست‌وجو، CPC و روند در دسترس‌اند؛ سختی و هدف جست‌وجو ارائه نمی‌شوند."}
-                </span>
-              </div>
-            )
+            ) : null
           }
         </controlsForm.Field>
       </div>

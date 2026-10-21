@@ -7,7 +7,12 @@ import {
   formatPosition,
 } from "@/client/features/search-performance/SearchPerformanceColumns";
 import { getImportantPages } from "@/serverFunctions/searchPerformance";
-import { EmptyState, SectionHeader } from "./shared";
+import {
+  EmptyState,
+  SectionHeader,
+  useContextUpdate,
+  type ContextKeyPage,
+} from "./shared";
 
 function pagePath(url: string): string {
   const path = new URL(url).pathname;
@@ -19,7 +24,14 @@ function pagePath(url: string): string {
   }
 }
 
-export function ImportantPagesFromGsc({ projectId }: { projectId: string }) {
+export function ImportantPagesFromGsc({
+  projectId,
+  keyPages,
+}: {
+  projectId: string;
+  keyPages: ContextKeyPage[];
+}) {
+  const update = useContextUpdate(projectId);
   const query = useQuery({
     queryKey: ["importantPages", projectId],
     queryFn: () => getImportantPages({ data: { projectId } }),
@@ -27,6 +39,9 @@ export function ImportantPagesFromGsc({ projectId }: { projectId: string }) {
   });
   const pages = query.data?.pages ?? [];
   const maxClicks = Math.max(1, ...pages.map((page) => page.clicks));
+  const registeredUrls = new Set(
+    keyPages.map((page) => page.url.replace(/\/$/, "")),
+  );
 
   return (
     <section className="space-y-3" dir="rtl">
@@ -132,6 +147,21 @@ export function ImportantPagesFromGsc({ projectId }: { projectId: string }) {
                   style={{ width: `${(page.clicks / maxClicks) * 100}%` }}
                 />
               </div>
+              <button
+                type="button"
+                className="btn btn-outline btn-xs mt-3"
+                disabled={
+                  update.isPending ||
+                  registeredUrls.has(page.key.replace(/\/$/, ""))
+                }
+                onClick={() =>
+                  update.mutate([{ addKeyPages: [{ url: page.key }] }])
+                }
+              >
+                {registeredUrls.has(page.key.replace(/\/$/, ""))
+                  ? "ثبت‌شده در زمینهٔ پروژه"
+                  : "افزودن به زمینهٔ پروژه"}
+              </button>
             </li>
           ))}
         </ol>

@@ -123,15 +123,13 @@ export function ProjectContextPage({ projectId }: { projectId: string }) {
         competitors={context.competitors}
       />
 
-      <ImportantPagesFromGsc projectId={projectId} />
-      <details className="rounded-lg border border-base-300 p-4">
-        <summary className="cursor-pointer text-sm font-medium">
-          ویرایش صفحات ثبت‌شده در زمینهٔ پروژه ({context.keyPages.length})
-        </summary>
-        <div className="mt-4">
-          <KeyPagesSection projectId={projectId} keyPages={context.keyPages} />
-        </div>
-      </details>
+      <ImportantPagesFromGsc
+        projectId={projectId}
+        keyPages={context.keyPages}
+      />
+      <div className="rounded-lg border border-base-300 p-4">
+        <KeyPagesSection projectId={projectId} keyPages={context.keyPages} />
+      </div>
 
       <CustomSections
         projectId={projectId}

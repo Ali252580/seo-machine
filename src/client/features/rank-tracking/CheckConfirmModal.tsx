@@ -2,7 +2,6 @@ import { Loader2, Zap } from "lucide-react";
 import { Modal } from "@/client/components/Modal";
 import type { RankTrackingConfig } from "@/types/schemas/rank-tracking";
 import {
-  estimateRankCheckCredits,
   devicesCount,
   KEYWORDS_PER_BATCH,
   SECONDS_PER_BATCH,
@@ -11,24 +10,16 @@ import {
 export function CheckConfirmModal({
   keywordCount,
   devices,
-  serpDepth,
   isPending,
   onRunNow,
   onCancel,
 }: {
   keywordCount: number;
   devices: RankTrackingConfig["devices"];
-  serpDepth: number;
   isPending: boolean;
   onRunNow: () => void;
   onCancel: () => void;
 }) {
-  const { costUsd } = estimateRankCheckCredits(
-    keywordCount,
-    devices,
-    serpDepth,
-    "live",
-  );
   const dc = devicesCount(devices);
   const totalChecks = keywordCount * dc;
   const liveTime =
@@ -46,6 +37,9 @@ export function CheckConfirmModal({
         </h3>
         <p className="text-sm text-base-content/60 mt-1">
           {keywordCount} کلمه &times; {dc} دستگاه = {totalChecks} بررسی نتایج
+        </p>
+        <p className="text-xs text-base-content/60 mt-1">
+          این بررسی از اعتبار حساب استفاده می‌کند.
         </p>
       </div>
 
@@ -66,10 +60,7 @@ export function CheckConfirmModal({
               : `${Math.ceil(liveTime / 60)} دقیقه`}
           </p>
         </div>
-        <div className="text-right">
-          <p className="font-mono font-semibold">~${costUsd.toFixed(2)}</p>
-          {isPending && <Loader2 className="size-3 animate-spin ml-auto" />}
-        </div>
+        {isPending && <Loader2 className="size-3 animate-spin ml-auto" />}
       </button>
 
       <button className="btn btn-ghost btn-sm self-center" onClick={onCancel}>

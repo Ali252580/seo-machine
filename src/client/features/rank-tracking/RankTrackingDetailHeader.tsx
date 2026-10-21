@@ -21,7 +21,6 @@ function isComparePeriod(v: string): v is ComparePeriod {
 export function RankTrackingDetailHeader({
   config,
   run,
-  costEstimate,
   hasBothDevices,
   activeDevice,
   onActiveDeviceChange,
@@ -32,7 +31,6 @@ export function RankTrackingDetailHeader({
 }: {
   config: RankTrackingConfig;
   run: { lastCheckedAt: string | null } | null | undefined;
-  costEstimate: { keywordCount: number; costUsd: number } | undefined;
   hasBothDevices: boolean;
   activeDevice: "desktop" | "mobile";
   onActiveDeviceChange: (v: "desktop" | "mobile") => void;
@@ -56,13 +54,6 @@ export function RankTrackingDetailHeader({
               {" "}
               &middot; آخرین بررسی:{" "}
               {new Date(run.lastCheckedAt).toLocaleDateString()}
-            </>
-          )}
-          {costEstimate && costEstimate.keywordCount > 0 && (
-            <>
-              {" "}
-              &middot; حدود ${costEstimate.costUsd.toFixed(2)} دلار برای هر
-              بررسی
             </>
           )}
         </p>

@@ -44,8 +44,8 @@ const SOURCE_LABELS: Record<ResearchSource, string> = {
   related: "کلمات مرتبط",
   suggestions: "پیشنهادها",
   ideas: "ایده‌ها",
-  google_ads: "Google Ads",
-  google_suggest: "Google Suggest",
+  google_ads: "داده‌های جست‌وجو",
+  google_suggest: "پیشنهاد جست‌وجو",
 };
 
 const MONTH_SHORT_LABELS = [
