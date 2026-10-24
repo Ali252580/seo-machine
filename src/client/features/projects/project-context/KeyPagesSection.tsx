@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Pencil, Plus } from "lucide-react";
+import { ArrowUpLeft, FileText, Pencil, Plus } from "lucide-react";
 import {
   KEY_PAGE_ROLES,
   type KeyPageRole,
@@ -16,6 +16,8 @@ import {
   useContextUpdate,
   type ContextKeyPage,
 } from "./shared";
+
+import { keyPagePath } from "./keyPageUrlKey";
 
 const ROLE_LABELS: Record<KeyPageRole, string> = {
   hub: "صفحهٔ اصلی موضوع",
@@ -67,14 +69,14 @@ export function KeyPagesSection({
   };
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-4" dir="rtl">
       <SectionHeader
-        title={`ویرایش صفحات ثبت‌شده در زمینهٔ پروژه (${keyPages.length})`}
-        hint="از فهرست سرچ کنسول صفحه انتخاب کنید یا نشانی را دستی وارد کنید. برای تغییر نقش، موضوع و یادداشت از دکمهٔ ویرایش استفاده کنید."
+        title={`صفحات مرجع برای SAM (${keyPages.length})`}
+        hint="صفحات منتخب شما که موضوع، نقش و راهنمای استفاده از آن‌ها در زمینهٔ همین پروژه ذخیره می‌شود."
         action={
           <button
             type="button"
-            className="btn btn-ghost btn-xs"
+            className="btn btn-outline btn-sm shrink-0"
             onClick={() => setAdding(true)}
           >
             <Plus className="size-3.5" />
@@ -82,6 +84,20 @@ export function KeyPagesSection({
           </button>
         }
       />
+
+      <div className="rounded-xl bg-primary/5 p-4 text-sm leading-7">
+        <p className="font-medium">این فهرست چه کمکی می‌کند؟</p>
+        <p className="mt-1 text-base-content/75">
+          SAM هنگام دریافت زمینهٔ پروژه، این صفحات و توضیحات شما را می‌خواند تا
+          بداند هر صفحه دربارهٔ چیست و در پیشنهادها و نگارش محتوا آن را در نظر
+          بگیرد. از «صفحات مهم» بالا صفحه‌ای اضافه کنید، سپس موضوع هدف و راهنمای
+          آن را بنویسید.
+        </p>
+        <p className="mt-2 text-xs text-base-content/60">
+          ذخیره یا حذف در این بخش فقط زمینهٔ همین پروژه را تغییر می‌دهد؛ صفحهٔ
+          سایت شما ویرایش، منتشر یا حذف نمی‌شود.
+        </p>
+      </div>
 
       {adding ? (
         <div className={listClass}>
@@ -96,15 +112,19 @@ export function KeyPagesSection({
       {keyPages.length === 0 ? (
         adding ? null : (
           <EmptyState>
-            هنوز صفحهٔ مهمی برای این پروژه ثبت نشده است. صفحات خدمات یا محصولات
-            اصلی را اضافه کنید یا از SAM بخواهید از بررسی سایت پیشنهاد بدهد.
+            هنوز صفحه‌ای انتخاب نکرده‌اید. در بخش «صفحات مهم»، «افزودن به زمینهٔ
+            پروژه» را بزنید یا با «افزودن صفحه» نشانی یک صفحهٔ خدمات، محصول یا
+            راهنما را وارد کنید.
           </EmptyState>
         )
       ) : (
-        <ul className={listClass}>
+        <ul className="grid gap-3 lg:grid-cols-2">
           {keyPages.map((page) =>
             editingId === page.id ? (
-              <li key={page.id}>
+              <li
+                key={page.id}
+                className="min-w-0 overflow-hidden rounded-xl border border-primary/40 lg:col-span-2"
+              >
                 <KeyPageForm
                   initial={page}
                   pending={update.isPending}
@@ -115,45 +135,84 @@ export function KeyPagesSection({
             ) : (
               <li
                 key={page.id}
-                className="flex items-start justify-between gap-3 p-3"
+                className="flex min-w-0 flex-col rounded-xl border border-base-300 bg-base-100 p-4 shadow-sm transition-colors hover:border-primary/40"
               >
-                <div className="min-w-0 space-y-0.5">
-                  <div className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="break-all text-sm font-medium" dir="ltr">
-                      {page.url}
-                    </span>
-                    <span className="badge badge-ghost badge-sm shrink-0">
-                      {ROLE_LABELS[page.role]}
-                    </span>
-                  </div>
-                  {page.topic ? (
-                    <p className="text-sm text-base-content/70">
-                      موضوع هدف: {page.topic}
+                <div className="flex items-start gap-3">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <FileText className="size-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <a
+                      href={page.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-1 text-sm font-semibold leading-6 hover:text-primary"
+                      title={page.url}
+                    >
+                      <span className="line-clamp-2 break-words">
+                        {page.topic || keyPagePath(page.url)}
+                      </span>
+                      <ArrowUpLeft
+                        className="mt-1 size-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                    </a>
+                    <p
+                      className="mt-1 truncate text-xs text-base-content/50"
+                      dir="ltr"
+                      title={page.url}
+                    >
+                      {new URL(page.url).hostname}
+                      {keyPagePath(page.url) === "صفحهٔ اصلی"
+                        ? "/"
+                        : keyPagePath(page.url)}
                     </p>
-                  ) : null}
-                  {page.notes ? (
-                    <p className="text-sm text-base-content/70">{page.notes}</p>
-                  ) : null}
-                  <Provenance by={page.updatedBy} at={page.updatedAt} />
+                  </div>
                 </div>
-                <RowActions>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-xs"
-                    aria-label={`ویرایش ${page.url}`}
-                    onClick={() => onEditingIdChange(page.id)}
-                  >
-                    <Pencil className="size-3.5" />
-                    ویرایش
-                  </button>
-                  <ConfirmDeleteButton
-                    label={`Remove ${page.url}`}
-                    pending={update.isPending}
-                    onConfirm={() =>
-                      update.mutate([{ removeKeyPages: [page.url] }])
-                    }
-                  />
-                </RowActions>
+                <dl className="my-4 space-y-3 border-t border-base-300 pt-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <dt className="text-xs text-base-content/60">نقش صفحه</dt>
+                    <dd className="badge badge-ghost badge-sm">
+                      {ROLE_LABELS[page.role]}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-base-content/60">موضوع هدف</dt>
+                    <dd className="mt-1 break-words">
+                      {page.topic || "هنوز مشخص نشده؛ از ویرایش اضافه کنید."}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-base-content/60">
+                      راهنمای SAM برای این صفحه
+                    </dt>
+                    <dd className="mt-1 whitespace-pre-wrap break-words text-base-content/75">
+                      {page.notes ||
+                        "مثلاً: این صفحه مرجع معرفی خدمات است؛ در مطالب مرتبط به آن لینک بده."}
+                    </dd>
+                  </div>
+                </dl>
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-base-300 pt-3">
+                  <Provenance by={page.updatedBy} at={page.updatedAt} />
+                  <RowActions>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-xs"
+                      aria-label={`ویرایش ${page.url}`}
+                      onClick={() => onEditingIdChange(page.id)}
+                    >
+                      <Pencil className="size-3.5" />
+                      ویرایش
+                    </button>
+                    <ConfirmDeleteButton
+                      label={`حذف از زمینهٔ پروژه: ${page.url}`}
+                      pending={update.isPending}
+                      onConfirm={() =>
+                        update.mutate([{ removeKeyPages: [page.url] }])
+                      }
+                    />
+                  </RowActions>
+                </div>
               </li>
             ),
           )}
@@ -190,64 +249,79 @@ function KeyPageForm({
 
   return (
     <form
-      className="space-y-2 bg-base-200/40 p-3"
+      className="space-y-4 bg-base-200/30 p-4"
       onSubmit={(event) => {
         event.preventDefault();
         if (!draft.url.trim() || pending) return;
         onSave(draft);
       }}
     >
-      <input
-        autoFocus
-        type="text"
-        value={draft.url}
-        onChange={(event) => setDraft({ ...draft, url: event.target.value })}
-        placeholder="example.com/pricing"
-        maxLength={2048}
-        className="input input-bordered input-sm w-full"
-        aria-label="نشانی صفحه"
-      />
-      <div className="grid gap-2 sm:grid-cols-2">
-        <select
-          value={draft.role}
-          onChange={(event) =>
-            setDraft({
-              ...draft,
-              role:
-                KEY_PAGE_ROLES.find((role) => role === event.target.value) ??
-                draft.role,
-            })
-          }
-          className="select select-bordered select-sm w-full"
-          aria-label="نقش صفحه"
-        >
-          {KEY_PAGE_ROLES.map((role) => (
-            <option key={role} value={role}>
-              {ROLE_LABELS[role]}
-            </option>
-          ))}
-        </select>
+      <label className="block space-y-1 text-sm">
+        <span>نشانی صفحه</span>
         <input
+          dir="ltr"
+          autoFocus
           type="text"
-          value={draft.topic}
-          onChange={(event) =>
-            setDraft({ ...draft, topic: event.target.value })
-          }
-          placeholder="موضوع هدف (اختیاری)"
-          maxLength={200}
+          value={draft.url}
+          onChange={(event) => setDraft({ ...draft, url: event.target.value })}
+          placeholder="example.com/pricing"
+          maxLength={2048}
           className="input input-bordered input-sm w-full"
-          aria-label="موضوع هدف"
+          aria-label="نشانی صفحه"
         />
+      </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block space-y-1 text-sm">
+          <span>نقش صفحه در سایت</span>
+          <select
+            value={draft.role}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                role:
+                  KEY_PAGE_ROLES.find((role) => role === event.target.value) ??
+                  draft.role,
+              })
+            }
+            className="select select-bordered select-sm w-full"
+            aria-label="نقش صفحه"
+          >
+            {KEY_PAGE_ROLES.map((role) => (
+              <option key={role} value={role}>
+                {ROLE_LABELS[role]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block space-y-1 text-sm">
+          <span>موضوع یا کلمهٔ کلیدی هدف</span>
+          <input
+            type="text"
+            value={draft.topic}
+            onChange={(event) =>
+              setDraft({ ...draft, topic: event.target.value })
+            }
+            placeholder="موضوع هدف (اختیاری)"
+            maxLength={200}
+            className="input input-bordered input-sm w-full"
+            aria-label="موضوع هدف"
+          />
+        </label>
       </div>
-      <input
-        type="text"
-        value={draft.notes}
-        onChange={(event) => setDraft({ ...draft, notes: event.target.value })}
-        placeholder="یادداشت (اختیاری)"
-        maxLength={500}
-        className="input input-bordered input-sm w-full"
-        aria-label="یادداشت صفحه"
-      />
+      <label className="block space-y-1 text-sm">
+        <span>راهنمای SAM برای استفاده از این صفحه</span>
+        <textarea
+          rows={3}
+          value={draft.notes}
+          onChange={(event) =>
+            setDraft({ ...draft, notes: event.target.value })
+          }
+          placeholder="مثلاً: صفحهٔ اصلی خدمات ماست؛ هنگام پیشنهاد محتوای مرتبط، این صفحه را در نظر بگیر."
+          maxLength={500}
+          className="textarea textarea-bordered w-full"
+          aria-label="یادداشت صفحه"
+        />
+      </label>
       <FormActions
         pending={pending}
         disabled={!draft.url.trim()}

@@ -7,23 +7,13 @@ import {
   formatPosition,
 } from "@/client/features/search-performance/SearchPerformanceColumns";
 import { getImportantPages } from "@/serverFunctions/searchPerformance";
-import { keyPageUrlKey } from "./keyPageUrlKey";
+import { keyPageUrlKey, keyPagePath } from "./keyPageUrlKey";
 import {
   EmptyState,
   SectionHeader,
   useContextUpdate,
   type ContextKeyPage,
 } from "./shared";
-
-function pagePath(url: string): string {
-  const path = new URL(url).pathname;
-  if (path === "/") return "صفحهٔ اصلی";
-  try {
-    return decodeURIComponent(path);
-  } catch {
-    return path;
-  }
-}
 
 export function ImportantPagesFromGsc({
   projectId,
@@ -104,7 +94,7 @@ export function ImportantPagesFromGsc({
                     title={page.key}
                   >
                     <span className="line-clamp-2">
-                      {page.title || pagePath(page.key)}
+                      {page.title || keyPagePath(page.key)}
                     </span>
                     <ArrowUpLeft
                       className="mt-1 size-3.5 shrink-0 opacity-50 group-hover:opacity-100"
@@ -116,7 +106,7 @@ export function ImportantPagesFromGsc({
                     dir="ltr"
                     title={page.key}
                   >
-                    {pagePath(page.key)}
+                    {keyPagePath(page.key)}
                   </p>
                 </div>
               </div>

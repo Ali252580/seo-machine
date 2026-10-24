@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { keyPageUrlKey } from "./keyPageUrlKey";
+import { keyPageUrlKey, keyPagePath } from "./keyPageUrlKey";
 
 describe("keyPageUrlKey", () => {
   it("matches a Search Console URL to the stored page URL", () => {
@@ -18,5 +18,15 @@ describe("keyPageUrlKey", () => {
     expect(keyPageUrlKey("https://example.com/page?a=1")).not.toBe(
       keyPageUrlKey("https://example.com/page?a=2"),
     );
+  });
+});
+
+describe("keyPagePath", () => {
+  it("displays readable Persian paths and labels the homepage", () => {
+    expect(keyPagePath("https://example.com/")).toBe("صفحهٔ اصلی");
+    expect(keyPagePath("https://example.com/%D8%B3%D8%A6%D9%88")).toBe("/سئو");
+  });
+  it("keeps malformed percent encoding readable without throwing", () => {
+    expect(keyPagePath("https://example.com/%broken")).toBe("/%broken");
   });
 });

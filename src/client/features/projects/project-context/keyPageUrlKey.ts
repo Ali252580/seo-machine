@@ -8,3 +8,13 @@ export function keyPageUrlKey(raw: string): string {
     ? url.href.replace(/\/$/, "")
     : url.href;
 }
+
+export function keyPagePath(url: string): string {
+  const path = new URL(url).pathname;
+  if (path === "/") return "صفحهٔ اصلی";
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+}
