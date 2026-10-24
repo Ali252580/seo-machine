@@ -1,7 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { waitUntil } from "cloudflare:workers";
 import { requireOrgPermission } from "@/server/auth/org-gate";
-import { AuditService } from "@/server/features/audit/services/AuditService";
+import {
+  AuditService,
+  usesNodeAuditRunner,
+} from "@/server/features/audit/services/AuditService";
 import { captureServerEvent } from "@/server/lib/posthog";
 import { requireProjectContext } from "@/serverFunctions/middleware";
 import {
@@ -83,4 +86,21 @@ export const deleteAudit = createServerFn({ method: "POST" })
     requireOrgPermission(context, { project: ["delete"] });
     await AuditService.remove(data.auditId, context.projectId);
     return { success: true };
+  });
+
+export const getAuditCapabilities = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(getAuditHistorySchema)
+  .handler(async () => ({
+    maxPages: usesNodeAuditRunner() ? 100 : 10000,
+    lighthouse: !usesNodeAuditRunner(),
+  }));
+
+export const stopAudit = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(getAuditStatusSchema)
+  .handler(async ({ data, context }) => {
+    requireOrgPermission(context, { project: ["delete"] });
+    await AuditService.stop(data.auditId, context.projectId);
+    return { stopped: true };
   });

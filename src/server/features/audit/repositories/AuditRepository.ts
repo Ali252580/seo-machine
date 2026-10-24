@@ -91,6 +91,7 @@ async function completeAudit(
       and(
         eq(audits.id, auditId),
         eq(audits.workflowInstanceId, workflowInstanceId),
+        eq(audits.status, "running"),
       ),
     );
 }

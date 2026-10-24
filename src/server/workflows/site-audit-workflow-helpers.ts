@@ -61,7 +61,11 @@ function parseLinkHeaderCanonical(
  * (see crawl-throttle.ts). `responseTimeMs` is measured from the last attempt
  * so backoff waiting never looks like a slow server.
  */
-async function fetchPage(url: string, throttle: CrawlThrottle) {
+async function fetchPage(
+  url: string,
+  throttle: CrawlThrottle,
+  fetcher: (url: string, init?: RequestInit) => Promise<Response>,
+) {
   for (let attempt = 1; ; attempt++) {
     if (!(await throttle.ready())) return null;
     const startedAt = Date.now();
@@ -71,7 +75,7 @@ async function fetchPage(url: string, throttle: CrawlThrottle) {
     // /docs/) need no special handling: normalizeUrl preserves trailing
     // slashes, so /docs and /docs/ are distinct URLs and the redirect resolves
     // to its canonical target instead of cycling back to its own source.
-    const response = await fetch(url, {
+    const response = await fetcher(url, {
       headers: {
         "User-Agent": CRAWL_USER_AGENT,
         Accept: "text/html,application/xhtml+xml",
@@ -107,11 +111,12 @@ export async function crawlPage(
   crawlDepth: number | null,
   inSitemap: boolean,
   throttle: CrawlThrottle,
+  fetcher: (url: string, init?: RequestInit) => Promise<Response> = fetch,
 ): Promise<CrawledPageResult | null> {
   const startTime = Date.now();
 
   try {
-    const fetched = await fetchPage(url, throttle);
+    const fetched = await fetchPage(url, throttle, fetcher);
     if (!fetched) return null;
     const { response, responseTimeMs, rateLimited } = fetched;
     const statusCode = response.status;

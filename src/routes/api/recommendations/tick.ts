@@ -14,6 +14,16 @@ export const Route = createFileRoute("/api/recommendations/tick")({
         ) {
           return new Response("Unauthorized", { status: 401 });
         }
+        if (process.env.VERCEL === "1" || process.env.AUDIT_RUNNER === "node") {
+          const { waitUntil } = await import("cloudflare:workers");
+          waitUntil(
+            withPgClient(async () => {
+              const { runPendingNodeAudits } =
+                await import("@/server/features/audit/services/nodeAuditRunner");
+              return runPendingNodeAudits();
+            }),
+          );
+        }
         const result = await withPgClient(() =>
           runDuePeriodicRecommendations(),
         );

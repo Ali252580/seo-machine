@@ -40,12 +40,19 @@ function LaunchContent({
   return (
     <div className="px-4 py-4 md:px-6 md:py-6 pb-24 md:pb-8 overflow-auto">
       <div className="mx-auto max-w-5xl space-y-4">
-        <h1 className="text-2xl font-semibold">ممیزی سایت</h1>
+        <h1 className="text-2xl font-semibold">خزیدن و ممیزی سایت</h1>
+        <p className="text-sm leading-7 text-base-content/70" dir="rtl">
+          صفحات همین پروژه از نقشهٔ سایت و لینک‌های داخلی پیدا می‌شوند.
+          عنوان‌ها، توضیحات، تیترها، تصاویر و لینک‌های خراب بررسی و نتیجه ذخیره
+          می‌شود. خزیدن با رعایت robots.txt انجام می‌شود؛ رتبهٔ گوگل را اندازه
+          نمی‌گیرد.
+        </p>
 
         <LaunchFormCard
           launchForm={controller.launchForm}
           commitMaxPagesInput={controller.commitMaxPagesInput}
           maxPagesLimit={controller.maxPagesLimit}
+          lighthouseAvailable={controller.lighthouseAvailable}
         />
 
         <AuditHistorySection

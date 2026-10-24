@@ -80,7 +80,10 @@ export default defineConfig(({ mode }) => {
           })
         : null,
       isVercel
-        ? nitro({ preset: "vercel" })
+        ? nitro({
+            preset: "vercel",
+            vercel: { functions: { maxDuration: 300 } },
+          })
         : cloudflare({
             inspectorPort: false,
             viteEnvironment: { name: "ssr" },

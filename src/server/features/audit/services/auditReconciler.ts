@@ -49,7 +49,8 @@ type RunningAudit = {
 export async function reconcileRunningAudit(
   audit: RunningAudit,
 ): Promise<AuditErrorInfo | null> {
-  if (!audit.workflowInstanceId) return null;
+  if (!audit.workflowInstanceId || audit.workflowInstanceId.startsWith("node:"))
+    return null;
 
   let errorInfo: AuditErrorInfo | null = null;
   try {

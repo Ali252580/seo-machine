@@ -10,12 +10,14 @@ type Props = {
   launchForm: ReturnType<typeof useLaunchController>["launchForm"];
   commitMaxPagesInput: () => number;
   maxPagesLimit: number;
+  lighthouseAvailable: boolean;
 };
 
 export function LaunchFormCard({
   commitMaxPagesInput,
   launchForm,
   maxPagesLimit,
+  lighthouseAvailable,
 }: Props) {
   return (
     <div className="card bg-base-100 border border-base-300">
@@ -61,10 +63,10 @@ export function LaunchFormCard({
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="size-4 animate-spin" /> Starting...
+                    <Loader2 className="size-4 animate-spin" /> در حال شروع…
                   </>
                 ) : (
-                  "Start Audit"
+                  "شروع خزیدن سایت"
                 )}
               </button>
             )}
@@ -75,8 +77,20 @@ export function LaunchFormCard({
               launchForm={launchForm}
               commitMaxPagesInput={commitMaxPagesInput}
               maxPagesLimit={maxPagesLimit}
+              lighthouseAvailable={lighthouseAvailable}
             />
-            <LighthouseOptions launchForm={launchForm} />
+            {lighthouseAvailable ? (
+              <LighthouseOptions launchForm={launchForm} />
+            ) : (
+              <div
+                className="rounded-lg bg-base-200/40 p-3 text-sm leading-7"
+                dir="rtl"
+              >
+                بررسی HTML صفحات، بدون اجرای جاوااسکریپت و Lighthouse. پیشرفت
+                ذخیره می‌شود؛ بررسی نیمه‌تمام با بازکردن گزارش یا نوبت زمان‌بندی
+                بعدی ادامه می‌یابد.
+              </div>
+            )}
           </div>
         </form>
 
@@ -91,15 +105,15 @@ function LaunchOptions({
   commitMaxPagesInput,
   maxPagesLimit,
 }: Props) {
-  const isFreeLimited = maxPagesLimit < PAID_MAX_AUDIT_PAGES;
+  const isFreeLimited = maxPagesLimit < 100;
 
   return (
     <div className="rounded-lg border border-base-300 bg-base-200/20 p-3 space-y-2">
       <label className="text-xs font-medium uppercase tracking-wide text-base-content/60">
-        Crawl limit
+        محدودهٔ بررسی
       </label>
       <div className="flex items-center gap-2">
-        <span className="text-sm text-base-content/70">Max pages</span>
+        <span className="text-sm text-base-content/70">حداکثر صفحه‌ها</span>
         <launchForm.Field name="maxPagesInput">
           {(field) => (
             <input
@@ -122,7 +136,7 @@ function LaunchOptions({
         </launchForm.Field>
       </div>
       <p className="text-xs text-base-content/50">
-        Enter any value from {MIN_PAGES} to {maxPagesLimit.toLocaleString()}.
+        بین {MIN_PAGES} تا {maxPagesLimit.toLocaleString()} صفحه انتخاب کنید.
         {isFreeLimited ? (
           <>
             {" "}

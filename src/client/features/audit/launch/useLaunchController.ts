@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   deleteAudit,
+  getAuditCapabilities,
   getAuditHistory,
   startAudit,
 } from "@/serverFunctions/audit";
@@ -50,7 +51,15 @@ export function useLaunchController({
 }) {
   const projectDomain = useProjectMarket(projectId)?.domain;
   const defaultUrl = projectDomain ? `https://${projectDomain}` : "";
-  const maxPagesLimit = getMaxPagesLimit(isFreePlan);
+  const capabilities = useQuery({
+    queryKey: ["audit-capabilities", projectId],
+    queryFn: () => getAuditCapabilities({ data: { projectId } }),
+  });
+  const maxPagesLimit = Math.min(
+    getMaxPagesLimit(isFreePlan),
+    capabilities.data?.maxPages ?? 100,
+  );
+  const lighthouseAvailable = capabilities.data?.lighthouse ?? false;
   const historyQuery = useQuery({
     queryKey: ["audit-history", projectId],
     queryFn: () => getAuditHistory({ data: { projectId } }),
@@ -88,9 +97,10 @@ export function useLaunchController({
           projectId,
           startUrl: value.url,
           maxPages: effectiveMaxPages,
-          lighthouseStrategy: value.runLighthouse ? "auto" : "none",
+          lighthouseStrategy:
+            lighthouseAvailable && value.runLighthouse ? "auto" : "none",
         });
-        toast.success("Audit started!");
+        toast.success("خزیدن سایت شروع شد");
         onAuditStarted(result.auditId);
       } catch (error) {
         formApi.setErrorMap({
@@ -112,6 +122,7 @@ export function useLaunchController({
     launchForm,
     historyQuery,
     maxPagesLimit,
+    lighthouseAvailable,
     commitMaxPagesInput: () => commitMaxPagesInput(launchForm, maxPagesLimit),
     deleteAudit: (auditId: string) => deleteMutation.mutate(auditId),
   };

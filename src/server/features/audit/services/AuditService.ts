@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import { env, waitUntil } from "cloudflare:workers";
 import {
   customerHasManagedAccess,
   customerHasPaidPlan,
@@ -25,6 +25,23 @@ import {
 } from "@/server/lib/audit/url-policy";
 import { reconcileRunningAudit } from "@/server/features/audit/services/auditReconciler";
 import { isHostedServerAuthMode } from "@/server/lib/runtime-env";
+
+import {
+  initialNodeCrawlState,
+  nodeCrawlStateSchema,
+  NODE_AUDIT_MAX_PAGES,
+  NODE_AUDIT_PREFIX,
+} from "./nodeCrawlState";
+
+export const usesNodeAuditRunner = () =>
+  process.env.VERCEL === "1" || process.env.AUDIT_RUNNER === "node";
+function scheduleNodeAudit(auditId: string, projectId: string) {
+  waitUntil(
+    import("./nodeAuditRunner")
+      .then(({ runNodeAudit }) => runNodeAudit(auditId, projectId))
+      .catch((error) => console.error("Audit runner failed", error)),
+  );
+}
 
 // Plan-tier limits are the abuse bound in hosted mode: free accounts get small
 // audits with a bounded burst, paid keeps the full limits, and customers with
@@ -62,27 +79,62 @@ async function startAudit(input: {
     throw new AppError("AUDIT_PAGE_LIMIT_EXCEEDED");
   }
 
-  const lighthouseStrategy = input.lighthouseStrategy ?? "auto";
+  const nodeRunner = usesNodeAuditRunner();
+  if (nodeRunner && maxPages > NODE_AUDIT_MAX_PAGES)
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "در هر بررسی حداکثر ۱۰۰ صفحه انتخاب کنید.",
+    );
+  if (nodeRunner && input.lighthouseStrategy === "auto")
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "بررسی Lighthouse در این محیط فعال نیست؛ خزیدن HTML را اجرا کنید.",
+    );
+  const lighthouseStrategy =
+    input.lighthouseStrategy ?? (nodeRunner ? "none" : "auto");
   const reservation = getEstimatedAuditCapacity({
     maxPages,
     lighthouseStrategy,
   });
 
   const auditId = crypto.randomUUID();
-  const config: AuditConfig = { maxPages, lighthouseStrategy };
-  // Anchor the audit to the site's real origin: a start domain that 301s
-  // elsewhere (…net -> …com, apex -> www) would otherwise dead-end after
-  // one page at the same-origin crawl boundary.
-  const startUrl = await resolveStartUrlRedirects(
-    await normalizeAndValidateStartUrl(input.startUrl),
-  );
+  const validatedStartUrl = await normalizeAndValidateStartUrl(input.startUrl);
+  const { ProjectRepository } =
+    await import("@/server/features/projects/repositories/ProjectRepository");
+  const project = await ProjectRepository.getProjectById(input.projectId);
+  if (!project) throw new AppError("NOT_FOUND");
+  if (project.domain) {
+    const domain = new URL(
+      project.domain.includes("://")
+        ? project.domain
+        : `https://${project.domain}`,
+    ).hostname.replace(/^www\./, "");
+    if (new URL(validatedStartUrl).hostname.replace(/^www\./, "") !== domain)
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "نشانی شروع باید متعلق به دامنهٔ همین پروژه باشد.",
+      );
+  }
+  const startUrl = nodeRunner
+    ? await (
+        await import("./nodeAuditRunner")
+      ).resolveNodeStartUrl(validatedStartUrl)
+    : await resolveStartUrlRedirects(validatedStartUrl);
+  const config: AuditConfig = {
+    maxPages,
+    lighthouseStrategy,
+    ...(nodeRunner ? { crawl: initialNodeCrawlState(startUrl) } : {}),
+  };
+  const workflowInstanceId = nodeRunner
+    ? `${NODE_AUDIT_PREFIX}${auditId}`
+    : auditId;
 
   await AuditRepository.createAudit({
     id: auditId,
     projectId: input.projectId,
     startedByUserId: input.actorUserId,
     startUrl,
-    workflowInstanceId: auditId,
+    workflowInstanceId,
     config,
     pagesTotal: reservation.pagesTotal,
     lighthouseTotal: reservation.lighthouseTotal,
@@ -106,6 +158,10 @@ async function startAudit(input: {
       throw new AppError("AUDIT_CAPACITY_REACHED");
     }
 
+    if (nodeRunner) {
+      scheduleNodeAudit(auditId, input.projectId);
+      return { auditId };
+    }
     await env.SITE_AUDIT_WORKFLOW.create({
       id: auditId,
       params: {
@@ -144,7 +200,12 @@ async function getStatus(auditId: string, projectId: string) {
   // Self-heal audits whose workflow died without reaching the mark-failed
   // step (instance terminated/errored, instance expired from retention, ...).
   // Without this they stay "running" forever and hold capacity.
-  if (audit.status === "running") {
+  if (
+    audit.status === "running" &&
+    audit.workflowInstanceId?.startsWith(NODE_AUDIT_PREFIX)
+  ) {
+    scheduleNodeAudit(auditId, projectId);
+  } else if (audit.status === "running") {
     const reconciled = await reconcileRunningAudit(audit);
     if (reconciled) {
       audit =
@@ -163,6 +224,7 @@ async function getStatus(auditId: string, projectId: string) {
     lighthouseFailed: audit.lighthouseFailed,
     currentPhase: audit.currentPhase,
     errorCode: audit.errorCode,
+    errorDetail: audit.errorDetail,
     startedAt: audit.startedAt,
     completedAt: audit.completedAt,
   };
@@ -222,6 +284,9 @@ async function getCrawlProgress(auditId: string, projectId: string) {
     throw new AppError("NOT_FOUND");
   }
 
+  if (audit.workflowInstanceId?.startsWith(NODE_AUDIT_PREFIX)) {
+    return nodeCrawlStateSchema.parse(JSON.parse(audit.config).crawl).recent;
+  }
   return AuditProgressKV.getCrawledUrls(auditId);
 }
 
@@ -231,7 +296,10 @@ async function remove(auditId: string, projectId: string) {
     throw new AppError("NOT_FOUND");
   }
 
-  if (audit.status === "running") {
+  if (
+    audit.status === "running" &&
+    !audit.workflowInstanceId?.startsWith(NODE_AUDIT_PREFIX)
+  ) {
     if (!audit.workflowInstanceId) {
       throw new AppError(
         "CONFLICT",
@@ -266,6 +334,7 @@ async function remove(auditId: string, projectId: string) {
   }
 
   await AuditRepository.deleteAuditForProject(auditId, projectId);
+  if (audit.workflowInstanceId?.startsWith(NODE_AUDIT_PREFIX)) return;
   // Best-effort: drop the crawl scratchpad DO with the audit (it lives in
   // the open-seo-audit worker, behind the AuditEngine RPC). A missed destroy
   // self-cleans via the DO's 7-day alarm.
@@ -276,6 +345,23 @@ async function remove(auditId: string, projectId: string) {
   }
 }
 
+async function stop(auditId: string, projectId: string) {
+  const audit = await AuditRepository.getAuditForProject(auditId, projectId);
+  if (!audit) throw new AppError("NOT_FOUND");
+  if (audit.status !== "running" || !audit.workflowInstanceId) return;
+  if (!audit.workflowInstanceId.startsWith(NODE_AUDIT_PREFIX)) {
+    const instance = await env.SITE_AUDIT_WORKFLOW.get(
+      audit.workflowInstanceId,
+    );
+    await instance.terminate();
+  }
+  await AuditRepository.failAudit(auditId, audit.workflowInstanceId, {
+    errorCode: "cancelled",
+    errorDetail: "بررسی به درخواست کاربر متوقف شد؛ نتایج دریافت‌شده حفظ شدند.",
+    failedPhase: audit.currentPhase,
+  });
+}
+
 export const AuditService = {
   resolveAuditLimitTier,
   startAudit,
@@ -284,4 +370,5 @@ export const AuditService = {
   getResults,
   getHistory,
   remove,
+  stop,
 } as const;

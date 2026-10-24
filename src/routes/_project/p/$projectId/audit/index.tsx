@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
+  stopAudit,
   getAuditResults,
   getAuditStatus,
   getCrawlProgress,
@@ -84,6 +85,11 @@ function AuditDetail({
     },
   });
 
+  const stopMutation = useMutation({
+    mutationFn: () => stopAudit({ data: { projectId, auditId } }),
+    onSuccess: () => statusQuery.refetch(),
+  });
+
   const isComplete = statusQuery.data?.status === "completed";
   const isFailed = statusQuery.data?.status === "failed";
   const isRunning = statusQuery.data?.status === "running";
@@ -135,6 +141,30 @@ function AuditDetail({
   return (
     <div className="px-4 py-4 md:px-6 md:py-6 pb-24 md:pb-8 overflow-auto">
       <div className="mx-auto max-w-5xl space-y-4">
+        {isRunning && (
+          <button
+            className="btn btn-outline btn-sm"
+            disabled={stopMutation.isPending}
+            onClick={() => stopMutation.mutate()}
+          >
+            توقف بررسی و حفظ نتایج
+          </button>
+        )}
+        {stopMutation.isError && (
+          <p role="alert" className="text-error text-sm">
+            توقف بررسی انجام نشد؛ دسترسی خود را بررسی و دوباره تلاش کنید.
+          </p>
+        )}
+        {isFailed && status?.errorDetail && (
+          <p
+            role="alert"
+            dir="rtl"
+            className="rounded-lg bg-warning/10 p-3 text-sm"
+          >
+            {status.errorDetail}
+          </p>
+        )}
+
         <div className="space-y-1">
           <button className="btn btn-ghost btn-sm px-0" onClick={onBack}>
             &larr; All audits
