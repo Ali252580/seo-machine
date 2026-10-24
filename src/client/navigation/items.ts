@@ -1,5 +1,6 @@
 import {
   Bookmark,
+  BookOpen,
   Bot,
   Brain,
   ClipboardCheck,
@@ -16,6 +17,11 @@ import { linkOptions } from "@tanstack/react-router";
 import { GoogleGlyphMuted } from "@/client/features/gsc/GoogleGlyph";
 
 const projectNavItems = [
+  {
+    to: "/p/$projectId/blog" as const,
+    label: "نگارش وبلاگ",
+    icon: BookOpen,
+  },
   {
     to: "/p/$projectId" as const,
     label: "داشبورد",
@@ -149,6 +155,7 @@ export function getProjectNavGroups(projectId: string) {
       label: "هوش مصنوعی",
       items: [
         byPath("/p/$projectId/sam"),
+        byPath("/p/$projectId/blog"),
         byPath("/p/$projectId/recommendations"),
         byPath("/p/$projectId/reports"),
         byPath("/p/$projectId/context"),

@@ -21,20 +21,29 @@ const localDraft = z.object({
     .optional(),
 });
 
+export function articleDraftKey(
+  projectId: string,
+  targetPage?: string,
+  blog = false,
+) {
+  return `openseo-${blog ? "blog" : "article"}-${projectId}${targetPage ? `:${targetPage}` : ""}`;
+}
+
 /** Keeps article drafts isolated by project and target URL. */
 export function useArticleDraft(
   projectId: string,
   targetPage?: string,
   suggestedTitle?: string,
+  blog = false,
 ) {
   const [keyword, setKeyword] = useState("");
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [content, setContent] = useState("");
-  const [kind, setKind] = useState<"page" | "post">("page");
+  const [kind, setKind] = useState<"page" | "post">(blog ? "post" : "page");
   const [image, setImage] = useState<ArticleImage | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const storageKey = `openseo-article-${projectId}${targetPage ? `:${targetPage}` : ""}`;
+  const storageKey = articleDraftKey(projectId, targetPage, blog);
 
   useEffect(() => {
     try {
@@ -55,7 +64,7 @@ export function useArticleDraft(
             : saved.data.slug,
         );
         setContent(saved.data.content);
-        setKind(saved.data.kind ?? "page");
+        setKind(blog ? "post" : (saved.data.kind ?? "page"));
         setImage(saved.data.image?.url ? saved.data.image : null);
       } else if (targetPage) {
         const pageName = recommendationPage(targetPage)?.title ?? "";
@@ -73,7 +82,7 @@ export function useArticleDraft(
       /* A damaged local draft should not block the editor. */
     }
     setLoaded(true);
-  }, [storageKey, targetPage, suggestedTitle]);
+  }, [storageKey, targetPage, suggestedTitle, blog]);
 
   useEffect(() => {
     if (loaded)

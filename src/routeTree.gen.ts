@@ -50,6 +50,7 @@ import { Route as STokenRawRouteImport } from './routes/s/$token/raw'
 import { Route as ProjectPProjectIdIndexRouteImport } from './routes/_project/p/$projectId/index'
 import { Route as ProjectPProjectIdAuditRouteImport } from './routes/_project/p/$projectId/audit'
 import { Route as ProjectPProjectIdBacklinksRouteImport } from './routes/_project/p/$projectId/backlinks'
+import { Route as ProjectPProjectIdBlogRouteImport } from './routes/_project/p/$projectId/blog'
 import { Route as ProjectPProjectIdBrandLookupRouteImport } from './routes/_project/p/$projectId/brand-lookup'
 import { Route as ProjectPProjectIdContentRouteImport } from './routes/_project/p/$projectId/content'
 import { Route as ProjectPProjectIdContextRouteImport } from './routes/_project/p/$projectId/context'
@@ -281,6 +282,11 @@ const ProjectPProjectIdBacklinksRoute =
     path: '/backlinks',
     getParentRoute: () => ProjectPProjectIdRouteRoute,
   } as any)
+const ProjectPProjectIdBlogRoute = ProjectPProjectIdBlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => ProjectPProjectIdRouteRoute,
+} as any)
 const ProjectPProjectIdBrandLookupRoute =
   ProjectPProjectIdBrandLookupRouteImport.update({
     id: '/brand-lookup',
@@ -464,6 +470,7 @@ export interface FileRoutesByFullPath {
   '/s/$token/': typeof STokenIndexRoute
   '/p/$projectId/audit': typeof ProjectPProjectIdAuditRouteWithChildren
   '/p/$projectId/backlinks': typeof ProjectPProjectIdBacklinksRoute
+  '/p/$projectId/blog': typeof ProjectPProjectIdBlogRoute
   '/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
   '/p/$projectId/content': typeof ProjectPProjectIdContentRoute
   '/p/$projectId/context': typeof ProjectPProjectIdContextRoute
@@ -525,6 +532,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingIndexRoute
   '/s/$token': typeof STokenIndexRoute
   '/p/$projectId/backlinks': typeof ProjectPProjectIdBacklinksRoute
+  '/p/$projectId/blog': typeof ProjectPProjectIdBlogRoute
   '/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
   '/p/$projectId/content': typeof ProjectPProjectIdContentRoute
   '/p/$projectId/context': typeof ProjectPProjectIdContextRoute
@@ -592,6 +600,7 @@ export interface FileRoutesById {
   '/s/$token/': typeof STokenIndexRoute
   '/_project/p/$projectId/audit': typeof ProjectPProjectIdAuditRouteWithChildren
   '/_project/p/$projectId/backlinks': typeof ProjectPProjectIdBacklinksRoute
+  '/_project/p/$projectId/blog': typeof ProjectPProjectIdBlogRoute
   '/_project/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
   '/_project/p/$projectId/content': typeof ProjectPProjectIdContentRoute
   '/_project/p/$projectId/context': typeof ProjectPProjectIdContextRoute
@@ -658,6 +667,7 @@ export interface FileRouteTypes {
     | '/s/$token/'
     | '/p/$projectId/audit'
     | '/p/$projectId/backlinks'
+    | '/p/$projectId/blog'
     | '/p/$projectId/brand-lookup'
     | '/p/$projectId/content'
     | '/p/$projectId/context'
@@ -719,6 +729,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/s/$token'
     | '/p/$projectId/backlinks'
+    | '/p/$projectId/blog'
     | '/p/$projectId/brand-lookup'
     | '/p/$projectId/content'
     | '/p/$projectId/context'
@@ -785,6 +796,7 @@ export interface FileRouteTypes {
     | '/s/$token/'
     | '/_project/p/$projectId/audit'
     | '/_project/p/$projectId/backlinks'
+    | '/_project/p/$projectId/blog'
     | '/_project/p/$projectId/brand-lookup'
     | '/_project/p/$projectId/content'
     | '/_project/p/$projectId/context'
@@ -1128,6 +1140,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectPProjectIdBacklinksRouteImport
       parentRoute: typeof ProjectPProjectIdRouteRoute
     }
+    '/_project/p/$projectId/blog': {
+      id: '/_project/p/$projectId/blog'
+      path: '/blog'
+      fullPath: '/p/$projectId/blog'
+      preLoaderRoute: typeof ProjectPProjectIdBlogRouteImport
+      parentRoute: typeof ProjectPProjectIdRouteRoute
+    }
     '/_project/p/$projectId/brand-lookup': {
       id: '/_project/p/$projectId/brand-lookup'
       path: '/brand-lookup'
@@ -1408,6 +1427,7 @@ const ProjectPProjectIdSettingsRouteWithChildren =
 interface ProjectPProjectIdRouteRouteChildren {
   ProjectPProjectIdAuditRoute: typeof ProjectPProjectIdAuditRouteWithChildren
   ProjectPProjectIdBacklinksRoute: typeof ProjectPProjectIdBacklinksRoute
+  ProjectPProjectIdBlogRoute: typeof ProjectPProjectIdBlogRoute
   ProjectPProjectIdBrandLookupRoute: typeof ProjectPProjectIdBrandLookupRoute
   ProjectPProjectIdContentRoute: typeof ProjectPProjectIdContentRoute
   ProjectPProjectIdContextRoute: typeof ProjectPProjectIdContextRoute
@@ -1430,6 +1450,7 @@ const ProjectPProjectIdRouteRouteChildren: ProjectPProjectIdRouteRouteChildren =
   {
     ProjectPProjectIdAuditRoute: ProjectPProjectIdAuditRouteWithChildren,
     ProjectPProjectIdBacklinksRoute: ProjectPProjectIdBacklinksRoute,
+    ProjectPProjectIdBlogRoute: ProjectPProjectIdBlogRoute,
     ProjectPProjectIdBrandLookupRoute: ProjectPProjectIdBrandLookupRoute,
     ProjectPProjectIdContentRoute: ProjectPProjectIdContentRoute,
     ProjectPProjectIdContextRoute: ProjectPProjectIdContextRoute,

@@ -18,7 +18,15 @@ it("keeps a researched existing-page prompt within SAM's 4,000-character limit",
     analytics: { status: "connected", rows: [] },
     rankTracking: {
       status: "connected",
-      rows: [{ device: "desktop", location: "تهران", position: 9, previousPosition: 5, rankingUrl: "https://example.com/page" }],
+      rows: [
+        {
+          device: "desktop",
+          location: "تهران",
+          position: 9,
+          previousPosition: 5,
+          rankingUrl: "https://example.com/page",
+        },
+      ],
     },
     existingPage: {
       url: `https://example.com/${"a".repeat(500)}`,
@@ -33,6 +41,18 @@ it("keeps a researched existing-page prompt within SAM's 4,000-character limit",
   expect(prompt).toContain("همان صفحه");
   expect(prompt).toContain("رتبه 9");
   expect(prompt).toContain("فقط HTML ساده بده.");
+  const blogPrompt = buildArticlePrompt(
+    "ک".repeat(100),
+    "ع".repeat(180),
+    evidence,
+    "post",
+  );
+  expect(blogPrompt.length).toBeLessThanOrEqual(4_000);
+  expect(blogPrompt).toContain("مقالهٔ وبلاگ برای سایت همین پروژه");
+  expect(blogPrompt).toContain("ترجیحات نگارش");
+  expect(blogPrompt).toContain("همان صفحه");
+  expect(blogPrompt).toContain("فقط HTML ساده بده.");
+  expect(prompt).not.toContain("مقالهٔ وبلاگ برای سایت همین پروژه");
 });
 
 it("includes saved keyword rank evidence in the article request", () => {
