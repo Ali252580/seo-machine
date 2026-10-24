@@ -52,6 +52,11 @@ it("keeps a researched existing-page prompt within SAM's 4,000-character limit",
   expect(blogPrompt).toContain("ترجیحات نگارش");
   expect(blogPrompt).toContain("همان صفحه");
   expect(blogPrompt).toContain("فقط HTML ساده بده.");
+  expect(blogPrompt).toContain("متن صفحه");
+  expect(blogPrompt).toContain("مثال فرضی را فرضی بنام");
+  expect(blogPrompt).toContain("فراخوان فروش و بخش «چرا ما» نگذار");
+  expect(prompt).toContain("به تصمیم مشتری کمک کن");
+  expect(blogPrompt).not.toContain("به تصمیم مشتری کمک کن");
   expect(prompt).not.toContain("مقالهٔ وبلاگ برای سایت همین پروژه");
 });
 
