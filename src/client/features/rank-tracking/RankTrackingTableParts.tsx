@@ -59,9 +59,20 @@ export function DeviceRankCell({
 }) {
   const { position, previousPosition } = result;
 
-  // Nothing at all
+  // No snapshot is different from a completed search with no matching URL.
+  if (position === null && !result.checkedAt) {
+    return <span className="text-xs text-base-content/50">بررسی نشده</span>;
+  }
+
   if (position === null && previousPosition === null) {
-    return <span className="text-base-content/40">-</span>;
+    return (
+      <span
+        className="text-xs text-base-content/60"
+        title="در نتایج بررسی‌شده نشانی سایت پیدا نشد؛ این به معنی حذف از گوگل نیست."
+      >
+        یافت نشد
+      </span>
+    );
   }
 
   // Was ranking, now lost
@@ -73,7 +84,7 @@ export function DeviceRankCell({
         </span>
         <span className="text-base-content/30">→</span>
         <span className="font-mono rounded px-1.5 py-0.5 text-xs font-semibold bg-error/20 text-error">
-          lost
+          یافت نشد
         </span>
       </span>
     );

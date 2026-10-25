@@ -157,7 +157,20 @@ function makeDeviceColumn(
     ),
     size: 120,
     maxSize: 140,
-    cell: ({ row }) => <DeviceRankCell result={row.original[device]} />,
+    cell: ({ row }) => (
+      <div className="space-y-1">
+        <DeviceRankCell result={row.original[device]} />
+        {row.original[device].checkedAt && (
+          <div
+            className="text-[10px] text-base-content/50"
+            dir="ltr"
+            title="زمان ثبت همین نتیجه (UTC)"
+          >
+            {row.original[device].checkedAt} UTC
+          </div>
+        )}
+      </div>
+    ),
     sortUndefined: "last",
   };
 }

@@ -168,6 +168,7 @@ function createEmptyDeviceResult(
 ): RankTrackingDeviceResult {
   return {
     position: null,
+    checkedAt: null,
     previousPosition,
     rankingUrl: null,
     serpFeatures: [],
@@ -180,6 +181,7 @@ function toDeviceResult(
 ): RankTrackingDeviceResult {
   return {
     position: snapshot.position,
+    checkedAt: snapshot.checkedAt,
     previousPosition,
     rankingUrl: snapshot.url,
     serpFeatures: parseSerpFeatures(snapshot.serpFeatures),

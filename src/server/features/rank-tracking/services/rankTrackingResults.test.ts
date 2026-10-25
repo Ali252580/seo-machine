@@ -81,4 +81,29 @@ describe("getLatestResults", () => {
       },
     });
   });
+
+  it("distinguishes a checked keyword without a match from an unchecked device", async () => {
+    mocks.getKeywordsForConfig.mockResolvedValue([
+      { id: "kw_1", keyword: "test" },
+    ]);
+    mocks.getLatestSnapshotsForKeywords.mockResolvedValue([
+      {
+        trackingKeywordId: "kw_1",
+        device: "desktop",
+        position: null,
+        checkedAt: "2026-10-24 09:00:00",
+        url: null,
+        serpFeatures: null,
+      },
+    ]);
+    const result = await getLatestResults("config_1", "project_1");
+    expect(result.rows[0].desktop).toMatchObject({
+      position: null,
+      checkedAt: "2026-10-24 09:00:00",
+    });
+    expect(result.rows[0].mobile).toMatchObject({
+      position: null,
+      checkedAt: null,
+    });
+  });
 });

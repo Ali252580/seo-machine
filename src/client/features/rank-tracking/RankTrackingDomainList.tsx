@@ -50,7 +50,12 @@ export function RankTrackingDomainList({
   const [filters, setFilters] = useState<DomainListFilters>(
     EMPTY_DOMAIN_LIST_FILTERS,
   );
-  const { data: summaries, isPending } = useQuery({
+  const {
+    data: summaries,
+    isPending,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["rankTrackingConfigSummaries", projectId],
     queryFn: () => getRankTrackingConfigSummaries({ data: { projectId } }),
   });
@@ -114,6 +119,16 @@ export function RankTrackingDomainList({
                   <div className="skeleton h-3 w-72" />
                 </div>
               ))}
+            </div>
+          ) : isError ? (
+            <div role="alert" className="px-5 py-6 text-sm text-error">
+              دریافت ردیابی‌های این پروژه انجام نشد.
+              <button
+                className="btn btn-sm btn-outline ms-3"
+                onClick={() => void refetch()}
+              >
+                تلاش دوباره
+              </button>
             </div>
           ) : allSummaries.length === 0 ? (
             <div className="px-5 py-10 text-center space-y-2">
