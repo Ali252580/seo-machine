@@ -1,9 +1,21 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import type { WritingProfile } from "./writingProfiles";
 import { recommendationPage } from "@/client/features/dashboard/recommendationPage";
 import type { ArticleImage } from "./ArticleMediaPanel";
 
 const localDraft = z.object({
+  brief: z.string().max(400).optional(),
+  profile: z
+    .enum([
+      "guide",
+      "comparison",
+      "troubleshooting",
+      "reference",
+      "service",
+      "product",
+    ])
+    .optional(),
   keyword: z.string(),
   title: z.string(),
   slug: z.string(),
@@ -36,6 +48,10 @@ export function useArticleDraft(
   suggestedTitle?: string,
   blog = false,
 ) {
+  const [brief, setBrief] = useState("");
+  const [profile, setProfile] = useState<WritingProfile>(
+    blog ? "guide" : "reference",
+  );
   const [keyword, setKeyword] = useState("");
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -51,6 +67,8 @@ export function useArticleDraft(
         JSON.parse(localStorage.getItem(storageKey) ?? "null"),
       );
       if (saved.success) {
+        setBrief(saved.data.brief ?? "");
+        setProfile(saved.data.profile ?? (blog ? "guide" : "reference"));
         setKeyword(saved.data.keyword);
         setTitle(saved.data.title);
         setSlug(
@@ -89,6 +107,8 @@ export function useArticleDraft(
       localStorage.setItem(
         storageKey,
         JSON.stringify({
+          brief,
+          profile,
           keyword,
           title,
           slug,
@@ -97,9 +117,24 @@ export function useArticleDraft(
           image: image?.url ? image : null,
         }),
       );
-  }, [loaded, storageKey, keyword, title, slug, content, kind, image]);
+  }, [
+    loaded,
+    storageKey,
+    brief,
+    profile,
+    keyword,
+    title,
+    slug,
+    content,
+    kind,
+    image,
+  ]);
 
   return {
+    brief,
+    setBrief,
+    profile,
+    setProfile,
     keyword,
     setKeyword,
     title,

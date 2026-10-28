@@ -1,3 +1,8 @@
+import {
+  writingProfiles,
+  resolveWritingProfile,
+  type WritingProfile,
+} from "./writingProfiles";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -28,6 +33,10 @@ export function ProjectContentEditor({
   blog?: boolean;
 }) {
   const {
+    brief,
+    setBrief,
+    profile,
+    setProfile,
     keyword,
     setKeyword,
     title,
@@ -89,7 +98,14 @@ export function ProjectContentEditor({
           projectId,
           sessionId: session.id,
           article: true,
-          text: buildArticlePrompt(keyword, title, evidence, kind),
+          text: buildArticlePrompt(
+            keyword,
+            title,
+            evidence,
+            kind,
+            profile,
+            brief,
+          ),
         },
       });
       return {
@@ -242,11 +258,48 @@ export function ProjectContentEditor({
                     setKind(event.target.value === "post" ? "post" : "page")
                   }
                 >
-                  <option value="page">صفحهٔ خدمات</option>
+                  <option value="page">مقالهٔ مرجع یا صفحهٔ سایت</option>
                   <option value="post">مقالهٔ وبلاگ</option>
                 </select>
               </label>
             )}
+            <label className="grid gap-1 text-sm">
+              قالب تخصصی نگارش
+              <select
+                className="select select-bordered w-full"
+                value={resolveWritingProfile(kind, profile)}
+                disabled={generate.isPending}
+                onChange={(event) =>
+                  setProfile(event.target.value as WritingProfile)
+                }
+              >
+                {Object.entries(writingProfiles)
+                  .filter(([, option]) => option.kind === kind)
+                  .map(([value, option]) => (
+                    <option key={value} value={value}>
+                      {option.label}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <p className="text-sm leading-7 text-base-content/70">
+              {writingProfiles[resolveWritingProfile(kind, profile)].prompt}
+            </p>
+            <label className="grid gap-1 text-sm">
+              مخاطب، هدف و شواهد اختصاصی مقاله
+              <textarea
+                className="textarea textarea-bordered w-full"
+                maxLength={400}
+                value={brief}
+                disabled={generate.isPending}
+                onChange={(event) => setBrief(event.target.value)}
+                placeholder="مخاطب چه کسی است؟ چه چیزی باید یاد بگیرد یا تصمیم بگیرد؟ چه اطلاعات یا تجربهٔ مستندی دارید؟"
+              />
+              <span className="text-xs text-base-content/60">
+                این یادداشت همراه زمینهٔ همین پروژه استفاده می‌شود.{" "}
+                {brief.length}/۴۰۰
+              </span>
+            </label>
             <button
               type="button"
               className="btn btn-primary"

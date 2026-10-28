@@ -85,3 +85,56 @@ it("includes saved keyword rank evidence in the article request", () => {
     "رتبه 9",
   );
 });
+
+it("keeps specialized profiles distinct and bounded with a full brief", () => {
+  const evidence = {
+    wordpressChecked: false,
+    pages: [],
+    existingPage: {
+      url: "https://example.com/" + "x".repeat(500),
+      title: "t".repeat(1000),
+      text: "original ".repeat(1000),
+    },
+    searchConsole: { status: "not_connected" },
+    analytics: { status: "not_connected" },
+    rankTracking: { status: "not_tracked" },
+  } as Parameters<typeof buildArticlePrompt>[2];
+  for (const [kind, profiles] of [
+    ["post", ["guide", "comparison", "troubleshooting"]],
+    ["page", ["reference", "service", "product"]],
+  ] as const) {
+    for (const profile of profiles) {
+      const prompt = buildArticlePrompt(
+        "k".repeat(100),
+        "t".repeat(180),
+        evidence,
+        kind,
+        profile,
+        "b".repeat(400),
+      );
+      expect(prompt.length).toBeLessThanOrEqual(4000);
+      expect(prompt).toContain("b".repeat(400));
+      expect(prompt).toContain("فقط HTML ساده بده.");
+    }
+  }
+  const comparison = buildArticlePrompt(
+    "keyword",
+    "title",
+    evidence,
+    "post",
+    "comparison",
+  );
+  expect(comparison).toContain("معیارهای یکسان");
+  const reference = buildArticlePrompt(
+    "keyword",
+    "title",
+    evidence,
+    "page",
+    "reference",
+  );
+  expect(reference).toContain("مرجع ماندگار");
+  expect(reference).not.toContain("معیارهای یکسان");
+  expect(
+    buildArticlePrompt("keyword", "title", evidence, "post", "product"),
+  ).toContain("قالب تخصصی: آموزش گام‌به‌گام");
+});
