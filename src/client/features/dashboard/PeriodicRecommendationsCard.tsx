@@ -99,6 +99,32 @@ export function PeriodicRecommendationsCard({
                 : "بر پایهٔ قواعد سئو"}
             </p>
           )}
+          {data.workflow && (
+            <div
+              className="rounded-xl border border-base-300 bg-base-100 p-4"
+              aria-label="مراحل خودکار سئو"
+            >
+              <h2 className="font-semibold">چرخهٔ خودکار سئوی همین پروژه</h2>
+              <p className="mt-2 text-sm leading-7">
+                دریافت داده‌ها ← شناسایی فرصت‌ها ← خواندن صفحات منتخب ← تحلیل با
+                مهارت‌ها ← برنامهٔ اصلاح و سنجش
+              </p>
+              <p className="mt-2 text-sm leading-7 text-base-content/70">
+                {data.workflow.message}
+              </p>
+              {data.workflow.analysis === "completed" && (
+                <p className="mt-2 text-xs">
+                  {data.workflow.pagesRead} صفحه خوانده شد ·{" "}
+                  {data.items.filter((item) => item.plan).length} برنامهٔ اقدام
+                </p>
+              )}
+            </div>
+          )}
+          <p className="text-xs leading-6 text-base-content/60">
+            زمان‌بند روزانه پروژه‌های موعدرسیده را بررسی می‌کند؛ فاصلهٔ معمول
+            بررسی هر پروژه هفت روز است. «بررسی اکنون» حداقل یک ساعت فاصله نیاز
+            دارد.
+          </p>
           {data.items.length === 0 ? (
             <p className="mt-5 text-sm text-base-content/70">
               هنوز فرصت قابل‌اتکایی پیدا نشده است. اتصال‌ها و رتبه‌یابی را بررسی
@@ -176,6 +202,47 @@ export function PeriodicRecommendationsCard({
                       )}
                     </div>
                     <div className="space-y-4 px-4 py-4 sm:px-6">
+                      {item.plan && (
+                        <div className="space-y-3 rounded-lg border border-primary/20 p-4">
+                          <h3 className="font-semibold">
+                            {item.plan.decision === "improve"
+                              ? "برنامهٔ بهبود صفحه"
+                              : item.plan.decision === "keep"
+                                ? "حفظ صفحه و پایش نتیجه"
+                                : "بررسی تکمیلی پیش از تغییر"}
+                          </h3>
+                          <p className="text-sm leading-7">
+                            {item.plan.rationale}
+                          </p>
+                          <ol className="list-inside list-decimal space-y-2 text-sm leading-7">
+                            {item.plan.steps.map((step, index) => (
+                              <li key={index}>{step}</li>
+                            ))}
+                          </ol>
+                          {item.plan.suggestedTitle && (
+                            <p className="text-sm leading-7">
+                              <strong>عنوان پیشنهادی: </strong>
+                              {item.plan.suggestedTitle}
+                            </p>
+                          )}
+                          {item.plan.outline.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium">
+                                ساختار پیشنهادی محتوا
+                              </h4>
+                              <ul className="mt-2 list-inside list-disc text-sm leading-7">
+                                {item.plan.outline.map((heading, index) => (
+                                  <li key={index}>{heading}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          <p className="text-sm leading-7">
+                            <strong>سنجش نتیجه: </strong>
+                            {item.plan.successMeasure}
+                          </p>
+                        </div>
+                      )}
                       <div>
                         <h3 className="text-sm font-medium">اقدام پیشنهادی</h3>
                         <p className="mt-1 max-w-3xl text-sm leading-7 text-base-content/75">
