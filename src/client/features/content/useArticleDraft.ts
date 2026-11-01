@@ -41,6 +41,68 @@ export function articleDraftKey(
   return `openseo-${blog ? "blog" : "article"}-${projectId}${targetPage ? `:${targetPage}` : ""}`;
 }
 
+/** Resolve a complete snapshot so missing drafts never inherit another page's fields. */
+export function loadArticleDraft(
+  storageKey: string,
+  targetPage?: string,
+  suggestedTitle?: string,
+  blog = false,
+) {
+  let data: z.infer<typeof localDraft> | undefined;
+  let storageError = false;
+  try {
+    const saved = localDraft.safeParse(
+      JSON.parse(localStorage.getItem(storageKey) ?? "null"),
+    );
+    if (saved.success) data = saved.data;
+  } catch {
+    storageError = true;
+  }
+  let pageSlug = "";
+  if (targetPage) {
+    try {
+      pageSlug =
+        new URL(targetPage).pathname.split("/").filter(Boolean).at(-1) ?? "";
+    } catch {
+      /* Invalid URLs do not discard a saved article. */
+    }
+    try {
+      pageSlug = decodeURIComponent(pageSlug);
+    } catch {
+      /* Preserve literal percent characters. */
+    }
+  }
+  const pageName = targetPage
+    ? (recommendationPage(targetPage)?.title ?? "")
+    : "";
+  const proposed = suggestedTitle?.split(/[|｜]/)[0].trim() || pageName;
+  return {
+    storageError,
+    draft: {
+      brief: data?.brief ?? "",
+      profile: data?.profile ?? (blog ? "guide" : "reference"),
+      keyword: data?.keyword ?? proposed.slice(0, 100),
+      title: data?.title ?? (suggestedTitle || pageName).slice(0, 180),
+      slug: targetPage ? pageSlug : (data?.slug ?? ""),
+      content: data?.content ?? "",
+      kind: blog ? ("post" as const) : (data?.kind ?? ("page" as const)),
+      image: data?.image?.url ? data.image : null,
+    },
+  };
+}
+
+export function persistArticleDraft(
+  key: string,
+  draft: z.infer<typeof localDraft>,
+): boolean {
+  try {
+    localStorage.setItem(key, JSON.stringify(draft));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Keeps article drafts isolated by project and target URL. */
 export function useArticleDraft(
   projectId: string,
@@ -58,67 +120,47 @@ export function useArticleDraft(
   const [content, setContent] = useState("");
   const [kind, setKind] = useState<"page" | "post">(blog ? "post" : "page");
   const [image, setImage] = useState<ArticleImage | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const [storageError, setStorageError] = useState(false);
   const storageKey = articleDraftKey(projectId, targetPage, blog);
 
   useEffect(() => {
-    try {
-      const saved = localDraft.safeParse(
-        JSON.parse(localStorage.getItem(storageKey) ?? "null"),
-      );
-      if (saved.success) {
-        setBrief(saved.data.brief ?? "");
-        setProfile(saved.data.profile ?? (blog ? "guide" : "reference"));
-        setKeyword(saved.data.keyword);
-        setTitle(saved.data.title);
-        setSlug(
-          targetPage
-            ? decodeURIComponent(
-                new URL(targetPage).pathname
-                  .split("/")
-                  .filter(Boolean)
-                  .at(-1) ?? "",
-              )
-            : saved.data.slug,
-        );
-        setContent(saved.data.content);
-        setKind(blog ? "post" : (saved.data.kind ?? "page"));
-        setImage(saved.data.image?.url ? saved.data.image : null);
-      } else if (targetPage) {
-        const pageName = recommendationPage(targetPage)?.title ?? "";
-        const proposed = suggestedTitle?.split(/[|｜]/)[0].trim() || pageName;
-        setKeyword(proposed.slice(0, 100));
-        setTitle((suggestedTitle || pageName).slice(0, 180));
-        setSlug(
-          decodeURIComponent(
-            new URL(targetPage).pathname.split("/").filter(Boolean).at(-1) ??
-              "",
-          ),
-        );
-      }
-    } catch {
-      /* A damaged local draft should not block the editor. */
-    }
-    setLoaded(true);
+    const loaded = loadArticleDraft(
+      storageKey,
+      targetPage,
+      suggestedTitle,
+      blog,
+    );
+    const draft = loaded.draft;
+    setBrief(draft.brief);
+    setProfile(draft.profile);
+    setKeyword(draft.keyword);
+    setTitle(draft.title);
+    setSlug(draft.slug);
+    setContent(draft.content);
+    setKind(draft.kind);
+    setImage(draft.image);
+    setStorageError(loaded.storageError);
+    setLoadedKey(storageKey);
   }, [storageKey, targetPage, suggestedTitle, blog]);
 
   useEffect(() => {
-    if (loaded)
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({
-          brief,
-          profile,
-          keyword,
-          title,
-          slug,
-          content,
-          kind,
-          image: image?.url ? image : null,
-        }),
-      );
+    // Never write the previous page's state into the next page's storage key.
+    if (loadedKey !== storageKey) return;
+    setStorageError(
+      !persistArticleDraft(storageKey, {
+        brief,
+        profile,
+        keyword,
+        title,
+        slug,
+        content,
+        kind,
+        image: image?.url ? image : null,
+      }),
+    );
   }, [
-    loaded,
+    loadedKey,
     storageKey,
     brief,
     profile,
@@ -131,6 +173,7 @@ export function useArticleDraft(
   ]);
 
   return {
+    storageError,
     brief,
     setBrief,
     profile,

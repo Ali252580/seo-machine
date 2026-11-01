@@ -286,11 +286,17 @@ export function RankTrackingDomainDetail({
               config.locationName,
             )
           }
-          onCopyKeywords={() => {
-            void navigator.clipboard.writeText(
-              filtered.map((r) => r.keyword).join("\n"),
-            );
-            toast.success("کلمات کلیدی کپی شدند");
+          onCopyKeywords={async () => {
+            try {
+              await navigator.clipboard.writeText(
+                filtered.map((r) => r.keyword).join("\n"),
+              );
+              toast.success("کلمات کلیدی کپی شدند");
+            } catch {
+              toast.error(
+                "مرورگر اجازهٔ کپی نداد. از خروجی فایل استفاده کنید.",
+              );
+            }
           }}
           onCheckNow={() => {
             const count = costEstimate?.keywordCount ?? rows?.length ?? 0;

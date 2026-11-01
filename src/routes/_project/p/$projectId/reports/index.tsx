@@ -41,7 +41,7 @@ function ReportsPage() {
           <div>
             <h1 className="text-2xl font-semibold">گزارش‌ها</h1>
             <p className="text-sm text-base-content/70">
-              HTML reports your agents saved to this project.
+              نتیجهٔ بررسی‌های عامل هوشمند که برای همین پروژه ذخیره شده‌اند.
             </p>
           </div>
           <Link
@@ -49,22 +49,34 @@ function ReportsPage() {
             params={{ projectId }}
             className="btn btn-ghost btn-sm"
           >
-            Templates
+            قالب‌های گزارش
           </Link>
         </div>
 
         {reportsQuery.isPending ? (
-          <div className="flex justify-center py-10">
+          <div
+            className="flex justify-center py-10"
+            role="status"
+            aria-label="در حال دریافت گزارش‌ها"
+          >
             <span className="loading loading-spinner loading-md" />
           </div>
         ) : reportsQuery.isError ? (
-          <div className="alert alert-error">
+          <div className="alert alert-error" role="alert">
             <span className="text-sm">
               {getStandardErrorMessage(
                 reportsQuery.error,
-                "Failed to load reports",
+                "دریافت گزارش‌ها انجام نشد",
               )}
             </span>
+            <button
+              type="button"
+              className="btn btn-sm"
+              disabled={reportsQuery.isFetching}
+              onClick={() => void reportsQuery.refetch()}
+            >
+              تلاش دوباره
+            </button>
           </div>
         ) : (
           <ReportsList

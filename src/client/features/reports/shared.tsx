@@ -48,7 +48,7 @@ export function useDeleteReport(projectId: string, onDeleted?: () => void) {
         project_id: projectId,
         report_id: reportId,
       });
-      toast.success("Report deleted");
+      toast.success("گزارش حذف شد");
       void queryClient.invalidateQueries({
         queryKey: reportsQueryKey(projectId),
       });
@@ -60,9 +60,7 @@ export function useDeleteReport(projectId: string, onDeleted?: () => void) {
       onDeleted?.();
     },
     onError: (error: Error) => {
-      toast.error(
-        getStandardErrorMessage(error, "Failed to delete the report"),
-      );
+      toast.error(getStandardErrorMessage(error, "حذف گزارش انجام نشد"));
     },
   });
 }
@@ -81,9 +79,9 @@ export function DeleteReportModal({
 }) {
   return (
     <ConfirmDeleteModal
-      title={`Delete \u201c${title}\u201d?`}
-      detail="This cannot be undone."
-      confirmLabel="Delete report"
+      title={`گزارش «${title}» حذف شود؟`}
+      detail="این کار قابل بازگشت نیست."
+      confirmLabel="حذف گزارش"
       isPending={isPending}
       onClose={onClose}
       onConfirm={onConfirm}

@@ -17,10 +17,22 @@ export function ReportsList({
 }) {
   if (reports.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-base-300 px-4 py-6 text-sm text-base-content/60">
-        No reports yet. Run an OpenSEO skill such as seo-audit from Claude Code
-        or Codex and the report will appear here.
-      </p>
+      <div className="space-y-3 rounded-lg border border-dashed border-base-300 px-4 py-6 text-sm">
+        <p className="font-medium">
+          هنوز گزارشی برای این پروژه ذخیره نشده است.
+        </p>
+        <p className="text-base-content/70">
+          در گفت‌وگو با SAM درخواست کنید: «سایت همین پروژه را بررسی کن و نتیجه
+          را به‌صورت گزارش ذخیره کن.» گزارش‌های ذخیره‌شده اینجا قابل مشاهده‌اند.
+        </p>
+        <Link
+          to="/p/$projectId/sam"
+          params={{ projectId }}
+          className="btn btn-primary btn-sm"
+        >
+          گفت‌وگو با عامل همین پروژه
+        </Link>
+      </div>
     );
   }
 
@@ -30,11 +42,13 @@ export function ReportsList({
         <table className="table table-sm">
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Created by</th>
-              <th>Type</th>
-              <th>Updated</th>
-              <th></th>
+              <th>عنوان گزارش</th>
+              <th>سازنده</th>
+              <th>نوع</th>
+              <th>آخرین تغییر</th>
+              <th>
+                <span className="sr-only">عملیات</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -44,7 +58,7 @@ export function ReportsList({
                   <Link
                     to="/p/$projectId/reports/$reportId"
                     params={{ projectId, reportId: report.id }}
-                    className="link link-hover font-medium"
+                    className="link link-hover break-words font-medium"
                   >
                     {report.title}
                   </Link>
@@ -61,8 +75,8 @@ export function ReportsList({
                 <td className="whitespace-nowrap text-base-content/70">
                   {formatRelativeTime(report.updatedAt)}
                 </td>
-                <td className="w-10 text-right">
-                  <PortalMenu ariaLabel={`Actions for ${report.title}`}>
+                <td className="w-10 text-end">
+                  <PortalMenu ariaLabel={`عملیات گزارش ${report.title}`}>
                     {(close) => (
                       <li>
                         <button
@@ -73,7 +87,7 @@ export function ReportsList({
                           }}
                         >
                           <Trash2 className="size-3.5" />
-                          Delete
+                          حذف گزارش
                         </button>
                       </li>
                     )}
@@ -86,7 +100,8 @@ export function ReportsList({
       </div>
       {reports.length === REPORT_APP_LIST_LIMIT ? (
         <p className="text-xs text-base-content/60">
-          Showing the {REPORT_APP_LIST_LIMIT} most recent reports.
+          {REPORT_APP_LIST_LIMIT.toLocaleString("fa-IR")} گزارش اخیر نمایش داده
+          می‌شود.
         </p>
       ) : null}
     </div>

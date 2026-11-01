@@ -33,6 +33,7 @@ export function ProjectContentEditor({
   blog?: boolean;
 }) {
   const {
+    storageError,
     brief,
     setBrief,
     profile,
@@ -54,10 +55,14 @@ export function ProjectContentEditor({
   useEffect(() => {
     if (blog) return;
     const key = `openseo-article-import-${projectId}`;
-    const imported = sessionStorage.getItem(key);
-    if (!imported) return;
-    sessionStorage.removeItem(key);
-    setContent(imported);
+    try {
+      const imported = sessionStorage.getItem(key);
+      if (!imported) return;
+      sessionStorage.removeItem(key);
+      setContent(imported);
+    } catch {
+      // Restricted browser storage must not prevent manual article editing.
+    }
   }, [projectId, blog, setContent]);
   const [checkedTarget, setCheckedTarget] = useState<string | null>(null);
   const [research, setResearch] = useState<
@@ -187,7 +192,22 @@ export function ProjectContentEditor({
             </div>
           </div>
         </section>
-        {!targetPage && !wordpress.data?.connection && (
+        {wordpress.isError && (
+          <div role="alert" className="alert alert-warning text-sm">
+            <span>
+              وضعیت اتصال وردپرس دریافت نشد. پیش‌نویس را می‌توانید همین‌جا
+              بنویسید.
+            </span>
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => void wordpress.refetch()}
+            >
+              بررسی دوبارهٔ اتصال
+            </button>
+          </div>
+        )}
+        {!targetPage && wordpress.isSuccess && !wordpress.data?.connection && (
           <p className="alert alert-info text-sm">
             برای ارسال پیش‌نویس، مدیر پروژه باید{" "}
             <Link
@@ -360,10 +380,20 @@ export function ProjectContentEditor({
                 placeholder="<h2>عنوان بخش</h2><p>متن…</p>"
               />
             </label>
+            {storageError && (
+              <p
+                role="alert"
+                className="rounded-lg border border-warning/50 p-3 text-sm"
+              >
+                ذخیرهٔ خودکار روی این دستگاه انجام نشد. پیش از بستن صفحه، متن را
+                کپی کنید یا خروجی JSON بگیرید.
+              </p>
+            )}
             <p className="text-xs text-base-content/60">
-              متن روی همین دستگاه ذخیره می‌شود. فقط برچسب‌های سادهٔ مقاله برای
-              وردپرس پذیرفته می‌شوند. ذخیره به دست‌کم ۱۸۰ واژه و دو بخش با تیتر
-              متفاوت نیاز دارد؛ صحت و ارزش افزودهٔ متن را نیز بازبینی کنید.
+              ذخیرهٔ خودکار وابسته به فضای ذخیره‌سازی همین مرورگر است. فقط
+              برچسب‌های سادهٔ مقاله برای وردپرس پذیرفته می‌شوند. ذخیره به دست‌کم
+              ۱۸۰ واژه و دو بخش با تیتر متفاوت نیاز دارد؛ صحت و ارزش افزودهٔ متن
+              را نیز بازبینی کنید.
             </p>
             <ArticleMediaPanel
               projectId={projectId}
