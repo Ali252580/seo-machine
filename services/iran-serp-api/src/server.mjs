@@ -1,6 +1,10 @@
 import { createServer } from "node:http";
 import { config } from "./config.mjs";
 import { closeBrowser, scrapeGoogle } from "./google-scraper.mjs";
+import { isAuthorized, validateInput } from "./search-policy.mjs";
+
+if (!config.serviceSecret) throw new Error("SERVICE_SECRET is required");
+let activeSearches = 0;
 
 function json(response, status, body) {
   response.writeHead(status, {
@@ -20,13 +24,6 @@ async function readJson(request) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
-function isAuthorized(request) {
-  return (
-    !config.serviceSecret ||
-    request.headers.authorization === `Bearer ${config.serviceSecret}`
-  );
-}
-
 /** Minimal HTTP surface consumed by the Vercel application. */
 createServer(async (request, response) => {
   if (request.method === "GET" && request.url === "/health") {
@@ -35,30 +32,36 @@ createServer(async (request, response) => {
   if (request.method !== "POST" || request.url !== "/search") {
     return json(response, 404, { error: "Not found" });
   }
-  if (!isAuthorized(request)) {
+  if (!isAuthorized(config.serviceSecret, request.headers.authorization)) {
     return json(response, 401, { error: "Unauthorized" });
   }
 
+  let input;
   try {
-    const input = await readJson(request);
-    const query = typeof input.query === "string" ? input.query.trim() : "";
-    if (!query) return json(response, 400, { error: "query is required" });
-    const depth = Math.max(
-      10,
-      Math.min(config.maxDepth, Number(input.depth) || config.maxDepth),
-    );
-    const result = await scrapeGoogle({
-      query,
-      depth,
-      language: typeof input.language === "string" ? input.language : "fa",
-      device: input.device === "mobile" ? "mobile" : "desktop",
+    input = validateInput(await readJson(request));
+  } catch {
+    return json(response, 400, {
+      error:
+        "Invalid search parameters; use Iran/Tehran, desktop or mobile and depth 10-100",
     });
+  }
+  if (activeSearches >= 2) {
+    response.setHeader("Retry-After", "30");
+    return json(response, 429, {
+      error: "Search capacity reached; retry later",
+    });
+  }
+  activeSearches += 1;
+  try {
+    const result = await scrapeGoogle(input);
     return json(response, 200, result);
   } catch (error) {
     console.error(error);
     return json(response, 503, {
-      error: error instanceof Error ? error.message : "Google scraping failed",
+      error: "Google results could not be verified; retry later",
     });
+  } finally {
+    activeSearches -= 1;
   }
 }).listen(config.port, "0.0.0.0", () => {
   console.log(`Iran SERP API listening on ${config.port}`);

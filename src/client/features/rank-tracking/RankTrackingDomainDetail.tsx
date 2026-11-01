@@ -85,7 +85,12 @@ export function RankTrackingDomainDetail({
   );
   const [viewMode, setViewMode] = useState<"table" | "history">("table");
 
-  const { data: resultsData, isLoading: resultsLoading } = useQuery({
+  const {
+    data: resultsData,
+    isLoading: resultsLoading,
+    isError: resultsError,
+    refetch: retryResults,
+  } = useQuery({
     queryKey: ["rankTrackingResults", projectId, config.id, comparePeriod],
     queryFn: () =>
       getLatestRankResults({
@@ -310,7 +315,24 @@ export function RankTrackingDomainDetail({
 
         {/* Table */}
         <div className="p-4">
-          {effectiveViewMode === "history" ? (
+          {resultsError ? (
+            <div
+              role="alert"
+              className="rounded-lg border border-error/30 bg-error/5 p-5 text-sm"
+            >
+              <p>
+                دریافت رتبه‌ها انجام نشد. این خطا به معنی نبود کلمه یا افت رتبه
+                نیست.
+              </p>
+              <button
+                type="button"
+                className="btn btn-sm mt-3"
+                onClick={() => void retryResults()}
+              >
+                دریافت دوبارهٔ نتایج
+              </button>
+            </div>
+          ) : effectiveViewMode === "history" ? (
             <RankTrackingHistoryMatrix
               cells={matrixCells ?? []}
               isLoading={matrixLoading}

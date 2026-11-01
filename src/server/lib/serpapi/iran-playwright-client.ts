@@ -91,8 +91,14 @@ export async function fetchIranPlaywrightResults(
     );
   }
 
-  const parsed = iranPlaywrightResponseSchema.safeParse(await response.json());
-  if (!parsed.success) {
+  const parsed = iranPlaywrightResponseSchema.safeParse(
+    await response.json().catch(() => null),
+  );
+  if (
+    !parsed.success ||
+    parsed.data.search_metadata?.status !== "Success" ||
+    !parsed.data.organic_results
+  ) {
     throw new AppError(
       "UPSTREAM_UNAVAILABLE",
       "Iran Playwright rank service returned an invalid response",

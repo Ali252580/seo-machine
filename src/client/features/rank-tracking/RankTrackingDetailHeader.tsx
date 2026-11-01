@@ -41,19 +41,24 @@ export function RankTrackingDetailHeader({
 }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 px-4 pt-4 pb-3">
-      <div>
-        <h2 className="text-lg font-semibold">{config.domain}</h2>
+      <div className="min-w-0">
+        <h2 className="text-lg font-semibold break-all" dir="ltr">
+          {config.domain}
+        </h2>
         <p className="text-xs text-base-content/60">
           {config.locationName
             ? formatLocationLabel(config.locationName, 2)
-            : (LOCATIONS[config.locationCode] ?? "US")}{" "}
+            : (LOCATIONS[config.locationCode] ?? "موقعیت نامشخص")}{" "}
           &middot; {devicesLabel(config.devices)} &middot;{" "}
           {scheduleLabel(config.scheduleInterval)}
           {run?.lastCheckedAt && (
             <>
               {" "}
               &middot; آخرین بررسی:{" "}
-              {new Date(run.lastCheckedAt).toLocaleDateString()}
+              {new Date(run.lastCheckedAt).toLocaleString("fa-IR", {
+                timeZone: "Asia/Tehran",
+              })}{" "}
+              (تهران)
             </>
           )}
         </p>
@@ -80,6 +85,7 @@ export function RankTrackingDetailHeader({
         <select
           className="select select-bordered select-sm text-xs w-auto"
           title="دوره مقایسه"
+          aria-label="دورهٔ مقایسهٔ رتبه‌ها"
           value={comparePeriod}
           onChange={(e) => {
             if (isComparePeriod(e.target.value))

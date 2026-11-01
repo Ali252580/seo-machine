@@ -1,21 +1,21 @@
 import { chromium } from "playwright";
 import { config } from "./config.mjs";
+import { validatePage } from "./search-policy.mjs";
 
 let browserPromise;
 
 function getBrowser() {
-  browserPromise ??= chromium.launch({
-    headless: true,
-    args: ["--disable-dev-shm-usage", "--no-sandbox"],
-    proxy: config.proxy,
-  });
+  browserPromise ??= chromium
+    .launch({
+      headless: true,
+      args: ["--disable-dev-shm-usage", "--no-sandbox"],
+      proxy: config.proxy,
+    })
+    .catch((error) => {
+      browserPromise = undefined;
+      throw error;
+    });
   return browserPromise;
-}
-
-function normalizeDigits(value) {
-  return value
-    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
-    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 }
 
 /** Scrapes Google result pages from a browser located in Iran. */
@@ -27,7 +27,9 @@ export async function scrapeGoogle({ query, language, device, depth }) {
     timezoneId: "Asia/Tehran",
     geolocation: { latitude: 35.69439, longitude: 51.42151 },
     permissions: ["geolocation"],
-    viewport: mobile ? { width: 390, height: 844 } : { width: 1365, height: 900 },
+    viewport: mobile
+      ? { width: 390, height: 844 }
+      : { width: 1365, height: 900 },
     userAgent: mobile
       ? "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36"
       : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
@@ -43,8 +45,11 @@ export async function scrapeGoogle({ query, language, device, depth }) {
   const organicResults = [];
   const seen = new Set();
   const features = new Set(["organic"]);
-  let totalResults;
   let pagesUsed = 0;
+  // Bound the whole run below the application's 45-second request deadline.
+  const deadline = setTimeout(() => {
+    void context.close().catch(() => {});
+  }, 40_000);
 
   try {
     for (let start = 0; start < depth; start += 10) {
@@ -57,7 +62,7 @@ export async function scrapeGoogle({ query, language, device, depth }) {
       url.searchParams.set("pws", "0");
       url.searchParams.set("filter", "0");
 
-      await page.goto(url.toString(), {
+      const response = await page.goto(url.toString(), {
         waitUntil: "domcontentloaded",
         timeout: 40_000,
       });
@@ -65,7 +70,11 @@ export async function scrapeGoogle({ query, language, device, depth }) {
       const blocked = await page
         .locator("#captcha-form, form[action*='sorry']")
         .count();
-      if (blocked) {
+      if (
+        blocked ||
+        new URL(page.url()).pathname.startsWith("/sorry") ||
+        !response?.ok()
+      ) {
         throw new Error(
           "Google blocked this browser IP; configure an Iranian proxy",
         );
@@ -76,6 +85,8 @@ export async function scrapeGoogle({ query, language, device, depth }) {
         for (const anchor of document.querySelectorAll("#search a")) {
           const heading = anchor.querySelector("h3");
           if (!heading || !anchor.href) continue;
+          if (anchor.closest("[data-text-ad], #tads, #bottomads")) continue;
+          if (!/^https?:/.test(anchor.href)) continue;
           rows.push({
             title: heading.textContent?.trim() || "",
             link: anchor.href,
@@ -85,11 +96,9 @@ export async function scrapeGoogle({ query, language, device, depth }) {
           rows,
           stats: document.querySelector("#result-stats")?.textContent || "",
           ads: document.querySelectorAll("[data-text-ad], [data-rw]").length,
-          shopping: document.querySelectorAll("[data-docid][data-pcu]")
+          shopping: document.querySelectorAll("[data-docid][data-pcu]").length,
+          local: document.querySelectorAll("[data-local-attribute], [data-cid]")
             .length,
-          local: document.querySelectorAll(
-            "[data-local-attribute], [data-cid]",
-          ).length,
           questions: document.querySelectorAll("[jsname='Cpkphb']").length,
         };
       });
@@ -98,10 +107,6 @@ export async function scrapeGoogle({ query, language, device, depth }) {
       if (pageData.shopping) features.add("shopping");
       if (pageData.local) features.add("local");
       if (pageData.questions) features.add("people_also_ask");
-      if (totalResults === undefined && pageData.stats) {
-        const digits = normalizeDigits(pageData.stats).replace(/[^0-9]/g, "");
-        if (digits) totalResults = Number(digits);
-      }
 
       let newRows = 0;
       for (const row of pageData.rows) {
@@ -115,15 +120,26 @@ export async function scrapeGoogle({ query, language, device, depth }) {
         newRows += 1;
         if (organicResults.length >= depth) break;
       }
-      if (organicResults.length >= depth || newRows === 0) break;
+      validatePage({
+        status: response.status(),
+        blocked: false,
+        rows: pageData.rows.length,
+        newRows,
+      });
+      if (organicResults.length >= depth) break;
     }
   } finally {
+    clearTimeout(deadline);
     await context.close();
   }
 
   return {
-    search_metadata: { status: "Success" },
-    search_information: { total_results: totalResults },
+    search_metadata: {
+      status: "Success",
+      checked_at: new Date().toISOString(),
+      location: "Tehran,Tehran Province,Iran",
+    },
+    search_information: {},
     organic_results: organicResults,
     serp_features: [...features],
     pages_used: pagesUsed,

@@ -44,7 +44,7 @@ export function CheckConfirmModal({
       </div>
 
       <button
-        className="flex w-full items-center gap-4 rounded-xl border-2 border-base-300 p-4 text-left transition-colors hover:border-primary hover:bg-primary/5"
+        className="flex w-full items-center gap-4 rounded-xl border-2 border-base-300 p-4 text-start transition-colors hover:border-primary hover:bg-primary/5"
         onClick={onRunNow}
         disabled={isPending}
       >
@@ -52,7 +52,9 @@ export function CheckConfirmModal({
           <Zap className="size-5 text-primary" />
         </div>
         <div className="flex-1">
-          <p className="font-medium">اجرای فوری</p>
+          <p className="font-medium" aria-live="polite">
+            {isPending ? "در حال شروع بررسی…" : "شروع بررسی رتبه‌ها"}
+          </p>
           <p className="text-xs text-base-content/60">
             زمان تقریبی:
             {liveTime < 60
