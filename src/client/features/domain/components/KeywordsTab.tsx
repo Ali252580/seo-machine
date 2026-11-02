@@ -1,3 +1,4 @@
+import { copyTextToClipboard } from "@/client/lib/clipboard";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Copy, Download, FileSpreadsheet, Save, Sheet } from "lucide-react";
@@ -223,8 +224,8 @@ export function KeywordsTab({
   );
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(JSON.stringify(rows, null, 2));
-    toast.success("Copied data");
+    if (!(await copyTextToClipboard(JSON.stringify(rows, null, 2)))) return;
+    toast.success("اطلاعات کپی شد");
   };
   const handleExportToSheets = () => {
     void exportTableToSheets({

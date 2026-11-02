@@ -1,3 +1,4 @@
+import { copyTextToClipboard } from "@/client/lib/clipboard";
 import { useMemo, useState } from "react";
 import { Copy, Download, Loader2 } from "lucide-react";
 import { reverse, sortBy } from "remeda";
@@ -51,7 +52,13 @@ export function KeywordTrendModal({
 }) {
   const [sinceDays, setSinceDays] = useState(730);
 
-  const { data: history, isLoading } = useQuery({
+  const {
+    data: history,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: [
       "rankKeywordHistory",
       projectId,
@@ -121,9 +128,9 @@ export function KeywordTrendModal({
       csvChange(r.position, r.previousPosition),
     ]);
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     const headers = ["Date", "Device", "Position", "Change vs previous"];
-    void navigator.clipboard.writeText(buildCsv(headers, exportRows()));
+    if (!(await copyTextToClipboard(buildCsv(headers, exportRows())))) return;
     toast.success("در کلیپ‌بورد کپی شد");
     captureClientEvent("rank_tracking:keyword_trend_copy");
   };
@@ -152,8 +159,8 @@ export function KeywordTrendModal({
             {domain} &middot;{" "}
             {locationName
               ? formatLocationLabel(locationName, 2)
-              : (LOCATIONS[locationCode] ?? "US")}{" "}
-            &middot; Position over time
+              : (LOCATIONS[locationCode] ?? "موقعیت نامشخص")}{" "}
+            &middot; تغییرات رتبه در زمان
           </p>
         </div>
         <TrendRangeToggle value={sinceDays} onChange={setSinceDays} />
@@ -162,6 +169,18 @@ export function KeywordTrendModal({
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="size-5 animate-spin text-base-content/50" />
+        </div>
+      ) : isError ? (
+        <div role="alert" className="alert alert-error">
+          <span>تاریخچه دریافت نشد؛ این خطا به معنی نبود رتبه نیست.</span>
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={isFetching}
+            onClick={() => void refetch()}
+          >
+            تلاش دوباره
+          </button>
         </div>
       ) : maxPerDevice <= 1 ? (
         <EmptyState count={maxPerDevice} />
@@ -185,14 +204,14 @@ export function KeywordTrendModal({
           <div className="flex items-center justify-end gap-2">
             <button className="btn btn-ghost btn-xs gap-1" onClick={handleCopy}>
               <Copy className="size-3.5" />
-              Copy
+              کپی
             </button>
             <button
               className="btn btn-ghost btn-xs gap-1"
               onClick={handleExport}
             >
               <Download className="size-3.5" />
-              Export CSV
+              دریافت CSV
             </button>
           </div>
 
@@ -203,7 +222,7 @@ export function KeywordTrendModal({
                   <th>تاریخ</th>
                   {devices.length > 1 && <th>دستگاه</th>}
                   <th>رتبه</th>
-                  <th>Δ vs previous check</th>
+                  <th>تغییر نسبت به بررسی قبل</th>
                 </tr>
               </thead>
               <tbody>
@@ -217,7 +236,9 @@ export function KeywordTrendModal({
                   return (
                     <tr key={`${r.device}-${r.checkedAt}-${idx}`}>
                       <td className="whitespace-nowrap text-xs">
-                        {new Date(r.checkedAt).toLocaleDateString()}
+                        {new Date(r.checkedAt).toLocaleString("fa-IR", {
+                          timeZone: "Asia/Tehran",
+                        })}
                       </td>
                       {devices.length > 1 && (
                         <td className="text-xs">
@@ -227,7 +248,7 @@ export function KeywordTrendModal({
                       <td>
                         {r.position === null ? (
                           <span className="text-base-content/40 text-xs">
-                            Not in top {serpDepth}
+                            خارج از {serpDepth} نتیجهٔ بررسی‌شده
                           </span>
                         ) : (
                           <span className="font-mono text-sm">
@@ -271,7 +292,7 @@ export function KeywordTrendModal({
 
       <div className="flex justify-end">
         <button className="btn btn-ghost btn-sm" onClick={onClose}>
-          Close
+          بستن
         </button>
       </div>
     </Modal>

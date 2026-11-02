@@ -1,3 +1,4 @@
+import { copyTextToClipboard } from "@/client/lib/clipboard";
 import { useCallback, useMemo, useState } from "react";
 import { Copy, Download, FileSpreadsheet, Sheet } from "lucide-react";
 import { toast } from "sonner";
@@ -172,8 +173,8 @@ export function PagesTab({
   const fileNamePrefix = target.replaceAll("/", "-");
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(JSON.stringify(rows, null, 2));
-    toast.success("Copied data");
+    if (!(await copyTextToClipboard(JSON.stringify(rows, null, 2)))) return;
+    toast.success("اطلاعات کپی شد");
   };
   const handleExportToSheets = () => {
     void exportTableToSheets({

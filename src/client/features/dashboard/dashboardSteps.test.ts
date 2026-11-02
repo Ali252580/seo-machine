@@ -14,12 +14,11 @@ const fresh: DashboardActivation = {
 };
 
 describe("dashboard checklist", () => {
-  it("starts with the website and has no SAM chat step", () => {
+  it("starts with the website and does not require external agent setup", () => {
     expect(setupSteps.map((step) => step.id)).toEqual([
       "domain",
       "project",
       "competitor",
-      "mcp",
       "gsc",
       "team",
     ]);

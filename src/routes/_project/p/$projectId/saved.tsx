@@ -1,3 +1,4 @@
+import { copyTextToClipboard } from "@/client/lib/clipboard";
 import { createFileRoute } from "@tanstack/react-router";
 // Aliased: `SavedKeywordsPage` has a local `sort` const (the saved-keyword
 // sort key) that would otherwise shadow this import at the call site.
@@ -108,7 +109,7 @@ function SavedKeywordsPage() {
     [appliedFilters, order, page, pageSize, projectId, selectedTagIds, sort],
   );
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["savedKeywords", projectId, queryInput],
     queryFn: () => getSavedKeywords({ data: queryInput }),
     placeholderData: (previous, previousQuery) =>
@@ -237,6 +238,27 @@ function SavedKeywordsPage() {
     setPage(1);
   };
 
+  if (isError) {
+    return (
+      <main className="p-4 md:p-6" dir="rtl">
+        <h1 className="mb-4 text-2xl font-semibold">کلمات ذخیره‌شده</h1>
+        <div role="alert" className="alert alert-error">
+          <span>
+            دریافت کلمات انجام نشد. این پیام به معنی حذف‌شدن کلمات شما نیست.
+          </span>
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={isFetching}
+            onClick={() => void refetch()}
+          >
+            تلاش دوباره
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <div className="overflow-auto px-4 py-4 pb-24 md:px-6 md:py-6 md:pb-8">
       <div className="mx-auto max-w-6xl space-y-4">
@@ -310,10 +332,13 @@ function SavedKeywordsPage() {
         <SavedKeywordsBulkActionBar
           selectedCount={selectedCount}
           exportingSelection={exporter.exportingSelection}
-          onCopy={() => {
-            void navigator.clipboard.writeText(
-              selectedRows.map((row) => row.keyword).join("\n"),
-            );
+          onCopy={async () => {
+            if (
+              !(await copyTextToClipboard(
+                selectedRows.map((row) => row.keyword).join("\n"),
+              ))
+            )
+              return;
             toast.success(
               `${selectedCount} keyword${selectedCount !== 1 ? "s" : ""} copied`,
             );

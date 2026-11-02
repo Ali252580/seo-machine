@@ -1,9 +1,11 @@
+import { copyTextToClipboard } from "@/client/lib/clipboard";
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || "seomachine@info.ir";
+const SUPPORT_EMAIL =
+  import.meta.env.VITE_SUPPORT_EMAIL || "seomachine@info.ir";
 const DISCORD_URL = "https://discord.gg/c9uGs3cFXr";
 const GITHUB_URL = "https://github.com/every-app/open-seo";
 
@@ -15,7 +17,7 @@ function SupportPage() {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(SUPPORT_EMAIL);
+    if (!(await copyTextToClipboard(SUPPORT_EMAIL))) return;
     toast.success("Email copied to clipboard");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

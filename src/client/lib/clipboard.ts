@@ -1,4 +1,18 @@
 import { normalizeExportValue, type CsvValue, type ExportValue } from "./csv";
+import { toast } from "sonner";
+
+/** Callers show success only after browser permission and the write succeed. */
+export async function copyTextToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    toast.error(
+      "کپی انجام نشد. دسترسی کلیپ‌بورد مرورگر را بررسی کنید یا متن را دستی انتخاب کنید.",
+    );
+    return false;
+  }
+}
 
 export const GOOGLE_SHEETS_NEW_URL = "https://sheets.new";
 

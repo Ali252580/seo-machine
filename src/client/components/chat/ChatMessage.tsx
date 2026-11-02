@@ -1,3 +1,4 @@
+import { copyTextToClipboard } from "@/client/lib/clipboard";
 import { type UIMessage } from "ai";
 import { useState } from "react";
 import {
@@ -86,8 +87,8 @@ function CopyButton({ message }: { message: UIMessage }) {
       aria-label="Copy message"
       title="Copy"
       className="btn btn-ghost btn-xs btn-square text-base-content/40 hover:text-base-content"
-      onClick={() => {
-        void navigator.clipboard.writeText(messageText(message));
+      onClick={async () => {
+        if (!(await copyTextToClipboard(messageText(message)))) return;
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
@@ -111,7 +112,7 @@ function MessageActions({
 }) {
   return (
     <div
-      className={`flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 ${
+      className={`flex gap-0.5 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 ${
         message.role === "user" ? "justify-end" : ""
       }`}
     >

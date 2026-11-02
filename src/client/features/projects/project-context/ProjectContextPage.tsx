@@ -72,13 +72,21 @@ export function ProjectContextPage({ projectId }: { projectId: string }) {
 
   if (contextQuery.isError) {
     return (
-      <div className="alert alert-error">
+      <div className="alert alert-error" role="alert">
         <span className="text-sm">
           {getStandardErrorMessage(
             contextQuery.error,
-            "Failed to load project context",
+            "دریافت زمینهٔ پروژه انجام نشد",
           )}
         </span>
+        <button
+          type="button"
+          className="btn btn-sm"
+          disabled={contextQuery.isFetching}
+          onClick={() => void contextQuery.refetch()}
+        >
+          تلاش دوباره
+        </button>
       </div>
     );
   }

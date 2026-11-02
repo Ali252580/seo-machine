@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import {
   articleHtml,
   articlePreviewHtml,
@@ -49,7 +50,17 @@ export function ArticleChatPreview({
           type="button"
           className="btn btn-primary btn-sm"
           onClick={() => {
-            sessionStorage.setItem(`openseo-article-import-${projectId}`, html);
+            try {
+              sessionStorage.setItem(
+                `openseo-article-import-${projectId}`,
+                html,
+              );
+            } catch {
+              toast.error(
+                "انتقال متن انجام نشد. از بخش نمایش HTML، متن را کپی و در ویرایشگر وارد کنید.",
+              );
+              return;
+            }
             void navigate({
               to: "/p/$projectId/content",
               params: { projectId },

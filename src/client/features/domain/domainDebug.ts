@@ -4,10 +4,14 @@ type DebugPayload = Record<string, unknown>;
 
 function isDomainDebugEnabled() {
   if (typeof window === "undefined") return false;
-  return (
-    window.localStorage.getItem("debug:domain-overview") === "1" ||
-    new URLSearchParams(window.location.search).get("debugDomain") === "1"
-  );
+  if (new URLSearchParams(window.location.search).get("debugDomain") === "1")
+    return true;
+  try {
+    return window.localStorage.getItem("debug:domain-overview") === "1";
+  } catch {
+    // Optional diagnostics must not break the feature when storage is denied.
+    return false;
+  }
 }
 
 export function debugDomain(event: string, payload?: DebugPayload) {
