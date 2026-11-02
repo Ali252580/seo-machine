@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
 import { ArticlePreview } from "@/client/features/content/ArticlePreview";
+import { ArticleTextEditor } from "./ArticleTextEditor";
 import { ArticleMediaPanel } from "@/client/features/content/ArticleMediaPanel";
 import { useArticleDraft } from "@/client/features/content/useArticleDraft";
 import { ContentEditorHeader } from "@/client/features/content/ContentEditorHeader";
@@ -386,17 +387,11 @@ export function ProjectContentEditor({
                 </ul>
               </div>
             )}
-            <label className="grid gap-1 text-sm">
-              متن مقاله (HTML ساده)
-              <textarea
-                className="textarea textarea-bordered min-h-96 w-full font-mono text-sm"
-                dir="rtl"
-                disabled={generate.isPending}
-                value={content}
-                onChange={(event) => setContent(event.target.value)}
-                placeholder="<h2>عنوان بخش</h2><p>متن…</p>"
-              />
-            </label>
+            <ArticleTextEditor
+              value={content}
+              onChange={setContent}
+              disabled={generate.isPending}
+            />
             {storageError && (
               <p
                 role="alert"
