@@ -1,7 +1,7 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { spawnSync } from "node:child_process";
+import { join, resolve } from "node:path";
+import { execFileSync, spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 import { z } from "zod";
@@ -21,6 +21,16 @@ const script = workflow.jobs.preview.steps.find(
   (step) => step.name === "Verify Access protection",
 )?.run;
 if (!script) throw new Error("Preview Access verification step is missing");
+
+// Windows' system bash is a WSL launcher, not the Git Bash used by this fixture.
+const bash =
+  process.platform === "win32"
+    ? resolve(
+        execFileSync("git", ["--exec-path"], { encoding: "utf8" }).trim(),
+        "../../..",
+        "bin/bash.exe",
+      )
+    : "bash";
 
 const access = "302 https://example.cloudflareaccess.com/cdn-cgi/access/login";
 
@@ -43,7 +53,7 @@ describe("preview Access verification", () => {
       const responseFile = join(directory, "responses");
       writeFileSync(responseFile, responses.join("\n") + "\n");
       const result = spawnSync(
-        "bash",
+        bash,
         [
           "-c",
           // A shared file descriptor advances even inside curl's command substitution.
@@ -59,7 +69,7 @@ ${script}`,
             ...process.env,
             PREVIEW_URL: "https://preview.example.invalid",
             STAGE: "test",
-            PREVIEW_RESPONSES: responseFile,
+            PREVIEW_RESPONSES: responseFile.replaceAll("\\", "/"),
           },
         },
       );

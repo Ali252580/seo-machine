@@ -1,6 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 import { createClient, type Client } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import {
@@ -17,21 +15,28 @@ import type * as ServiceModule from "./GoogleAccountService";
 
 vi.mock("cloudflare:workers", () => ({ env: {} }));
 let client: Client;
-const directory = mkdtempSync(join(tmpdir(), "google-account-removal-"));
 let service: typeof ServiceModule.GoogleAccountService;
 type Build = Parameters<typeof runBatch>[0];
 
 beforeAll(async () => {
-  client = createClient({ url: `file:${join(directory, "test.db")}` });
+  client = createClient({ url: "file::memory:" });
   const testDb = drizzle(client);
   vi.doMock("@/db", () => ({ db: testDb }));
   vi.doMock("@/db/runBatch", () => ({
     runBatch: async (build: Build) => {
-      await testDb.transaction(async (tx) => {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- real SQLite Drizzle executor has the same query-builder surface
-        for (const statement of build(tx as unknown as Parameters<Build>[0]))
+      // Keep the transaction on the same in-memory connection.
+      await client.execute("BEGIN");
+      try {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- test executor uses the same query builder surface
+        for (const statement of build(
+          testDb as unknown as Parameters<Build>[0],
+        ))
           await statement;
-      });
+        await client.execute("COMMIT");
+      } catch (error) {
+        await client.execute("ROLLBACK");
+        throw error;
+      }
     },
   }));
   await client.executeMultiple(`
@@ -70,10 +75,7 @@ beforeAll(async () => {
   ({ GoogleAccountService: service } = await import("./GoogleAccountService"));
 });
 
-afterAll(() => {
-  client.close();
-  rmSync(directory, { recursive: true });
-});
+afterAll(() => client.close());
 beforeEach(async () => {
   await client.executeMultiple(
     "DROP TRIGGER IF EXISTS fail_remove; DELETE FROM gsc_connections; DELETE FROM ga4_connections; DELETE FROM account;",

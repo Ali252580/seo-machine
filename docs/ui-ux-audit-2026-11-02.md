@@ -36,9 +36,27 @@ After fixes, the targeted client/domain/content/rank/dashboard suite passed all
 85 tests in 20 files. New regression tests first reproduced denied clipboard and
 blocked-storage failures. TypeScript validation passed.
 
-The full suite is not green. Remaining baseline failures above were not hidden,
-skipped, or treated as proof that production features fail. They need separate
-billing-fixture and runtime investigation.
+## Follow-up verification
+
+The follow-up full run passed **1,495 tests in 201 files** using
+`node node_modules/vitest/vitest.mjs run --maxWorkers=4 --reporter=dot`.
+No test suites were skipped or timeouts increased. Four workers avoid the import
+contention observed during the initial unrestricted run on this Windows host.
+
+- Replaced obsolete Autumn assertions with SQLite wallet checks: repeat customer
+  setup preserves spent credits, organizations stay isolated, depleted wallets
+  are denied and database failures do not grant access.
+- Fixed a production bug found by the new test: telemetry failure no longer
+  replaces the depleted-credit response used by SAM and image generation.
+- Updated provider and rank-workflow mocks to the current wallet interface;
+  provider tests still cover metering billed failures and rejecting calls before
+  execution when credits are exhausted.
+- Google removal tests use one in-memory SQLite connection, including explicit
+  transaction commit/rollback, avoiding native file-handle cleanup on Windows.
+- Preview Access shell tests use Git Bash on Windows rather than the system WSL
+  launcher. Access checks themselves remain unchanged.
+- Prompt-explorer fixtures now include the runtime environment export.
+- MCP OAuth tests passed in the full run without changing their assertions.
 
 ## Not verified
 

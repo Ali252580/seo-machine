@@ -67,6 +67,9 @@ export async function checkUsageCreditsDepleted(
         project_id: customer.projectId,
         monthly_remaining: balance,
       },
+    }).catch(() => {
+      // Telemetry must not replace the wallet's depleted-credit response.
+      console.warn("billing credit-gate analytics unavailable");
     });
   }
   return { depleted, monthlyRemaining: balance };

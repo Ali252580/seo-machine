@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   updateRun: vi.fn(),
   updateConfig: vi.fn(),
   getSnapshotsForRun: vi.fn(),
-  autumnCheck: vi.fn(),
+  creditBalance: vi.fn(),
   createRankTrackingClient: vi.fn(),
   runLiveCheck: vi.fn(),
   failRunIfActive: vi.fn(),
@@ -51,8 +51,8 @@ vi.mock("@/server/lib/serpapi/client", () => ({
 vi.mock("@/server/lib/posthog", () => ({
   captureServerEvent: mocks.captureServerEvent,
 }));
-vi.mock("@/server/billing/autumn", () => ({
-  autumn: { check: mocks.autumnCheck },
+vi.mock("@/server/billing/subscription", () => ({
+  getCreditBalance: mocks.creditBalance,
 }));
 vi.mock("@/server/lib/runtime-env", () => ({
   isHostedServerAuthMode: mocks.isHostedServerAuthMode,
@@ -75,7 +75,7 @@ describe("rank check workflow credit ceiling", () => {
     mocks.getRunById.mockResolvedValue(activeRun);
     mocks.updateRun.mockResolvedValue(undefined);
     mocks.isHostedServerAuthMode.mockResolvedValue(true);
-    mocks.autumnCheck.mockResolvedValue({ balance: { remaining: 1_000 } });
+    mocks.creditBalance.mockResolvedValue(1_000);
   });
 
   it("rejects a keyword-list race before balance or provider calls", async () => {
@@ -113,7 +113,7 @@ describe("rank check workflow credit ceiling", () => {
       ),
     ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
 
-    expect(mocks.autumnCheck).not.toHaveBeenCalled();
+    expect(mocks.creditBalance).not.toHaveBeenCalled();
     expect(mocks.createRankTrackingClient).not.toHaveBeenCalled();
     expect(mocks.runLiveCheck).not.toHaveBeenCalled();
   });
@@ -137,7 +137,7 @@ describe("rank check workflow credit ceiling", () => {
     });
 
     expect(result.keywords).toHaveLength(4);
-    expect(mocks.autumnCheck).toHaveBeenCalledTimes(2);
+    expect(mocks.creditBalance).toHaveBeenCalledTimes(1);
   });
 
   it("preserves callers that do not provide a ceiling", async () => {
@@ -159,7 +159,7 @@ describe("rank check workflow credit ceiling", () => {
     });
 
     expect(result.keywords).toHaveLength(5);
-    expect(mocks.autumnCheck).not.toHaveBeenCalled();
+    expect(mocks.creditBalance).not.toHaveBeenCalled();
   });
 });
 
@@ -181,7 +181,7 @@ describe("rank check finalization", () => {
     mocks.getSnapshotsForRun.mockResolvedValue([]);
     mocks.updateRun.mockResolvedValue(undefined);
     mocks.isHostedServerAuthMode.mockResolvedValue(true);
-    mocks.autumnCheck.mockResolvedValue({ balance: { remaining: 1_000 } });
+    mocks.creditBalance.mockResolvedValue(1_000);
   });
 
   it("fails a run where no keyword produced a snapshot, keeping the recorded reason", async () => {

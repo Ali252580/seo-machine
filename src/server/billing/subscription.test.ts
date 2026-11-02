@@ -1,197 +1,109 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  AUTUMN_PAID_PLAN_FEATURE_ID,
-  AUTUMN_SEO_DATA_BALANCE_FEATURE_ID,
-  AUTUMN_SEO_DATA_TOPUP_BALANCE_FEATURE_ID,
-} from "@/shared/billing";
+import type { DatabaseSync } from "node:sqlite";
+import { afterAll, beforeEach, expect, it, vi } from "vitest";
 
-const { checkMock, getOrCreateMock, kvGetMock, kvPutMock } = vi.hoisted(() => ({
-  checkMock: vi.fn(),
-  getOrCreateMock: vi.fn(),
-  kvGetMock: vi.fn(),
-  kvPutMock: vi.fn(),
+const state = vi.hoisted(() => ({
+  sqlite: null as DatabaseSync | null,
 }));
-
-vi.mock("cloudflare:workers", () => ({
-  env: { KV: { get: kvGetMock, put: kvPutMock } },
-}));
-
-vi.mock("@/server/billing/autumn", () => ({
-  autumn: {
-    check: checkMock,
-    customers: {
-      getOrCreate: getOrCreateMock,
-    },
-  },
-}));
-
-vi.mock("@/server/lib/runtime-env", () => ({
-  isHostedServerAuthMode: vi.fn(),
-}));
-
-// subscription.ts now imports posthog (for trackUsageCreditSpend); stub it so
-// the test doesn't pull in the cloudflare:workers runtime it depends on.
+vi.mock("@/db", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const { drizzle } = await import("drizzle-orm/sqlite-proxy");
+  const sqlite = new DatabaseSync(":memory:");
+  state.sqlite = sqlite;
+  return {
+    db: drizzle(async (query, params, method) => {
+      const statement = sqlite.prepare(query);
+      statement.setReturnArrays(true);
+      if (method === "run") {
+        statement.run(...params);
+        return { rows: [] };
+      }
+      return { rows: statement.all(...params) };
+    }),
+  };
+});
+vi.mock("@/db/schema", async () => import("@/db/billing.schema"));
+vi.mock("@/db/runBatch", () => ({ runBatch: vi.fn() }));
 vi.mock("@/server/lib/posthog", () => ({
-  captureServerEvent: vi.fn(),
+  captureServerEvent: vi.fn().mockResolvedValue(undefined),
 }));
-
 import {
   assertUsageCreditsAvailable,
   customerHasPaidPlan,
+  customerHasManagedAccess,
+  getCreditBalance,
   getOrCreateOrganizationCustomer,
+  checkUsageCreditsDepleted,
 } from "./subscription";
-
-describe("subscription billing", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    kvGetMock.mockResolvedValue(null);
-    kvPutMock.mockResolvedValue(undefined);
+import { captureServerEvent } from "@/server/lib/posthog";
+const customer = {
+  organizationId: "first",
+  userId: "u",
+  userEmail: "u@example.com",
+};
+beforeEach(() => {
+  vi.mocked(captureServerEvent).mockReset().mockResolvedValue(undefined);
+  state.sqlite!.exec(`DROP TABLE IF EXISTS billing_customer_status;
+  CREATE TABLE billing_customer_status (
+    organization_id TEXT PRIMARY KEY, is_paying INTEGER NOT NULL DEFAULT 0,
+    paid_plan_id TEXT, paid_plan_status TEXT, credit_balance INTEGER NOT NULL DEFAULT 1000,
+    customer_json TEXT NOT NULL, synced_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );`);
+});
+afterAll(() => state.sqlite!.close());
+it("creates one wallet and preserves spent credits when ensuring the same customer again", async () => {
+  expect(await getOrCreateOrganizationCustomer(customer)).toEqual({
+    id: "first",
   });
-
-  afterEach(() => {
-    vi.useRealTimers();
+  expect(await getCreditBalance("first")).toBe(1000);
+  state.sqlite!.exec("UPDATE billing_customer_status SET credit_balance=25");
+  await getOrCreateOrganizationCustomer(customer);
+  expect(await getCreditBalance("first")).toBe(25);
+  expect(
+    state
+      .sqlite!.prepare("SELECT COUNT(*) AS n FROM billing_customer_status")
+      .get(),
+  ).toMatchObject({ n: 1 });
+});
+it("does not read another organization's wallet", async () => {
+  await getOrCreateOrganizationCustomer(customer);
+  expect(await customerHasPaidPlan("first")).toBe(true);
+  expect(await customerHasPaidPlan("second")).toBe(false);
+  expect(await getCreditBalance("second")).toBe(0);
+  await expect(assertUsageCreditsAvailable("second")).rejects.toMatchObject({
+    code: "INSUFFICIENT_CREDITS",
   });
-
-  it("checks the paid plan entitlement", async () => {
-    checkMock.mockResolvedValue({ allowed: true });
-
-    await expect(customerHasPaidPlan("org_123")).resolves.toBe(true);
-
-    expect(checkMock).toHaveBeenCalledWith({
-      customerId: "org_123",
-      featureId: AUTUMN_PAID_PLAN_FEATURE_ID,
+});
+it.each([0, -1])(
+  "rejects exhausted balance %s while preserving managed access",
+  async (balance) => {
+    await getOrCreateOrganizationCustomer(customer);
+    state
+      .sqlite!.prepare("UPDATE billing_customer_status SET credit_balance=?")
+      .run(balance);
+    expect(await customerHasPaidPlan("first")).toBe(false);
+    expect(await customerHasManagedAccess("first")).toBe(true);
+    await expect(assertUsageCreditsAvailable("first")).rejects.toMatchObject({
+      code: "INSUFFICIENT_CREDITS",
     });
+  },
+);
+it("returns current positive credit balance", async () => {
+  await getOrCreateOrganizationCustomer(customer);
+  await expect(assertUsageCreditsAvailable("first")).resolves.toEqual({
+    monthlyRemaining: 1000,
   });
-
-  it("returns false without retrying when org lacks paid plan", async () => {
-    checkMock.mockResolvedValue({ allowed: false });
-
-    await expect(customerHasPaidPlan("org_123")).resolves.toBe(false);
-    expect(checkMock).toHaveBeenCalledTimes(1);
+});
+it("keeps the depleted-credit result when telemetry is unavailable", async () => {
+  vi.mocked(captureServerEvent).mockRejectedValueOnce(
+    new Error("telemetry offline"),
+  );
+  await expect(checkUsageCreditsDepleted(customer)).resolves.toEqual({
+    depleted: true,
+    monthlyRemaining: 0,
   });
-
-  it("recovers from a degraded negative read when retryDenied is set", async () => {
-    vi.useFakeTimers();
-    checkMock
-      .mockResolvedValueOnce({ allowed: false })
-      .mockResolvedValueOnce({ allowed: true });
-
-    const result = customerHasPaidPlan("org_123", { retryDenied: true });
-    await vi.runAllTimersAsync();
-
-    await expect(result).resolves.toBe(true);
-    expect(checkMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("retries a missing monthly balance once", async () => {
-    vi.useFakeTimers();
-    let monthlyChecks = 0;
-    checkMock.mockImplementation(
-      async ({ featureId }: { featureId: string }) => {
-        if (featureId === AUTUMN_SEO_DATA_TOPUP_BALANCE_FEATURE_ID) {
-          return { balance: null };
-        }
-        if (featureId === AUTUMN_SEO_DATA_BALANCE_FEATURE_ID) {
-          monthlyChecks += 1;
-          return monthlyChecks === 1
-            ? { balance: null }
-            : { balance: { remaining: 250 } };
-        }
-        throw new Error(`Unexpected feature ${featureId}`);
-      },
-    );
-
-    const result = assertUsageCreditsAvailable("org_123");
-    await vi.runAllTimersAsync();
-
-    await expect(result).resolves.toEqual({ monthlyRemaining: 250 });
-    expect(monthlyChecks).toBe(2);
-  });
-
-  it("fails closed when the retry still has no monthly balance", async () => {
-    vi.useFakeTimers();
-    checkMock.mockResolvedValue({ balance: null });
-
-    const result = assertUsageCreditsAvailable("org_123");
-    const assertion = expect(result).rejects.toMatchObject({
-      code: "INTERNAL_ERROR",
-    });
-    await vi.runAllTimersAsync();
-
-    await assertion;
-    expect(checkMock).toHaveBeenCalledTimes(3);
-  });
-
-  it("looks up the billing customer by organization id", async () => {
-    getOrCreateMock.mockResolvedValue({ id: "cust_123" });
-
-    await getOrCreateOrganizationCustomer({
-      organizationId: "org_123",
-      userId: "user_123",
-      userEmail: "alice@example.com",
-    });
-
-    expect(getOrCreateMock).toHaveBeenCalledWith({
-      customerId: "org_123",
-      email: "alice@example.com",
-    });
-    expect(kvPutMock).toHaveBeenCalled();
-  });
-
-  it("skips the Autumn round trip when the customer was recently ensured", async () => {
-    kvGetMock.mockResolvedValue("1");
-
-    const result = await getOrCreateOrganizationCustomer({
-      organizationId: "org_123",
-      userId: "user_123",
-      userEmail: "alice@example.com",
-    });
-
-    expect(result).toEqual({ id: "org_123" });
-    expect(getOrCreateMock).not.toHaveBeenCalled();
-  });
-
-  it("falls back to Autumn when the customer cache read fails", async () => {
-    const cacheError = new Error("KV read unavailable");
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    kvGetMock.mockRejectedValue(cacheError);
-    getOrCreateMock.mockResolvedValue({ id: "cust_123" });
-
-    await expect(
-      getOrCreateOrganizationCustomer({
-        organizationId: "org_123",
-        userId: "user_123",
-        userEmail: "alice@example.com",
-      }),
-    ).resolves.toEqual({ id: "cust_123" });
-
-    expect(getOrCreateMock).toHaveBeenCalledWith({
-      customerId: "org_123",
-      email: "alice@example.com",
-    });
-    expect(console.warn).toHaveBeenCalledWith(
-      "billing.customer-cache-read failed:",
-      cacheError,
-    );
-  });
-
-  it("returns the resolved customer when the customer cache write fails", async () => {
-    const cacheError = new Error("KV write unavailable");
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    getOrCreateMock.mockResolvedValue({ id: "cust_123" });
-    kvPutMock.mockRejectedValue(cacheError);
-
-    await expect(
-      getOrCreateOrganizationCustomer({
-        organizationId: "org_123",
-        userId: "user_123",
-        userEmail: "alice@example.com",
-      }),
-    ).resolves.toEqual({ id: "cust_123" });
-
-    expect(console.warn).toHaveBeenCalledWith(
-      "billing.customer-cache-write failed:",
-      cacheError,
-    );
-  });
+});
+it("propagates database failures instead of granting access", async () => {
+  state.sqlite!.exec("DROP TABLE billing_customer_status");
+  await expect(assertUsageCreditsAvailable("first")).rejects.toThrow();
 });
