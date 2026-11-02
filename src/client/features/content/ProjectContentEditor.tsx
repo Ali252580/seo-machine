@@ -157,6 +157,20 @@ export function ProjectContentEditor({
           targetPage={targetPage}
           blog={blog}
         />
+        <nav
+          aria-label="بخش‌های نگارش مقاله"
+          className="flex flex-wrap gap-2 text-sm"
+        >
+          <a href="#article-form" className="btn btn-sm btn-outline">
+            ۱. موضوع و نگارش
+          </a>
+          <a href="#article-preview" className="btn btn-sm btn-outline">
+            ۲. بازبینی پیش‌نویس
+          </a>
+          <a href="#article-delivery" className="btn btn-sm btn-outline">
+            ۳. خروجی و ارسال
+          </a>
+        </nav>
         <section
           className="rounded-xl border border-base-300 bg-base-200/40 p-4 text-sm"
           aria-label="راهنمای تصمیم‌گیری نگارش محتوا"
@@ -221,7 +235,10 @@ export function ProjectContentEditor({
           </p>
         )}
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <section className="space-y-3 rounded-xl border border-base-300 p-4">
+          <section
+            id="article-form"
+            className="min-w-0 scroll-mt-4 space-y-3 rounded-xl border border-base-300 p-4"
+          >
             <label className="grid gap-1 text-sm">
               کلمهٔ کلیدی هدف
               <input
@@ -395,33 +412,35 @@ export function ProjectContentEditor({
               ۱۸۰ واژه و دو بخش با تیتر متفاوت نیاز دارد؛ صحت و ارزش افزودهٔ متن
               را نیز بازبینی کنید.
             </p>
-            <ArticleMediaPanel
-              projectId={projectId}
-              title={title}
-              keyword={keyword}
-              slug={slug}
-              kind={kind}
-              content={content}
-              image={image}
-              onImage={setImage}
-              canUpload={canWrite && Boolean(wordpress.data?.connection)}
-              onImport={(article) => {
-                setTitle(article.title);
-                setKind(blog ? "post" : article.kind);
-                setContent(article.content);
-                setImage(
-                  article.image
-                    ? {
-                        ...article.image,
-                        preview: article.image.url,
-                        mediaType: "image/jpeg",
-                        alt: article.title,
-                      }
-                    : null,
-                );
-                setCheckedTarget(null);
-              }}
-            />
+            <div id="article-delivery" className="scroll-mt-4">
+              <ArticleMediaPanel
+                projectId={projectId}
+                title={title}
+                keyword={keyword}
+                slug={slug}
+                kind={kind}
+                content={content}
+                image={image}
+                onImage={setImage}
+                canUpload={canWrite && Boolean(wordpress.data?.connection)}
+                onImport={(article) => {
+                  setTitle(article.title);
+                  setKind(blog ? "post" : article.kind);
+                  setContent(article.content);
+                  setImage(
+                    article.image
+                      ? {
+                          ...article.image,
+                          preview: article.image.url,
+                          mediaType: "image/jpeg",
+                          alt: article.title,
+                        }
+                      : null,
+                  );
+                  setCheckedTarget(null);
+                }}
+              />
+            </div>
             {targetPage ? (
               <p className="text-sm text-base-content/70">
                 {
@@ -465,13 +484,15 @@ export function ProjectContentEditor({
               </p>
             )}
           </section>
-          <ArticlePreview
-            content={content}
-            keyword={keyword}
-            title={title}
-            articleText={articleText}
-            wordCount={wordCount}
-          />
+          <div id="article-preview" className="min-w-0 scroll-mt-4">
+            <ArticlePreview
+              content={content}
+              keyword={keyword}
+              title={title}
+              articleText={articleText}
+              wordCount={wordCount}
+            />
+          </div>
         </div>
       </div>
     </main>

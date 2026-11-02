@@ -145,16 +145,52 @@ export function DashboardPage({ projectId }: { projectId: string }) {
           activation={activation}
         />
 
-        <Link
-          to="/p/$projectId/recommendations"
-          params={{ projectId }}
-          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-base-300 p-4 hover:bg-base-200"
+        <section
+          aria-label="مسیر کار روی سئوی پروژه"
+          className="rounded-xl border border-base-300 p-5"
+          dir="rtl"
         >
-          <span className="font-medium">پیشنهادهای دوره‌ای سئو</span>
-          <span className="text-sm text-primary">
-            مشاهدهٔ فرصت‌ها و پیشنهادها
-          </span>
-        </Link>
+          <h2 className="font-semibold">از بررسی تا پیش‌نویس</h2>
+          <p className="mt-1 text-sm text-base-content/60">
+            از داده‌های همین پروژه شروع کنید؛ سپس دربارهٔ تغییر محتوا تصمیم
+            بگیرید.
+          </p>
+          <nav
+            className="mt-4 grid gap-3 sm:grid-cols-3"
+            aria-label="اقدام‌های اصلی پروژه"
+          >
+            <Link
+              to="/p/$projectId/audit"
+              params={{ projectId }}
+              className="rounded-lg p-3 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              <span className="block font-medium">۱. بررسی سلامت سایت</span>
+              <span className="mt-1 block text-sm text-base-content/60">
+                خزش صفحات و شناسایی ایرادهای فنی
+              </span>
+            </Link>
+            <Link
+              to="/p/$projectId/recommendations"
+              params={{ projectId }}
+              className="rounded-lg bg-primary/10 p-3 text-primary focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              <span className="block font-medium">۲. انتخاب فرصت بهبود</span>
+              <span className="mt-1 block text-sm">
+                مشاهدهٔ شواهد و اقدام پیشنهادی
+              </span>
+            </Link>
+            <Link
+              to="/p/$projectId/blog"
+              params={{ projectId }}
+              className="rounded-lg p-3 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              <span className="block font-medium">۳. نگارش و بازبینی</span>
+              <span className="mt-1 block text-sm text-base-content/60">
+                آماده‌کردن پیش‌نویس وبلاگ برای وردپرس
+              </span>
+            </Link>
+          </nav>
+        </section>
 
         {/* Every card is half width on large screens (only the checklist spans).
           Cards with data render before setup pitches and empty states. */}

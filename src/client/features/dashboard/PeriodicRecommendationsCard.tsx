@@ -43,7 +43,7 @@ export function PeriodicRecommendationsCard({
         <button
           className="btn btn-primary btn-sm"
           type="button"
-          disabled={refresh.isPending}
+          disabled={refresh.isPending || data?.status === "running"}
           onClick={() => refresh.mutate()}
         >
           {refresh.isPending ? "در حال بررسی…" : "بررسی اکنون"}
@@ -51,7 +51,7 @@ export function PeriodicRecommendationsCard({
       </div>
       {query.isPending && <div className="skeleton mt-4 h-20" />}
       {(query.isError || refresh.isError) && (
-        <p className="mt-4 text-sm text-error">
+        <p role="alert" className="mt-4 text-sm text-error">
           دریافت پیشنهادها انجام نشد. دوباره تلاش کنید.
         </p>
       )}
@@ -93,7 +93,11 @@ export function PeriodicRecommendationsCard({
           )}
           {data.updatedAt && (
             <p className="mt-2 text-xs text-base-content/50">
-              آخرین بررسی: {new Date(data.updatedAt).toLocaleString("fa-IR")} ·{" "}
+              آخرین بررسی:{" "}
+              {new Date(data.updatedAt).toLocaleString("fa-IR", {
+                timeZone: "Asia/Tehran",
+              })}{" "}
+              (تهران) ·{" "}
               {data.analysis === "skills"
                 ? "با مهارت‌های SAM"
                 : "بر پایهٔ قواعد سئو"}
@@ -187,7 +191,7 @@ export function PeriodicRecommendationsCard({
                           </a>
                         </div>
                       )}
-                      {page && (
+                      {page && item.plan?.decision !== "keep" && (
                         <Link
                           to="/p/$projectId/content"
                           params={{ projectId }}
@@ -197,7 +201,9 @@ export function PeriodicRecommendationsCard({
                           }}
                           className="btn btn-outline btn-sm mt-4"
                         >
-                          بررسی و نگارش بهبود با SAM
+                          {item.plan?.decision === "investigate"
+                            ? "بررسی شواهد صفحه با SAM"
+                            : "آماده‌کردن پیش‌نویس بهبود"}
                         </Link>
                       )}
                     </div>
@@ -214,33 +220,38 @@ export function PeriodicRecommendationsCard({
                           <p className="text-sm leading-7">
                             {item.plan.rationale}
                           </p>
-                          <ol className="list-inside list-decimal space-y-2 text-sm leading-7">
-                            {item.plan.steps.map((step, index) => (
-                              <li key={index}>{step}</li>
-                            ))}
-                          </ol>
-                          {item.plan.suggestedTitle && (
+                          <details>
+                            <summary className="cursor-pointer text-sm font-medium text-primary">
+                              مراحل اجرا، ساختار محتوا و سنجش نتیجه
+                            </summary>
+                            <ol className="mt-3 list-inside list-decimal space-y-2 text-sm leading-7">
+                              {item.plan.steps.map((step, index) => (
+                                <li key={index}>{step}</li>
+                              ))}
+                            </ol>
+                            {item.plan.suggestedTitle && (
+                              <p className="text-sm leading-7">
+                                <strong>عنوان پیشنهادی: </strong>
+                                {item.plan.suggestedTitle}
+                              </p>
+                            )}
+                            {item.plan.outline.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium">
+                                  ساختار پیشنهادی محتوا
+                                </h4>
+                                <ul className="mt-2 list-inside list-disc text-sm leading-7">
+                                  {item.plan.outline.map((heading, index) => (
+                                    <li key={index}>{heading}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                             <p className="text-sm leading-7">
-                              <strong>عنوان پیشنهادی: </strong>
-                              {item.plan.suggestedTitle}
+                              <strong>سنجش نتیجه: </strong>
+                              {item.plan.successMeasure}
                             </p>
-                          )}
-                          {item.plan.outline.length > 0 && (
-                            <div>
-                              <h4 className="text-sm font-medium">
-                                ساختار پیشنهادی محتوا
-                              </h4>
-                              <ul className="mt-2 list-inside list-disc text-sm leading-7">
-                                {item.plan.outline.map((heading, index) => (
-                                  <li key={index}>{heading}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          <p className="text-sm leading-7">
-                            <strong>سنجش نتیجه: </strong>
-                            {item.plan.successMeasure}
-                          </p>
+                          </details>
                         </div>
                       )}
                       <div>

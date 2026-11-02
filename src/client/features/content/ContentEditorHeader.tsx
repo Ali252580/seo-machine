@@ -18,12 +18,12 @@ export function ContentEditorHeader({
           <h1 className="text-2xl font-semibold">
             {blog ? "نگارش وبلاگ" : "نگارش محتوا با SAM"}
           </h1>
-          {blog && (
+          {project && (
             <p className="my-2 text-sm font-medium">
               {project?.name ?? "پروژهٔ جاری"}
               {project?.domain && (
                 <span
-                  className="ms-2 inline-block text-base-content/60"
+                  className="ms-2 inline-block break-all text-base-content/60"
                   dir="ltr"
                 >
                   {project.domain}
