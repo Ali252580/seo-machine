@@ -25,6 +25,9 @@ export function PeriodicRecommendationsCard({
   const query = useQuery({
     queryKey: key,
     queryFn: () => getDashboardRecommendations({ data: { projectId } }),
+    // Poll stored results only; rerunning the analysis can consume credits.
+    refetchInterval: (query) =>
+      query.state.data?.status === "running" ? 5000 : false,
   });
   const refresh = useMutation({
     mutationFn: () => refreshDashboardRecommendations({ data: { projectId } }),
@@ -46,14 +49,34 @@ export function PeriodicRecommendationsCard({
           disabled={refresh.isPending || data?.status === "running"}
           onClick={() => refresh.mutate()}
         >
-          {refresh.isPending ? "در حال بررسی…" : "بررسی اکنون"}
+          {refresh.isPending || data?.status === "running"
+            ? "در حال بررسی…"
+            : "بررسی اکنون"}
         </button>
       </div>
       {query.isPending && <div className="skeleton mt-4 h-20" />}
       {(query.isError || refresh.isError) && (
-        <p role="alert" className="mt-4 text-sm text-error">
-          دریافت پیشنهادها انجام نشد. دوباره تلاش کنید.
-        </p>
+        <div
+          role="alert"
+          className="mt-4 flex flex-wrap items-center gap-3 text-sm text-error"
+        >
+          <p>
+            {query.isError
+              ? "دریافت پیشنهادها انجام نشد."
+              : "پاسخ بررسی دریافت نشد؛ ابتدا وضعیت نتیجه را دوباره دریافت کنید."}
+          </p>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            disabled={query.isFetching}
+            onClick={async () => {
+              const result = await query.refetch();
+              if (!result.isError) refresh.reset();
+            }}
+          >
+            {query.isFetching ? "در حال دریافت…" : "دریافت دوبارهٔ نتیجه"}
+          </button>
+        </div>
       )}
       {data && (
         <>
