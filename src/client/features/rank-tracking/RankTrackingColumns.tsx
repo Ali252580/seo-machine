@@ -46,7 +46,7 @@ export function SortableHeader({
       className="inline-flex items-center gap-1 text-xs uppercase tracking-wide font-medium text-base-content/60 transition-colors hover:text-base-content"
       onClick={column.getToggleSortingHandler()}
       title={tooltip ?? HEADER_TOOLTIPS[id]}
-      aria-label={`Sort by ${label}`}
+      aria-label={`مرتب‌سازی بر اساس ${label}`}
       aria-pressed={!!sorted}
     >
       {label}
@@ -125,7 +125,8 @@ function makeKeywordColumn(
       <div className="flex items-center gap-1.5">
         <button
           type="button"
-          className="font-medium text-left link link-hover decoration-dotted underline-offset-2"
+          className="max-w-64 whitespace-normal break-words text-start font-medium link link-hover decoration-dotted underline-offset-2"
+          dir="auto"
           onClick={() => onKeywordClick(row.original)}
           title="مشاهده تاریخچه رتبه"
         >
@@ -153,7 +154,11 @@ function makeDeviceColumn(
     id,
     accessorFn: (row) => row[device].position ?? undefined,
     header: ({ column }) => (
-      <SortableHeader column={column} label="رتبه" id={id} />
+      <SortableHeader
+        column={column}
+        label={device === "desktop" ? "رتبه دسکتاپ" : "رتبه موبایل"}
+        id={id}
+      />
     ),
     size: 120,
     maxSize: 140,
@@ -187,7 +192,7 @@ function makeUrlColumn(
         className="text-xs uppercase tracking-wide font-medium text-base-content/60 cursor-help"
         title={HEADER_TOOLTIPS.url}
       >
-        URL
+        {device === "desktop" ? "صفحه در دسکتاپ" : "صفحه در موبایل"}
       </span>
     ),
     size: 240,
@@ -208,7 +213,9 @@ function makeSerpColumn(
         className="text-xs uppercase tracking-wide font-medium text-base-content/60 cursor-help"
         title={HEADER_TOOLTIPS.serp}
       >
-        SERP Features
+        {device === "desktop"
+          ? "ویژگی‌های نتایج دسکتاپ"
+          : "ویژگی‌های نتایج موبایل"}
       </span>
     ),
     cell: ({ row }) => {

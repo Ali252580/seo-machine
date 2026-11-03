@@ -1,4 +1,9 @@
-import { Sparkles } from "lucide-react";
+import { ExternalLink, Sparkles } from "lucide-react";
+import {
+  formatUrlForDisplay,
+  resolveUrlHref,
+} from "@/client/components/table/url";
+import { recommendationPage } from "@/client/features/dashboard/recommendationPage";
 import { toast } from "sonner";
 import { buildCsv, downloadCsv } from "@/client/lib/csv";
 import { exportTableToSheets } from "@/client/lib/exportToSheets";
@@ -123,19 +128,40 @@ export function DeviceUrlCell({
   result: RankTrackingDeviceResult;
   domain: string;
 }) {
-  if (!result.rankingUrl) {
-    return <span className="text-base-content/40 text-xs">-</span>;
+  const href = resolveUrlHref(result.rankingUrl, domain);
+  const page = recommendationPage(href);
+  if (!page) {
+    return <span className="text-base-content/40 text-xs">نشانی ثبت نشده</span>;
   }
   return (
-    <a
-      href={toFullUrl(result.rankingUrl, domain)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="link link-hover block truncate text-xs"
-      title={result.rankingUrl}
-    >
-      {toPath(result.rankingUrl)}
-    </a>
+    <div className="w-56 max-w-full space-y-1.5 text-start" dir="rtl">
+      <a
+        href={page.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-start gap-1.5 rounded text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+        title={formatUrlForDisplay(page.href)}
+      >
+        <span className="line-clamp-2 break-words" dir="auto">
+          {page.title}
+        </span>
+        <ExternalLink className="mt-1 size-3 shrink-0" aria-hidden="true" />
+      </a>
+      <div className="truncate text-xs text-base-content/60" dir="ltr">
+        {page.host}
+      </div>
+      <details className="text-xs text-base-content/60">
+        <summary className="cursor-pointer py-1 focus-visible:outline-2 focus-visible:outline-primary">
+          نشانی کامل
+        </summary>
+        <p
+          className="mt-1 select-text whitespace-normal break-all rounded bg-base-200 p-2 leading-6"
+          dir="ltr"
+        >
+          {formatUrlForDisplay(page.href)}
+        </p>
+      </details>
+    </div>
   );
 }
 
@@ -279,18 +305,4 @@ export function exportRankTrackingCsv(
   );
   downloadCsv(`rank-tracking-${domain}.csv`, buildCsv(headers, csvRows));
   captureClientEvent("rank_tracking:export_csv");
-}
-
-function toPath(url: string): string {
-  try {
-    const parsed = new URL(url);
-    return `${parsed.hostname}${parsed.pathname}${parsed.search}`;
-  } catch {
-    return url;
-  }
-}
-
-function toFullUrl(url: string, domain: string): string {
-  if (url.startsWith("http")) return url;
-  return `https://${domain}${url}`;
 }

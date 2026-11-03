@@ -177,7 +177,7 @@ export function RankTrackingTable({
               onClick={() => setShowConfirm(true)}
               variant="danger"
             >
-              Remove
+              حذف از ردیابی
             </TableBulkActionButton>
             <TableBulkExportMenu
               actions={[
@@ -204,19 +204,18 @@ export function RankTrackingTable({
           labelledBy="remove-keywords-title"
         >
           <h3 id="remove-keywords-title" className="text-lg font-semibold">
-            Remove keywords?
+            کلمات از ردیابی حذف شوند؟
           </h3>
           <p className="text-sm text-base-content/70">
-            This will stop tracking {selectedCount} keyword
-            {selectedCount !== 1 ? "s" : ""}. Historical ranking data is
-            preserved but won't appear in the table.
+            ردیابی {selectedCount.toLocaleString("fa-IR")} کلمه متوقف می‌شود.
+            تاریخچهٔ رتبه‌ها حفظ می‌شود، اما در این جدول نمایش داده نخواهد شد.
           </p>
           <div className="flex justify-end gap-2">
             <button
               className="btn btn-ghost btn-sm"
               onClick={() => setShowConfirm(false)}
             >
-              Cancel
+              انصراف
             </button>
             <button
               className="btn btn-error btn-sm gap-1"
@@ -228,8 +227,7 @@ export function RankTrackingTable({
               {removeMutation.isPending && (
                 <Loader2 className="size-3 animate-spin" />
               )}
-              Remove {selectedCount} keyword
-              {selectedCount !== 1 ? "s" : ""}
+              حذف {selectedCount.toLocaleString("fa-IR")} کلمه از ردیابی
             </button>
           </div>
         </Modal>
@@ -250,7 +248,8 @@ export function RankTrackingTable({
 
       <AppDataTable table={table} getCellClassName={() => "align-top"} />
       <p className="text-xs text-base-content/60 pt-2">
-        {rows.length} of {totalCount} keywords
+        نمایش {rows.length.toLocaleString("fa-IR")} از{" "}
+        {totalCount.toLocaleString("fa-IR")} کلمهٔ کلیدی
       </p>
     </>
   );
