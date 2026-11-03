@@ -134,7 +134,7 @@ describe("project service", () => {
         "org_1",
         "Acme",
         "acme.com",
-        undefined,
+        { locationCode: 2364, languageCode: "fa" },
       );
     });
 

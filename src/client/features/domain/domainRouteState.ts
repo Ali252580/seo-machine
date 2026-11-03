@@ -2,10 +2,7 @@ import {
   DEFAULT_DOMAIN_KEYWORDS_PAGE_SIZE,
   type DomainSearchParams,
 } from "@/types/schemas/domain";
-import {
-  DEFAULT_LOCATION_CODE,
-  isLabsLocationCode,
-} from "@/client/features/keywords/locations";
+import { isLabsLocationCode } from "@/client/features/keywords/locations";
 import type { ProjectMarket } from "@/client/features/projects/types";
 import {
   EMPTY_DOMAIN_FILTERS,
@@ -75,7 +72,7 @@ export function getDomainRouteState(
   const defaultLocationCode =
     projectMarket && isLabsLocationCode(projectMarket.locationCode)
       ? projectMarket.locationCode
-      : DEFAULT_LOCATION_CODE;
+      : 2840; // Labs does not support Iran; this is a provider-specific market.
   // Domain analytics is Labs-backed; Google-Ads-only countries aren't valid.
   const normalizedLocationCode =
     search.loc != null && isLabsLocationCode(search.loc)

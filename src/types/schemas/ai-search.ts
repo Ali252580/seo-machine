@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  DEFAULT_LOCATION_CODE,
+  getLanguageCode,
+} from "@/shared/keyword-locations";
 import { researchScopeSchema } from "@/shared/researchScope";
 
 /**
@@ -47,8 +51,12 @@ export const brandLookupInputSchema = z.object({
   // have no URL to scope. Omitted = derive from the query (root → domain, path
   // → subfolder).
   scope: researchScopeSchema.optional(),
-  locationCode: z.number().int().positive().default(2840),
-  languageCode: z.string().min(2).max(8).default("en"),
+  locationCode: z.number().int().positive().default(DEFAULT_LOCATION_CODE),
+  languageCode: z
+    .string()
+    .min(2)
+    .max(8)
+    .default(getLanguageCode(DEFAULT_LOCATION_CODE)),
 });
 
 export type BrandLookupInput = z.infer<typeof brandLookupInputSchema>;

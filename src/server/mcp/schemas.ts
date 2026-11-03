@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { isSupportedLanguageCode } from "@/shared/keyword-locations";
 
-export const DEFAULT_LOCATION_CODE = 2840;
+export { DEFAULT_LOCATION_CODE } from "@/shared/keyword-locations";
 
 export const projectIdSchema = z
   .string()

@@ -9,7 +9,10 @@ import { ProjectRepository } from "@/server/features/projects/repositories/Proje
 import { normalizeBacklinksTarget } from "@/server/lib/dataforseoBacklinksTarget";
 import { AppError } from "@/server/lib/errors";
 import { assertLanguageForLocation } from "@/server/lib/market";
-import { getLanguageCode } from "@/shared/keyword-locations";
+import {
+  DEFAULT_LOCATION_CODE,
+  getLanguageCode,
+} from "@/shared/keyword-locations";
 
 function mapProject(project: {
   id: string;
@@ -111,7 +114,10 @@ export async function createProject(
       organizationId,
       input.name,
       normalizeProjectDomain(input.domain),
-      resolveMarketInput(input),
+      resolveMarketInput(input) ?? {
+        locationCode: DEFAULT_LOCATION_CODE,
+        languageCode: getLanguageCode(DEFAULT_LOCATION_CODE),
+      },
     );
     return mapProject(row);
   } catch (error) {

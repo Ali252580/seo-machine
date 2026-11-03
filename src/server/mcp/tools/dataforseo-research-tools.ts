@@ -33,7 +33,6 @@ import {
   assertLanguageForLocation,
 } from "@/server/lib/market";
 import {
-  DEFAULT_LOCATION_CODE,
   languageCodeSchema,
   locationCodeSchema,
   projectIdSchema,
@@ -441,7 +440,7 @@ function resolveMarketSelector(
     );
   } else if (selector.market?.country != null) {
     // The Zod enum already restricts explicit values to United States variants.
-    resolved = { locationCode: DEFAULT_LOCATION_CODE, languageCode: "en" };
+    resolved = { locationCode: 2840, languageCode: "en" };
   } else {
     resolved = resolveLabsMarket({}, project);
   }

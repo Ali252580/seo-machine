@@ -2,6 +2,7 @@ import { sort } from "remeda";
 import { describe, expect, it } from "vitest";
 import {
   LABS_LOCATION_OPTIONS,
+  DEFAULT_LOCATION_CODE,
   LOCATION_OPTIONS,
   formatLocationLabel,
   getIsoCountryCode,
@@ -16,6 +17,12 @@ import {
 } from "./keyword-locations";
 
 describe("keyword locations", () => {
+  it("defaults to Iran and Persian without changing explicit countries", () => {
+    expect(DEFAULT_LOCATION_CODE).toBe(2364);
+    expect(getLanguageCode(DEFAULT_LOCATION_CODE)).toBe("fa");
+    expect(getIsoCountryCode(DEFAULT_LOCATION_CODE)).toBe("ir");
+    expect(getLanguageCode(2840)).toBe("en");
+  });
   it("routes Labs-supported countries to labs", () => {
     expect(getKeywordDataProvider(2840)).toBe("labs"); // US
     expect(getKeywordDataProvider(2826)).toBe("labs"); // UK
@@ -86,7 +93,7 @@ describe("getIsoCountryCode", () => {
   });
 
   it("falls back to us for unknown location codes", () => {
-    expect(getIsoCountryCode(999999)).toBe("us");
+    expect(getIsoCountryCode(999999)).toBe("ir");
   });
 });
 

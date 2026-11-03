@@ -27,6 +27,10 @@ import {
 import { detectTarget } from "@/shared/targetDetection";
 import { useProjectMarket } from "@/client/features/projects/useProjectMarket";
 import {
+  DEFAULT_LOCATION_CODE,
+  getLanguageCode,
+} from "@/shared/keyword-locations";
+import {
   parseResearchTarget,
   toScopeSearchParam,
   type ResearchScope,
@@ -80,7 +84,11 @@ function BrandLookupPageInner({
   onSearchChange,
   planGate,
 }: Props & { planGate: HostedPlanGateState }) {
-  const projectDomain = useProjectMarket(projectId)?.domain;
+  const projectMarket = useProjectMarket(projectId);
+  const projectDomain = projectMarket?.domain;
+  const locationCode = projectMarket?.locationCode ?? DEFAULT_LOCATION_CODE;
+  const languageCode =
+    projectMarket?.languageCode ?? getLanguageCode(locationCode);
   const [query, setQuery] = useState(initialQuery || projectDomain || "");
   // The user's explicit scope pick, or undefined to follow the input's default.
   const [scopeChoice, setScopeChoice] = useState<ResearchScope | undefined>(
@@ -122,6 +130,8 @@ function BrandLookupPageInner({
     queryKey: [
       "brand-lookup",
       projectId,
+      locationCode,
+      languageCode,
       trimmedInitialQuery,
       competitorKey,
       initialScope ?? "",
@@ -133,14 +143,14 @@ function BrandLookupPageInner({
           query: trimmedInitialQuery,
           competitors: initialCompetitors,
           scope: initialScope,
-          locationCode: 2840,
-          languageCode: "en",
+          locationCode,
+          languageCode,
         },
       }),
     // Client-side gate is a UX optimization only; the paywall is enforced
     // server-side (lookupBrand → assertPaidPlan) before any DataForSEO spend,
     // so a stale free-plan window here just yields a rejected request, not cost.
-    enabled: hasActiveQuery && !planGate.isFreePlan,
+    enabled: hasActiveQuery && !!projectMarket && !planGate.isFreePlan,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });

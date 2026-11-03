@@ -16,11 +16,11 @@
  * googleAdsOnly entries must exist in BOTH the Google Ads and SERP language
  * lists (rank tracking shares this picker and uses the SERP API).
  *
- * Entries are sorted alphabetically by country name; pick US as the
+ * Entries are sorted alphabetically by country name; pick Iran as the
  * product-wide default via DEFAULT_LOCATION_CODE below.
  */
-export const DEFAULT_LOCATION_CODE = 2840;
 export const IRAN_LOCATION_CODE = 2364;
+export const DEFAULT_LOCATION_CODE = IRAN_LOCATION_CODE;
 
 /**
  * Human-readable form of a canonical DataForSEO location_name, whose segments
@@ -49,7 +49,7 @@ const ISO_COUNTRY_OVERRIDES: Record<string, string> = { UK: "GB" };
 export function getIsoCountryCode(locationCode: number): string {
   const shortLabel =
     LOCATION_OPTIONS.find((option) => option.code === locationCode)
-      ?.shortLabel ?? "US";
+      ?.shortLabel ?? "IR";
   return (ISO_COUNTRY_OVERRIDES[shortLabel] ?? shortLabel).toLowerCase();
 }
 
@@ -710,7 +710,7 @@ const SUPPORTED_LANGUAGE_CODES = new Set<string>(
 );
 
 export function getLanguageCode(locationCode: number): string {
-  return LOCATION_LANGUAGE[locationCode] ?? "en";
+  return LOCATION_LANGUAGE[locationCode] ?? "fa";
 }
 
 /**
@@ -767,9 +767,7 @@ export function resolveLabsMarket(
 
   return resolveMarket(
     args,
-    projectIsServed
-      ? project
-      : { locationCode: DEFAULT_LOCATION_CODE, languageCode: "en" },
+    projectIsServed ? project : { locationCode: 2840, languageCode: "en" },
   );
 }
 

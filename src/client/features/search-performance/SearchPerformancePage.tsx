@@ -120,7 +120,7 @@ export function SearchPerformancePage({ projectId }: { projectId: string }) {
   const [device, setDevice] = useState<SearchPerformanceDevice | typeof ALL>(
     ALL,
   );
-  const [country, setCountry] = useState<string>(ALL);
+  const [country, setCountry] = useState<string>("irn");
   const [tab, setTab] = useState<Tab>("striking");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(
@@ -270,11 +270,14 @@ export function SearchPerformancePage({ projectId }: { projectId: string }) {
                     aria-label="فیلتر کشور"
                   >
                     <option value={ALL}>همه کشورها</option>
-                    {report.countries.map((row) => (
-                      <option key={row.key} value={row.key}>
-                        {row.key.toUpperCase()}
-                      </option>
-                    ))}
+                    <option value="irn">ایران</option>
+                    {report.countries
+                      .filter((row) => row.key !== "irn")
+                      .map((row) => (
+                        <option key={row.key} value={row.key}>
+                          {row.key.toUpperCase()}
+                        </option>
+                      ))}
                   </select>
                   <select
                     className="select select-bordered select-sm w-36"

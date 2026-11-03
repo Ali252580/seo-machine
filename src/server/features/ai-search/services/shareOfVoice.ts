@@ -50,11 +50,8 @@ export function resolveCompetitorGroups(
  * aggregation_keys are matched back to requested keys case-insensitively so
  * vendor normalization can't orphan a row or the target's isTarget flag.
  *
- * US/en assumption: today the only locale that exists for both platforms is
- * US/en (the UI hardcodes locationCode 2840 / languageCode en and has no locale
- * selector), so we sum every returned platform. If a locale selector ships,
- * gate chat_gpt here the same way the single-brand totals do in shapeResult —
- * do not duplicate the chatGptLocaleMatches branch into this path.
+ * shapeResult filters platforms to the requested market before aggregation;
+ * ChatGPT's US/en data must not be summed with another market's Google data.
  *
  * Null vs zero: a brand whose summed mentions is null is "no data" (excluded
  * from the denominator, sharePct null); a brand with mentions 0 is known-zero
