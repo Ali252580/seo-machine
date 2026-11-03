@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
 import { ArticlePreview } from "@/client/features/content/ArticlePreview";
 import { ArticleTextEditor } from "./ArticleTextEditor";
+import { confirmArticleReplacement } from "./confirmArticleReplacement";
 import { ArticleMediaPanel } from "@/client/features/content/ArticleMediaPanel";
 import { useArticleDraft } from "@/client/features/content/useArticleDraft";
 import { ContentEditorHeader } from "@/client/features/content/ContentEditorHeader";
@@ -344,9 +345,12 @@ export function ProjectContentEditor({
               disabled={
                 keyword.trim().length < 2 ||
                 title.trim().length < 5 ||
-                generate.isPending
+                generate.isPending ||
+                save.isPending
               }
-              onClick={() => generate.mutate()}
+              onClick={() => {
+                if (confirmArticleReplacement(content)) generate.mutate();
+              }}
             >
               {generate.isPending
                 ? "در حال بررسی و نگارش…"
@@ -407,7 +411,11 @@ export function ProjectContentEditor({
               ۱۸۰ واژه و دو بخش با تیتر متفاوت نیاز دارد؛ صحت و ارزش افزودهٔ متن
               را نیز بازبینی کنید.
             </p>
-            <div id="article-delivery" className="scroll-mt-4">
+            <fieldset
+              id="article-delivery"
+              className="min-w-0 scroll-mt-4"
+              disabled={generate.isPending || save.isPending}
+            >
               <ArticleMediaPanel
                 projectId={projectId}
                 title={title}
@@ -419,6 +427,7 @@ export function ProjectContentEditor({
                 onImage={setImage}
                 canUpload={canWrite && Boolean(wordpress.data?.connection)}
                 onImport={(article) => {
+                  if (!confirmArticleReplacement(content)) return;
                   setTitle(article.title);
                   setKind(blog ? "post" : article.kind);
                   setContent(article.content);
@@ -435,7 +444,7 @@ export function ProjectContentEditor({
                   setCheckedTarget(null);
                 }}
               />
-            </div>
+            </fieldset>
             {targetPage ? (
               <p className="text-sm text-base-content/70">
                 {
@@ -450,6 +459,7 @@ export function ProjectContentEditor({
                   !canCreateNewDraft ||
                   !wordpress.data?.connection ||
                   save.isPending ||
+                  generate.isPending ||
                   wordCount < 180 ||
                   distinctSections < 2
                 }
