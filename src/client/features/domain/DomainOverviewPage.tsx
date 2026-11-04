@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, type FormEvent } from "react";
 import { useForm, useStore } from "@tanstack/react-form";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "@tanstack/react-router";
+import { IranDomainOverview } from "./components/IranDomainOverview";
 import { IRAN_LOCATION_CODE } from "@/shared/keyword-locations";
 import {
   DEFAULT_DOMAIN_KEYWORDS_PAGE_SIZE,
@@ -587,27 +587,12 @@ export function DomainOverviewPage({
         />
 
         {routeState.locationCode === IRAN_LOCATION_CODE ? (
-          <div
-            role="status"
-            className="rounded-xl border border-base-300 bg-base-100 p-5 space-y-3"
-          >
-            <h2 className="font-semibold">
-              نمای کلی دامنه برای ایران در دسترس نیست
-            </h2>
-            <p className="text-sm leading-7 text-base-content/70">
-              منبع دادهٔ این بخش، ترافیک تخمینی و فهرست کلمات دامنه‌ها را برای
-              ایران ارائه نمی‌کند. برای سایت خودتان، آمار واقعی کلیک، نمایش،
-              رتبه و صفحات را در سرچ کنسول همین پروژه ببینید. این آمار به اتصال
-              سرچ کنسول نیاز دارد و برای سایت رقبا قابل دریافت نیست.
-            </p>
-            <Link
-              to="/p/$projectId/search-performance"
-              params={{ projectId }}
-              className="btn btn-primary btn-sm"
-            >
-              مشاهدهٔ سرچ کنسول همین پروژه
-            </Link>
-          </div>
+          <IranDomainOverview
+            key={projectId}
+            projectId={projectId}
+            projectDomain={projectDomain}
+            domain={routeState.domain}
+          />
         ) : state.isLoading ? (
           <>
             {tabControls}
