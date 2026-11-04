@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Loader2, Sheet } from "lucide-react";
+import { Download, Loader2, Settings2, Sheet } from "lucide-react";
 import { toast } from "sonner";
 import { TableExportMenu } from "@/client/components/table/TableBulkActionBar";
 import { TablePagination } from "@/client/components/table/TablePagination";
@@ -201,8 +201,9 @@ export function SearchPerformancePage({ projectId }: { projectId: string }) {
             <Link
               to="/p/$projectId/settings/integrations"
               params={{ projectId }}
-              className="link link-hover shrink-0 self-start text-sm font-medium text-base-content/60 transition-colors hover:text-base-content sm:mt-1"
+              className="btn btn-outline btn-primary min-h-11 shrink-0 self-start gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 sm:mt-1"
             >
+              <Settings2 className="size-4" aria-hidden="true" />
               تغییر سایت متصل
             </Link>
           ) : null}
