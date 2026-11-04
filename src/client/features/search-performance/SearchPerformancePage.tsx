@@ -193,8 +193,8 @@ export function SearchPerformancePage({ projectId }: { projectId: string }) {
           <div>
             <h1 className="text-2xl font-semibold">عملکرد جستجو</h1>
             <p className="text-sm text-base-content/70">
-              See your site&apos;s clicks, impressions, CTR, and position from
-              Google Search Console.
+              کلیک‌ها، نمایش‌ها، نرخ کلیک و میانگین جایگاه سایت را از سرچ کنسول
+              گوگل ببینید.
             </p>
           </div>
           {report?.connected ? (

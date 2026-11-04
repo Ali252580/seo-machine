@@ -17,9 +17,9 @@ const THEME_OPTIONS: {
   label: string;
   icon: typeof Sun;
 }[] = [
-  { value: "system", label: "System", icon: Monitor },
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "سیستم", icon: Monitor },
+  { value: "light", label: "روشن", icon: Sun },
+  { value: "dark", label: "تیره", icon: Moon },
 ];
 
 function PersonalSettings() {
@@ -37,12 +37,16 @@ function PersonalSettings() {
         analyticsOptedOut: !enabled,
       });
       if (result.error) {
-        toast.error("We couldn't update your analytics setting.");
+        toast.error("ذخیرهٔ تنظیمات آمار استفاده انجام نشد.");
       } else {
-        toast.success(enabled ? "Analytics enabled" : "Analytics disabled");
+        toast.success(
+          enabled
+            ? "ارسال آمار استفاده فعال شد"
+            : "ارسال آمار استفاده غیرفعال شد",
+        );
       }
     } catch {
-      toast.error("We couldn't update your analytics setting.");
+      toast.error("ذخیرهٔ تنظیمات آمار استفاده انجام نشد.");
     } finally {
       setIsSaving(false);
     }
@@ -51,12 +55,12 @@ function PersonalSettings() {
   return (
     <div className="space-y-10">
       <section className="space-y-3">
-        <h2 className="text-sm font-medium text-base-content/50">Appearance</h2>
+        <h2 className="text-sm font-medium text-base-content/50">ظاهر</h2>
         <div className="flex items-center justify-between gap-6">
-          <span className="text-sm">Theme</span>
+          <span className="text-sm">پوسته</span>
           <div
             role="radiogroup"
-            aria-label="Theme preference"
+            aria-label="انتخاب پوسته"
             className="flex gap-0.5 rounded-lg bg-base-200 p-0.5"
           >
             {THEME_OPTIONS.map((option) => {
@@ -91,13 +95,13 @@ function PersonalSettings() {
 
           <section className="space-y-3">
             <h2 className="text-sm font-medium text-base-content/50">
-              Analytics
+              آمار استفاده
             </h2>
             <div className="flex items-start justify-between gap-6">
               <div>
-                <p className="text-sm">Help improve OpenSEO</p>
+                <p className="text-sm">کمک به بهبود سایت</p>
                 <p className="mt-1 text-sm text-base-content/60">
-                  Share analytics and usage data.
+                  با ارسال آمار استفاده، به بهبود امکانات سایت کمک کنید.
                 </p>
               </div>
               <input
@@ -108,16 +112,16 @@ function PersonalSettings() {
                 onChange={(event) => {
                   void updateAnalyticsPreference(event.currentTarget.checked);
                 }}
-                aria-label="Enable product analytics"
+                aria-label="فعال‌کردن ارسال آمار استفاده"
               />
             </div>
           </section>
         </>
       ) : (
         <section className="space-y-3">
-          <h2 className="text-sm font-medium text-base-content/50">About</h2>
+          <h2 className="text-sm font-medium text-base-content/50">درباره</h2>
           <div className="flex items-center justify-between gap-6">
-            <span className="text-sm">Version</span>
+            <span className="text-sm">نسخه</span>
             <span className="font-mono text-sm text-base-content/60">
               v{version}
             </span>

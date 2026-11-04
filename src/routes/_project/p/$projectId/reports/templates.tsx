@@ -83,8 +83,8 @@ function ReportTemplatesPage() {
           <div>
             <h1 className="text-2xl font-semibold">قالب‌های گزارش</h1>
             <p className="text-sm text-base-content/70">
-              Reusable briefs your agents follow when they write a report: who
-              it is for, which sections it has, and how it should sound.
+              دستور نگارش گزارش را یک‌بار تنظیم کنید: مخاطب، بخش‌های گزارش و لحن
+              آن؛ عامل هوشمند در گزارش‌های بعدی همین قالب را دنبال می‌کند.
             </p>
           </div>
           <button

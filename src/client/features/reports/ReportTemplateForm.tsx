@@ -128,7 +128,7 @@ export function ReportTemplateForm({
           {(field) => (
             <Labelled
               label="Instructions"
-              hint="Brand voice for the whole project lives in Context › Writing preferences."
+              hint="لحن کلی پروژه را در بخش «زمینهٔ پروژه ← ترجیحات نگارش» تنظیم کنید."
               error={getFieldError(field.state.meta.errors)}
             >
               <textarea

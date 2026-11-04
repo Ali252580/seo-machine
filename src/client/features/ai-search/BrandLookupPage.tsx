@@ -53,18 +53,18 @@ const KEYWORD_SCOPE_REASON = "Scopes apply to domain lookups";
 const BRAND_LOOKUP_BULLETS = [
   {
     icon: TrendingUp,
-    title: "Track AI visibility",
-    body: "See estimated counts for ChatGPT and Google AI Overview answers that cite your brand, and watch the trend month over month.",
+    title: "پیگیری حضور در هوش مصنوعی",
+    body: "تعداد تخمینی پاسخ‌هایی که به برند شما اشاره می‌کنند و روند ماهانهٔ آن را ببینید.",
   },
   {
     icon: Quote,
-    title: "See the prompts",
-    body: "View sample user questions where LLMs reference your brand or domain.",
+    title: "مشاهدهٔ پرسش‌ها",
+    body: "نمونهٔ پرسش‌هایی را ببینید که مدل‌ها در پاسخ به آن‌ها از برند یا دامنهٔ شما نام می‌برند.",
   },
   {
     icon: BarChart3,
-    title: "Map the competition",
-    body: "Spot the pages LLMs cite alongside you so you know who's competing for attention in AI answers.",
+    title: "شناخت رقبا",
+    body: "صفحاتی را که در کنار سایت شما به‌عنوان منبع معرفی می‌شوند بشناسید.",
   },
 ];
 
@@ -274,14 +274,15 @@ function BrandLookupPageInner({
         <div>
           <h1 className="text-2xl font-semibold">بررسی برند</h1>
           <p className="text-sm text-base-content/70">
-            See how AI search cites any brand name or domain.
+            ببینید موتورهای جست‌وجوی هوش مصنوعی چگونه از برند یا دامنهٔ شما نام
+            می‌برند.
           </p>
         </div>
 
         {planGate.isFreePlan ? (
           <AiSearchPaidPlanGate
-            feature="Brand Lookup"
-            description="See how ChatGPT and Google AI Overview cite any brand or domain — total mentions, sample prompts where it appears, and the pages cited alongside it."
+            feature="بررسی برند"
+            description="تعداد اشاره‌ها به برند، نمونهٔ پرسش‌ها و صفحات منبع را در پاسخ‌های چت‌جی‌پی‌تی و نمای هوش مصنوعی گوگل بررسی کنید."
             bullets={BRAND_LOOKUP_BULLETS}
           />
         ) : (

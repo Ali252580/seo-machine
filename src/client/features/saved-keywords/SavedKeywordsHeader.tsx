@@ -29,8 +29,8 @@ export function SavedKeywordsHeader({
       <div>
         <h1 className="text-2xl font-semibold">کلمات ذخیره‌شده</h1>
         <p className="text-sm text-base-content/70">
-          Save keyword ideas from research, organize them with tags, and revisit
-          when you&apos;re ready to act.
+          ایده‌های تحقیق کلمات کلیدی را ذخیره کنید، با برچسب‌ها مرتب کنید و برای
+          برنامه‌ریزی محتوا به آن‌ها برگردید.
         </p>
       </div>
 
@@ -46,7 +46,7 @@ export function SavedKeywordsHeader({
             <RefreshCw
               className={`size-4 ${metricsRefreshing ? "animate-spin" : ""}`}
             />
-            {metricsRefreshing ? "Updating..." : "Actions"}
+            {metricsRefreshing ? "در حال به‌روزرسانی…" : "عملیات"}
             <ChevronDown className="size-3 opacity-60" />
           </button>
           <ul
@@ -62,9 +62,9 @@ export function SavedKeywordsHeader({
               >
                 <RefreshCw className="size-4" />
                 <span className="flex flex-col items-start">
-                  <span>Update keyword stats</span>
+                  <span>به‌روزرسانی آمار کلمات</span>
                   <span className="text-xs text-base-content/50">
-                    Volume, difficulty &amp; CPC
+                    حجم جست‌وجو، سختی و هزینهٔ هر کلیک
                   </span>
                 </span>
               </button>
@@ -85,7 +85,7 @@ export function SavedKeywordsHeader({
             ) : (
               <Download className="size-4" />
             )}
-            Export
+            خروجی
             <ChevronDown className="size-3 opacity-60" />
           </button>
           <ul
@@ -100,13 +100,13 @@ export function SavedKeywordsHeader({
                 disabled={disabled}
               >
                 <Sheet className="size-4" />
-                Export to Sheets
+                خروجی به گوگل شیت
               </button>
             </li>
             <li>
               <button type="button" onClick={onExportCsv} disabled={disabled}>
                 <FileDown className="size-4" />
-                Export CSV
+                دریافت فایل CSV
               </button>
             </li>
           </ul>

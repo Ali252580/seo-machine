@@ -185,8 +185,8 @@ export function BacklinksPage({
         <div>
           <h1 className="text-2xl font-semibold">بک‌لینک‌ها</h1>
           <p className="text-sm text-base-content/70">
-            Understand who links to a site, what changed recently, and which
-            pages attract links.
+            سایت‌های لینک‌دهنده، تغییرات اخیر بک‌لینک‌ها و صفحاتی را که لینک
+            دریافت می‌کنند بررسی کنید.
           </p>
         </div>
 
