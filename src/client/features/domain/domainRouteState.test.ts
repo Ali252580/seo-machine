@@ -38,6 +38,18 @@ describe("research scope resolution", () => {
 });
 
 describe("getDomainRouteState", () => {
+  it("preserves Iran as the default and explicit selection instead of substituting US data", () => {
+    expect(getDomainRouteState({}).locationCode).toBe(2364);
+    const iran = { locationCode: 2364, languageCode: "fa" };
+    expect(getDomainRouteState({}, iran).locationCode).toBe(2364);
+    expect(
+      getDomainRouteState(
+        { loc: 2364 },
+        { locationCode: 2840, languageCode: "en" },
+      ).locationCode,
+    ).toBe(2364);
+    expect(getDomainRouteState({ loc: 2840 }, iran).locationCode).toBe(2840);
+  });
   it("uses a Labs-backed project market when the URL omits loc", () => {
     const state = getDomainRouteState(
       {},

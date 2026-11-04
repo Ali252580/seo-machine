@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDomainOverview } from "@/serverFunctions/domain";
 import type { ResearchScope } from "@/shared/researchScope";
+import { isLabsLocationCode } from "@/shared/keyword-locations";
 
 type Input = {
   projectId: string;
@@ -13,7 +14,9 @@ export function useDomainOverviewQuery(input: Input) {
   const trimmedDomain = input.domain.trim();
 
   return useQuery({
-    enabled: trimmedDomain !== "",
+    enabled:
+      trimmedDomain !== "" &&
+      (input.locationCode == null || isLabsLocationCode(input.locationCode)),
     queryKey: [
       "domain-overview",
       input.projectId,

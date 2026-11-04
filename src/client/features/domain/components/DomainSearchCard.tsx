@@ -4,7 +4,10 @@ import { getFieldError, getFormError } from "@/client/lib/forms";
 import type { DomainOverviewControlsForm } from "@/client/features/domain/DomainOverviewPage";
 import { toSortMode } from "@/client/features/domain/utils";
 import type { DomainSortMode } from "@/client/features/domain/types";
-import { LABS_LOCATION_OPTIONS } from "@/client/features/keywords/locations";
+import {
+  LOCATION_OPTIONS,
+  IRAN_LOCATION_CODE,
+} from "@/shared/keyword-locations";
 import { LocationSelect } from "@/client/components/LocationSelect";
 import { ResearchScopeSelect } from "@/client/components/ResearchScopeSelect";
 import type { ResearchScope } from "@/shared/researchScope";
@@ -18,6 +21,10 @@ type Props = {
   onSortChange: (sort: DomainSortMode) => void;
   onLocationChange: (locationCode: number) => void;
 };
+
+const DOMAIN_LOCATIONS = LOCATION_OPTIONS.filter(
+  (option) => !option.googleAdsOnly || option.code === IRAN_LOCATION_CODE,
+);
 
 export function DomainSearchCard({
   controlsForm,
@@ -79,7 +86,7 @@ export function DomainSearchCard({
             {(field) => (
               <LocationSelect
                 value={field.state.value}
-                options={LABS_LOCATION_OPTIONS}
+                options={DOMAIN_LOCATIONS}
                 className="w-full lg:w-44 lg:shrink-0"
                 onChange={(code) => {
                   field.handleChange(code);
@@ -116,7 +123,7 @@ export function DomainSearchCard({
                 className="btn btn-primary shrink-0 px-6"
                 disabled={isLoading || isSubmitting}
               >
-                {isLoading || isSubmitting ? "Loading..." : "جستجو"}
+                {isLoading || isSubmitting ? "در حال دریافت…" : "جستجو"}
               </button>
             )}
           </controlsForm.Subscribe>

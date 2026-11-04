@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, type FormEvent } from "react";
 import { useForm, useStore } from "@tanstack/react-form";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
+import { IRAN_LOCATION_CODE } from "@/shared/keyword-locations";
 import {
   DEFAULT_DOMAIN_KEYWORDS_PAGE_SIZE,
   type DomainSearchParams,
@@ -134,7 +136,9 @@ function getHistorySearchUpdate(
   defaultLocationCode: number,
 ): DomainSearchUpdate {
   const historyLocation =
-    item.locationCode != null && isLabsLocationCode(item.locationCode)
+    item.locationCode != null &&
+    (isLabsLocationCode(item.locationCode) ||
+      item.locationCode === IRAN_LOCATION_CODE)
       ? item.locationCode
       : defaultLocationCode;
 
@@ -280,7 +284,7 @@ function useDomainOverviewState({
     projectId,
     domain: routeState.domain,
     scope: routeState.scope,
-    locationCode: routeState.sentLocationCode,
+    locationCode: routeState.locationCode,
   });
   const overview = overviewQuery.data ?? null;
   const isLoading = routeState.domain.trim() !== "" && overviewQuery.isLoading;
@@ -564,8 +568,7 @@ export function DomainOverviewPage({
         <div>
           <h1 className="text-2xl font-semibold">نمای کلی دامنه</h1>
           <p className="text-sm text-base-content/70">
-            Analyze any domain&apos;s SEO profile: traffic, keywords, and
-            backlinks.
+            ترافیک تخمینی و کلمات کلیدی دامنه را در کشور انتخاب‌شده بررسی کنید.
           </p>
         </div>
 
@@ -583,7 +586,29 @@ export function DomainOverviewPage({
           }
         />
 
-        {state.isLoading ? (
+        {routeState.locationCode === IRAN_LOCATION_CODE ? (
+          <div
+            role="status"
+            className="rounded-xl border border-base-300 bg-base-100 p-5 space-y-3"
+          >
+            <h2 className="font-semibold">
+              نمای کلی دامنه برای ایران در دسترس نیست
+            </h2>
+            <p className="text-sm leading-7 text-base-content/70">
+              منبع دادهٔ این بخش، ترافیک تخمینی و فهرست کلمات دامنه‌ها را برای
+              ایران ارائه نمی‌کند. برای سایت خودتان، آمار واقعی کلیک، نمایش،
+              رتبه و صفحات را در سرچ کنسول همین پروژه ببینید. این آمار به اتصال
+              سرچ کنسول نیاز دارد و برای سایت رقبا قابل دریافت نیست.
+            </p>
+            <Link
+              to="/p/$projectId/search-performance"
+              params={{ projectId }}
+              className="btn btn-primary btn-sm"
+            >
+              مشاهدهٔ سرچ کنسول همین پروژه
+            </Link>
+          </div>
+        ) : state.isLoading ? (
           <>
             {tabControls}
             <DomainOverviewLoadingState />
