@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   ArrowLeft,
   BarChart3,
-  Hand,
   Sparkles,
   Search,
   TrendingUp,
@@ -60,8 +59,7 @@ export function ProductPreview() {
         <span className="seo-example">پیش‌نمایش · دادهٔ نمونه</span>
       </div>
       <div className="seo-preview-guide">
-        <Hand size={17} aria-hidden="true" />
-        <span>این پیش‌نمایش تعاملی است؛ روی هر تب کلیک کنید.</span>
+        <span>سه ابزار، یک پروژه؛ نمونهٔ هر بخش را انتخاب کنید.</span>
       </div>
       <div
         className="seo-preview-tabs"

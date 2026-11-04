@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import {
   ArrowLeft,
   ArrowUpLeft,
@@ -70,7 +71,7 @@ const questions = [
   ],
   [
     "هوش مصنوعی چه کمکی به تولید محتوا می‌کند؟",
-    "می‌توانید از عامل هوشمند برای توضیح داده‌ها، پیشنهاد موضوع، طراحی ساختار مقاله و تهیهٔ پیش‌نویس کمک بگیرید. دسترسی به مدل نیازمند تنظیم سرویس هوش مصنوعی است و خروجی باید پیش از انتشار از نظر صحت، لحن و تناسب با کسب‌وکار بازبینی شود.",
+    "عامل SAM داخل همین سایت، با توجه به امکانات و اعتبار حساب، در توضیح داده‌ها، پیشنهاد موضوع و تهیهٔ پیش‌نویس کمک می‌کند. کاربر نیازی به تنظیم کلید مدل یا رفتن به محیط دیگری ندارد. پیش از انتشار، صحت اطلاعات و تناسب متن با کسب‌وکار را بازبینی کنید.",
   ],
   [
     "هزینهٔ استفاده چگونه مشخص می‌شود؟",
@@ -91,6 +92,7 @@ function Brand() {
 }
 
 export function PublicHomePage() {
+  const mobileMenu = useRef<HTMLDetailsElement>(null);
   return (
     <main className="seo-home" dir="rtl">
       <link rel="stylesheet" href={homeCss} />
@@ -102,6 +104,7 @@ export function PublicHomePage() {
           <Brand />
           <nav aria-label="منوی اصلی" className="seo-desktop-nav">
             <a href="#features">ابزارهای سئو</a>
+            <a href="#start">از کجا شروع کنم؟</a>
             <a href="#ai">هوش مصنوعی</a>
             <a href="#integrations">اتصال‌ها</a>
             <a href="#faq">پرسش‌ها</a>
@@ -114,12 +117,31 @@ export function PublicHomePage() {
               ساخت حساب <ArrowLeft size={16} />
             </a>
           </div>
-          <details className="seo-mobile-nav">
+          <details
+            ref={mobileMenu}
+            className="seo-mobile-nav"
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && mobileMenu.current?.open) {
+                mobileMenu.current.open = false;
+                mobileMenu.current.querySelector("summary")?.focus();
+              }
+            }}
+          >
             <summary aria-label="باز کردن منو">
               <ChevronDown size={22} />
             </summary>
-            <nav aria-label="منوی موبایل">
+            <nav
+              aria-label="منوی موبایل"
+              onClick={(event) => {
+                if (
+                  (event.target as HTMLElement).closest("a") &&
+                  mobileMenu.current
+                )
+                  mobileMenu.current.open = false;
+              }}
+            >
               <a href="#features">ابزارهای سئو</a>
+              <a href="#start">از کجا شروع کنم؟</a>
               <a href="#ai">هوش مصنوعی</a>
               <a href="#integrations">اتصال‌ها</a>
               <a href="#faq">پرسش‌ها</a>
@@ -131,20 +153,21 @@ export function PublicHomePage() {
       <section className="seo-hero seo-container" id="home-content">
         <div className="seo-hero-copy">
           <div className="seo-eyebrow">
-            <Sparkles size={16} /> سئو با داده، همراه با هوش مصنوعی
+            <Sparkles size={16} /> فضای کاری سئو برای سایت شما
           </div>
           <h1>
-            فرصت بعدی رشد
+            بدانید چه چیزی را
             <br />
-            سایتت را <span>پیدا کن.</span>
+            بهتر کنید؛ از داده تا محتوا.
           </h1>
           <p>
-            از پیدا کردن کلمهٔ درست تا تحلیل عملکرد محتوا؛ OpenSEO ابزارهای سئو
-            و یک دستیار هوشمند را در یک فضای کاری کنار هم می‌آورد.
+            عملکرد سایت را ببینید، فرصت‌های سئو را اولویت‌بندی کنید و با کمک SAM
+            پیش‌نویس قابل ویرایش بسازید. تحقیق، نگارش و پیگیری نتیجه، در پروژهٔ
+            همان سایت.
           </p>
           <div className="seo-hero-actions">
             <a className="seo-button" href="/sign-up">
-              شروع با OpenSEO <ArrowLeft size={18} />
+              ساخت اولین پروژه <ArrowLeft size={18} />
             </a>
             <a className="seo-text-link" href="#product">
               ببین چطور کار می‌کند <ArrowUpLeft size={17} />
@@ -155,7 +178,7 @@ export function PublicHomePage() {
               <Check size={15} /> فضای کاری فارسی
             </span>
             <span>
-              <Check size={15} /> اتصال اختیاری گوگل
+              <Check size={15} /> هوش مصنوعی داخل سایت
             </span>
           </div>
         </div>
@@ -165,6 +188,60 @@ export function PublicHomePage() {
             <span className="seo-caption-line" /> پیدا کن. تحلیل کن. قدم بعدی را
             انتخاب کن.
           </div>
+        </div>
+      </section>
+
+      <section
+        className="seo-start seo-container"
+        id="start"
+        aria-labelledby="seo-start-title"
+      >
+        <div className="seo-start-heading">
+          <span className="seo-eyebrow">قدم اول متناسب با نیاز شما</span>
+          <h2 id="seo-start-title">امروز روی چه چیزی کار می‌کنید؟</h2>
+          <p>
+            بعد از ساخت حساب، سایت خود را در یک پروژه ثبت کنید و از مسیر مناسب
+            شروع کنید.
+          </p>
+        </div>
+        <div className="seo-start-grid">
+          {[
+            {
+              icon: ShieldCheck,
+              title: "سایتم نیاز به بررسی دارد",
+              text: "خزش را اجرا کنید؛ خطاهای فنی و صفحات نیازمند اصلاح را ببینید.",
+              result: "خروجی: فهرست مشکل‌ها و صفحات درگیر",
+              href: "#features",
+              action: "آشنایی با ابزارهای بررسی",
+            },
+            {
+              icon: FileText,
+              title: "می‌خواهم محتوا بنویسم",
+              text: "زمینهٔ کسب‌وکار و موضوع را مشخص کنید؛ برای وبلاگ یا صفحهٔ خدمات، پیش‌نویس مناسب بسازید.",
+              result: "خروجی: متن قابل ویرایش و بازبینی",
+              href: "#ai",
+              action: "دیدن روند کار با SAM",
+            },
+            {
+              icon: TrendingUp,
+              title: "می‌خواهم نتیجه را بدانم",
+              text: "سرچ کنسول را متصل کنید و عملکرد صفحات را کنار تاریخچهٔ رتبه‌ها بررسی کنید.",
+              result: "خروجی: آمار و فرصت‌های بهبود",
+              href: "#integrations",
+              action: "آشنایی با گزارش‌های گوگل",
+            },
+          ].map(({ icon: Icon, title, text, result, href, action }) => (
+            <article key={title}>
+              <Icon size={24} aria-hidden="true" />
+              <h3>{title}</h3>
+              <p>{text}</p>
+              <small>{result}</small>
+              <a href={href}>
+                {action}
+                <ArrowLeft size={17} aria-hidden="true" />
+              </a>
+            </article>
+          ))}
         </div>
       </section>
 
