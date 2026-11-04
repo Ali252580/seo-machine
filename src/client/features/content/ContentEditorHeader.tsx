@@ -13,23 +13,28 @@ export function ContentEditorHeader({
   const project = useProjectMarket(projectId);
   return (
     <>
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <header className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
+        <div className="w-full min-w-0 sm:w-auto sm:flex-1">
           <h1 className="text-2xl font-semibold">
             {blog ? "نگارش وبلاگ" : "نگارش محتوا با SAM"}
           </h1>
           {project && (
-            <p className="my-2 text-sm font-medium">
-              {project?.name ?? "پروژهٔ جاری"}
-              {project?.domain && (
-                <span
-                  className="ms-2 inline-block break-all text-base-content/60"
-                  dir="ltr"
-                >
-                  {project.domain}
-                </span>
+            <dl className="my-3 flex flex-wrap gap-x-6 gap-y-2 rounded-lg border border-base-300 bg-base-200/50 px-3 py-2 text-sm">
+              <div className="flex min-w-0 items-baseline gap-2">
+                <dt className="shrink-0 text-base-content/60">پروژه:</dt>
+                <dd className="min-w-0 break-words font-medium" dir="auto">
+                  {project.name || "پروژهٔ جاری"}
+                </dd>
+              </div>
+              {project.domain && (
+                <div className="flex min-w-0 items-baseline gap-2">
+                  <dt className="shrink-0 text-base-content/60">سایت:</dt>
+                  <dd className="min-w-0 break-all font-medium" dir="ltr">
+                    {project.domain}
+                  </dd>
+                </div>
               )}
-            </p>
+            </dl>
           )}
           <p className="text-sm text-base-content/60">
             {blog
@@ -42,7 +47,7 @@ export function ContentEditorHeader({
         <Link
           to="/p/$projectId/sam"
           params={{ projectId }}
-          className="btn btn-outline btn-sm"
+          className="btn btn-outline btn-sm shrink-0"
         >
           گفت‌وگو با SAM
         </Link>
