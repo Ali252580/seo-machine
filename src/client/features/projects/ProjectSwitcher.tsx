@@ -233,7 +233,10 @@ export function ProjectSwitcher({
         >
           <span className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-medium text-base-content">
-              {activeProject?.name ?? "انتخاب پروژه"}
+              {activeProject?.name ??
+                (projectsQuery.isPending
+                  ? "در حال دریافت پروژه‌ها…"
+                  : "انتخاب پروژه")}
             </span>
             {activeProject?.domain ? (
               <span className="truncate text-xs font-normal text-base-content/50">
@@ -262,6 +265,27 @@ export function ProjectSwitcher({
 
       {open ? (
         <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-box border border-base-300 bg-base-100 shadow-lg">
+          {projectsQuery.isError ? (
+            <div role="alert" className="space-y-2 p-3 text-sm">
+              <p>فهرست پروژه‌ها دریافت نشد.</p>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline"
+                disabled={projectsQuery.isFetching}
+                onClick={() => void projectsQuery.refetch()}
+              >
+                {projectsQuery.isFetching ? "در حال تلاش…" : "تلاش دوباره"}
+              </button>
+            </div>
+          ) : projectsQuery.isPending ? (
+            <p role="status" className="p-3 text-sm">
+              در حال دریافت پروژه‌ها…
+            </p>
+          ) : projects.length === 0 ? (
+            <p className="p-3 text-sm text-base-content/70">
+              برای شروع، اولین پروژهٔ خود را بسازید.
+            </p>
+          ) : null}
           {showSearch ? (
             <div className="border-b border-base-300 p-2">
               <label className="input input-sm w-full">

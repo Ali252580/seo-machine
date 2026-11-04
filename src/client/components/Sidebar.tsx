@@ -37,7 +37,7 @@ interface SidebarProps {
 }
 
 const navItemBaseClass =
-  "relative flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-base-content/70";
+  "relative flex min-h-11 items-center gap-2.5 rounded-md px-3 py-2 text-sm text-base-content/70 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2";
 
 // Hover uses a lighter tint than the active background (bg-base-300/50) so a
 // hovered item next to the active one stays visually distinct instead of
@@ -76,7 +76,7 @@ function SidebarNavLink({
             <div className="absolute right-0 top-1 bottom-1 w-[3px] rounded-l-full bg-primary" />
           ) : null}
           <Icon className="h-4 w-4 shrink-0" />
-          <span className="truncate">{label}</span>
+          <span className="min-w-0 leading-6">{label}</span>
         </>
       )}
     </Link>
@@ -177,10 +177,13 @@ export function Sidebar({ projectId, onNavigate, onClose }: SidebarProps) {
       {view === "chat" && projectId ? (
         <SamSidebarPanel projectId={projectId} onNavigate={onNavigate} />
       ) : (
-        <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+        <nav
+          aria-label="بخش‌های پروژه"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2"
+        >
           {navGroups.map((group) => (
             <div key={group.label} className="mb-1">
-              <div className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-base-content/40">
+              <div className="px-3 pb-1 pt-3 text-xs font-semibold text-base-content/60">
                 {group.label}
               </div>
               {group.items.map((item) => {

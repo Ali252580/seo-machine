@@ -20,7 +20,7 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 
   const message = getStandardErrorMessage(
     error,
-    "Something went wrong. Please try again.",
+    "دریافت اطلاعات این صفحه انجام نشد. دوباره تلاش کنید.",
   );
   const errorCode = getErrorCode(error);
 
@@ -66,7 +66,10 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 
   return (
     <div className="min-w-0 flex-1 p-4 flex flex-col items-center justify-center gap-6">
-      <p className="text-center text-error">{message}</p>
+      <h1 className="text-lg font-semibold">این صفحه بارگذاری نشد</h1>
+      <p role="alert" className="max-w-xl break-words text-center text-error">
+        {message}
+      </p>
       <div className="flex gap-2 items-center flex-wrap">
         <button
           onClick={() => {
@@ -74,11 +77,11 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
           }}
           className="btn btn-primary btn-sm"
         >
-          Try Again
+          تلاش دوباره
         </button>
         {isRoot ? (
           <Link to="/" className="btn btn-sm">
-            Home
+            صفحهٔ اصلی
           </Link>
         ) : (
           <Link
@@ -89,7 +92,7 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
               window.history.back();
             }}
           >
-            Go Back
+            بازگشت
           </Link>
         )}
       </div>

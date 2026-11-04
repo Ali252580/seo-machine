@@ -18,6 +18,11 @@ import { GoogleGlyphMuted } from "@/client/features/gsc/GoogleGlyph";
 
 const projectNavItems = [
   {
+    to: "/p/$projectId/content" as const,
+    label: "نگارش و بازنویسی صفحات",
+    icon: FileText,
+  },
+  {
     to: "/p/$projectId/blog" as const,
     label: "نگارش وبلاگ",
     icon: BookOpen,
@@ -87,7 +92,7 @@ const projectNavItems = [
   },
   {
     to: "/p/$projectId/context" as const,
-    label: "زمینه",
+    label: "زمینه و اطلاعات پروژه",
     icon: Brain,
   },
   {
@@ -130,7 +135,7 @@ export function getProjectNavGroups(projectId: string) {
   return [
     {
       label: "نمای کلی",
-      items: [byPath("/p/$projectId")],
+      items: [byPath("/p/$projectId"), byPath("/p/$projectId/context")],
     },
     {
       label: "پژوهش",
@@ -152,15 +157,17 @@ export function getProjectNavGroups(projectId: string) {
       ],
     },
     {
-      label: "هوش مصنوعی",
+      label: "محتوا و بهبود سایت",
       items: [
-        byPath("/p/$projectId/sam"),
-        byPath("/p/$projectId/blog"),
         byPath("/p/$projectId/recommendations"),
+        byPath("/p/$projectId/content"),
+        byPath("/p/$projectId/blog"),
         byPath("/p/$projectId/reports"),
-        byPath("/p/$projectId/context"),
-        aiNavItem,
       ],
+    },
+    {
+      label: "هوش مصنوعی",
+      items: [byPath("/p/$projectId/sam"), aiNavItem],
     },
   ];
 }

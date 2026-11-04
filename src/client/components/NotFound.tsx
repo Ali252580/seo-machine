@@ -3,8 +3,11 @@ export function NotFound({ children }: { children?: React.ReactNode }) {
     <div className="space-y-2 p-4">
       <h1 className="text-2xl">404</h1>
       <div className="text-base-content/70">
-        {children || <p>The page you are looking for does not exist.</p>}
+        {children || <p>این صفحه پیدا نشد؛ ممکن است نشانی تغییر کرده باشد.</p>}
       </div>
+      <a href="/projects" className="btn btn-primary btn-sm">
+        بازگشت به پروژه‌ها
+      </a>
     </div>
   );
 }
