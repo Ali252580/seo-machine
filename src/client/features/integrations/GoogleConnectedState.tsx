@@ -27,7 +27,7 @@ export function GoogleConnectedState({
         </p>
         {detail ? (
           <p className="mt-1 text-xs text-base-content/50">
-            ID {detail.replace(/^properties\//, "")}
+            شناسه {detail.replace(/^properties\//, "")}
           </p>
         ) : null}
         {email ? (
@@ -45,8 +45,8 @@ export function GoogleConnectedState({
             onClick={onChange}
           >
             {canManage
-              ? "Change property or account"
-              : "Manage Google accounts"}
+              ? "تغییر سایت یا حساب"
+              : "مدیریت حساب‌های گوگل"}
           </button>
           {canManage ? (
             <button
@@ -54,7 +54,7 @@ export function GoogleConnectedState({
               className="btn btn-ghost btn-sm text-error hover:bg-error/10"
               onClick={onDisconnect}
             >
-              {disconnecting ? "Disconnecting…" : "Disconnect project"}
+              {disconnecting ? "در حال قطع اتصال…" : "قطع اتصال پروژه"}
             </button>
           ) : null}
         </fieldset>

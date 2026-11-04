@@ -203,7 +203,7 @@ export function SearchPerformancePage({ projectId }: { projectId: string }) {
               params={{ projectId }}
               className="link link-hover shrink-0 self-start text-sm font-medium text-base-content/60 transition-colors hover:text-base-content sm:mt-1"
             >
-              Change property
+              تغییر سایت متصل
             </Link>
           ) : null}
         </div>
