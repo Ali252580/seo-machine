@@ -67,20 +67,55 @@ function MobileSidebarDrawer({
   projectId: string | null;
   onClose: () => void;
 }) {
-  if (!open) return null;
+  const dialogRef = React.useRef<HTMLDialogElement>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    const desktop = window.matchMedia("(min-width: 768px)");
+    if (desktop.matches) {
+      onClose();
+      return;
+    }
+    dialog?.showModal();
+    const closeOnDesktop = () => {
+      if (desktop.matches) onClose();
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      desktop.removeEventListener("change", closeOnDesktop);
+      dialog?.close();
+    };
+  }, [open, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 md:hidden">
-      <button
-        type="button"
-        aria-label="بستن منو"
-        className="absolute inset-0 bg-black/45"
-        onClick={onClose}
-      />
-      <div className="absolute right-0 top-0 h-full shadow-xl">
-        <Sidebar projectId={projectId} onNavigate={onClose} onClose={onClose} />
-      </div>
-    </div>
+    <dialog
+      ref={dialogRef}
+      aria-label="منوی پروژه"
+      className="fixed inset-0 m-0 h-[100dvh] max-h-none w-screen max-w-none border-0 bg-transparent p-0 backdrop:bg-black/45"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      {open ? (
+        <>
+          <button
+            type="button"
+            aria-label="بستن منو"
+            className="absolute inset-0"
+            tabIndex={-1}
+            onClick={onClose}
+          />
+          <div className="absolute right-0 top-0 h-full shadow-xl">
+            <Sidebar
+              projectId={projectId}
+              onNavigate={onClose}
+              onClose={onClose}
+            />
+          </div>
+        </>
+      ) : null}
+    </dialog>
   );
 }
 
@@ -119,7 +154,8 @@ const MissingSeoSetupModal = React.forwardRef<
               id="dataforseo-setup-description"
               className="text-sm text-base-content/75"
             >
-              برای شروع استفاده از OpenSEO، کلید API سرویس DataForSEO را اضافه کنید.
+              برای شروع استفاده از OpenSEO، کلید API سرویس DataForSEO را اضافه
+              کنید.
             </p>
           </div>
         </div>

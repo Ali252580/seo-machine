@@ -28,6 +28,7 @@ export function AuthenticatedAppLayout({
 }) {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const closeDrawer = React.useCallback(() => setDrawerOpen(false), []);
   const setupModalRef = React.useRef<HTMLDivElement | null>(null);
   const [showMissingSeoApiKeyModal, setShowMissingSeoApiKeyModal] =
     React.useState(false);
@@ -57,6 +58,9 @@ export function AuthenticatedAppLayout({
   // builds links that self-correct via the route guard once data arrives.
   const sidebarProjectId =
     projectId ?? fallbackProjectId ?? rememberedProjectId;
+  const activeProject = fallbackProjects.find(
+    (project) => project.id === sidebarProjectId,
+  );
   const isHostedMode = isHostedClientAuthMode();
   const shouldCheckSeoApiKeyStatus =
     !isHostedMode && location.pathname !== BILLING_ROUTE;
@@ -125,6 +129,8 @@ export function AuthenticatedAppLayout({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileTopBar
+          projectName={activeProject?.name}
+          projectDomain={activeProject?.domain ?? undefined}
           drawerOpen={drawerOpen}
           onOpenDrawer={() => setDrawerOpen(true)}
         />
@@ -148,7 +154,7 @@ export function AuthenticatedAppLayout({
       <MobileSidebarDrawer
         open={drawerOpen}
         projectId={sidebarProjectId}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
       />
 
       <MissingSeoSetupModal
@@ -166,9 +172,13 @@ export function AuthenticatedAppLayout({
 }
 
 function MobileTopBar({
+  projectName,
+  projectDomain,
   drawerOpen,
   onOpenDrawer,
 }: {
+  projectName?: string;
+  projectDomain?: string;
   drawerOpen: boolean;
   onOpenDrawer: () => void;
 }) {
@@ -176,16 +186,32 @@ function MobileTopBar({
     <div className="flex shrink-0 items-center gap-1 border-b border-base-300 bg-base-100 px-2 py-1.5 md:hidden">
       <button
         type="button"
-        className="btn btn-square btn-ghost btn-sm"
-        aria-label="باز و بسته‌کردن منو"
+        className="btn btn-square btn-ghost min-h-11 min-w-11"
+        aria-label="بازکردن منوی پروژه"
         aria-expanded={drawerOpen}
         onClick={onOpenDrawer}
       >
         <Menu className="h-5 w-5" />
       </button>
-      <Link to="/" className="mr-1 font-semibold text-base-content">
+      <Link to="/" className="mr-1 shrink-0 font-semibold text-base-content">
         OpenSEO
       </Link>
+      {projectName ? (
+        <div className="mr-auto min-w-0 ps-3 text-left">
+          <p className="truncate text-sm font-medium" title={projectName}>
+            {projectName}
+          </p>
+          {projectDomain ? (
+            <p
+              dir="ltr"
+              className="truncate text-xs text-base-content/60"
+              title={projectDomain}
+            >
+              {projectDomain}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

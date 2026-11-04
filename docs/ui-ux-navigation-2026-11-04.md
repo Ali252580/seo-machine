@@ -20,3 +20,17 @@ overflow at 320, 390 and 1280px; the 320px screenshot was visually reviewed.
 
 No authenticated production walkthrough or live provider calls were performed.
 This covers shared navigation controls, not every feature's complete workflow.
+
+## Mobile navigation follow-up
+
+- The mobile drawer now uses the browser's modal dialog behavior for focus
+  containment, Escape and focus restoration. It closes when resizing to desktop.
+- Portal action menus stay inside the viewport, focus their first action, restore
+  trigger focus on Escape/action selection and remain usable inside the drawer.
+- The mobile header displays the selected project's name and domain.
+- `node e2e/mobile-navigation.smoke.mjs` verifies the real drawer/portal components
+  with an isolated sidebar fixture (no authentication or provider requests).
+  Chrome checks cover background focus blocking, keyboard cycles, nested menus,
+  Escape, outside click, desktop resize and menu bounds at 320/390/1000px.
+
+Not verified: authenticated production navigation, Safari/iOS and real phones.
