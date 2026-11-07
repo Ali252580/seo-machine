@@ -21,6 +21,41 @@ const plan = {
 };
 
 describe("automatic SEO workflow", () => {
+  it("preserves bounded planning metadata and remains compatible with old plans", () => {
+    const planning = {
+      priority: "high",
+      priorityReason: "شواهد ثبت‌شده",
+      effort: "small",
+      dependencies: ["بررسی دسترسی"],
+      reviewAfterDays: 28,
+    };
+    const [result] = parseWorkflowPlans(
+      JSON.stringify([{ ...plan, planning }]),
+      [candidate],
+      [candidate.page!],
+    );
+    expect(result.plan.planning).toEqual(planning);
+    expect(
+      parseWorkflowPlans(
+        JSON.stringify([plan]),
+        [candidate],
+        [candidate.page!],
+      )[0].plan.planning,
+    ).toBeUndefined();
+    expect(
+      parseWorkflowPlans(JSON.stringify([{ ...plan, planning }]), [
+        candidate,
+      ])[0].plan.planning,
+    ).toBeUndefined();
+    expect(() =>
+      parseWorkflowPlans(
+        JSON.stringify([
+          { ...plan, planning: { ...planning, reviewAfterDays: 0 } },
+        ]),
+        [candidate],
+      ),
+    ).toThrow();
+  });
   it("rejects other domains, credentials and protocols before any page read", () => {
     const urls = [
       candidate.page,

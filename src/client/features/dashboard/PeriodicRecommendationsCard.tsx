@@ -1,4 +1,58 @@
 import { ExternalLink, Sparkles } from "lucide-react";
+import type { PeriodicRecommendations } from "@/server/features/sam/periodicRecommendations";
+
+function ActionPlanning({
+  planning,
+}: {
+  planning: NonNullable<
+    NonNullable<PeriodicRecommendations["items"][number]["plan"]>["planning"]
+  >;
+}) {
+  return (
+    <div className="space-y-3 rounded-lg bg-base-200/60 p-4">
+      <div className="flex flex-wrap gap-2 text-sm">
+        <span className="badge badge-outline">
+          اولویت پیشنهادی:{" "}
+          {
+            {
+              high: "بالا",
+              medium: "متوسط",
+              low: "پایین",
+            }[planning.priority]
+          }
+        </span>
+        <span className="badge badge-outline">
+          تلاش تخمینی:{" "}
+          {
+            {
+              small: "کم",
+              medium: "متوسط",
+              large: "زیاد",
+            }[planning.effort]
+          }
+        </span>
+      </div>
+      <p className="text-sm leading-7">
+        <strong>دلیل اولویت: </strong>
+        {planning.priorityReason}
+      </p>
+      {planning.dependencies.length > 0 && (
+        <div>
+          <h4 className="text-sm font-medium">پیش‌نیازهای اقدام</h4>
+          <ul className="mt-2 list-inside list-disc space-y-1 text-sm leading-7">
+            {planning.dependencies.map((dependency, index) => (
+              <li key={index}>{dependency}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <p className="text-sm leading-7">
+        زمان پیشنهادی سنجش: {planning.reviewAfterDays.toLocaleString("fa-IR")}{" "}
+        روز پس از اجرای اقدام توسط شما؛ این زمان یادآور زمان‌بندی‌شده نیست.
+      </p>
+    </div>
+  );
+}
 import { Link } from "@tanstack/react-router";
 import { recommendationPage } from "./recommendationPage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -251,6 +305,9 @@ export function PeriodicRecommendationsCard({
                           <p className="text-sm leading-7">
                             {item.plan.rationale}
                           </p>
+                          {item.plan.planning && (
+                            <ActionPlanning planning={item.plan.planning} />
+                          )}
                           <details open>
                             <summary className="cursor-pointer text-sm font-medium text-primary">
                               مراحل اجرا، ساختار محتوا و سنجش نتیجه

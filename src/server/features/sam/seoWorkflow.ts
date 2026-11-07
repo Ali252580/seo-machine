@@ -8,6 +8,15 @@ export const actionPlanSchema = z.object({
   suggestedTitle: z.string().max(180).nullable(),
   outline: z.array(z.string().max(180)).max(8),
   successMeasure: z.string().min(1).max(500),
+  planning: z
+    .object({
+      priority: z.enum(["high", "medium", "low"]),
+      priorityReason: z.string().min(1).max(500),
+      effort: z.enum(["small", "medium", "large"]),
+      dependencies: z.array(z.string().min(1).max(300)).max(5),
+      reviewAfterDays: z.number().int().min(7).max(90),
+    })
+    .optional(),
 });
 export const workflowSchema = z.object({
   pagesRead: z.number().int().nonnegative(),
@@ -39,6 +48,8 @@ export function parseWorkflowPlans(
       plan.steps = [
         "دسترسی به متن صفحه را بررسی کنید و سپس قصد جست‌وجو و پوشش محتوا را با داده‌های ثبت‌شده تطبیق دهید.",
       ];
+      // A rewrite estimate is no longer valid when the task becomes investigation.
+      plan.planning = undefined;
     }
     return [{ ...candidate, plan }];
   });
