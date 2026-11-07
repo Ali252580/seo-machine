@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, Search } from "lucide-react";
-import { IRAN_LOCATION_CODE, LOCATION_OPTIONS } from "@/shared/keyword-locations";
+import {
+  IRAN_LOCATION_CODE,
+  LOCATION_OPTIONS,
+} from "@/shared/keyword-locations";
 
 type LocationOption = (typeof LOCATION_OPTIONS)[number];
 
@@ -42,6 +46,8 @@ export function LocationSelect({
   const [activeIndex, setActiveIndex] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ top: 0, left: 0, maxHeight: 320 });
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -52,12 +58,55 @@ export function LocationSelect({
     [options, query],
   );
 
+  useLayoutEffect(() => {
+    if (!open) return;
+    const updatePosition = () => {
+      const trigger = containerRef.current?.getBoundingClientRect();
+      const menu = menuRef.current;
+      if (!trigger || !menu) return;
+      const viewport = window.visualViewport;
+      const top = (viewport?.offsetTop ?? 0) + 8;
+      const left = (viewport?.offsetLeft ?? 0) + 8;
+      const width = (viewport?.width ?? window.innerWidth) - 16;
+      const maxHeight = (viewport?.height ?? window.innerHeight) - 16;
+      const bounds = menu.getBoundingClientRect();
+      setPosition({
+        left: Math.max(
+          left,
+          Math.min(trigger.right - bounds.width, left + width - bounds.width),
+        ),
+        top: Math.max(
+          top,
+          Math.min(
+            trigger.bottom + 8,
+            top + maxHeight - Math.min(bounds.height, maxHeight),
+          ),
+        ),
+        maxHeight,
+      });
+    };
+    updatePosition();
+    const observer = new ResizeObserver(updatePosition);
+    if (menuRef.current) observer.observe(menuRef.current);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    window.visualViewport?.addEventListener("resize", updatePosition);
+    window.visualViewport?.addEventListener("scroll", updatePosition);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.visualViewport?.removeEventListener("resize", updatePosition);
+      window.visualViewport?.removeEventListener("scroll", updatePosition);
+    };
+  }, [open]);
+
   // Reset transient state and focus the search input each time the menu opens.
   useEffect(() => {
     if (!open) return;
     setQuery("");
     setActiveIndex(0);
-    inputRef.current?.focus();
+    inputRef.current?.focus({ preventScroll: true });
   }, [open]);
 
   // Close on outside click so it behaves like the surrounding native selects.
@@ -65,7 +114,11 @@ export function LocationSelect({
     if (!open) return;
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target;
-      if (target instanceof Node && !containerRef.current?.contains(target)) {
+      if (
+        target instanceof Node &&
+        !containerRef.current?.contains(target) &&
+        !menuRef.current?.contains(target)
+      ) {
         setOpen(false);
       }
     };
@@ -122,62 +175,69 @@ export function LocationSelect({
         </span>
       </button>
 
-      {open ? (
-        <div className="fixed z-30 mt-2 w-full max-w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
-          <label className="flex items-center gap-2 rounded-lg border border-base-300 px-3 py-2 focus-within:border-primary">
-            <Search className="size-4 shrink-0 text-base-content/50" />
-            <input
-              ref={inputRef}
-              type="text"
-              className="grow min-w-0 bg-transparent text-sm outline-none placeholder:text-base-content/40"
-              placeholder="Search countries"
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setActiveIndex(0);
-              }}
-              onKeyDown={handleKeyDown}
-            />
-          </label>
+      {open
+        ? createPortal(
+            <div
+              ref={menuRef}
+              style={position}
+              className="fixed z-[1000] flex w-56 max-w-[calc(100vw-1rem)] flex-col rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
+            >
+              <label className="flex shrink-0 items-center gap-2 rounded-lg border border-base-300 px-3 py-2 focus-within:border-primary">
+                <Search className="size-4 shrink-0 text-base-content/50" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  className="grow min-w-0 bg-transparent text-base sm:text-sm outline-none placeholder:text-base-content/40"
+                  placeholder="Search countries"
+                  value={query}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setActiveIndex(0);
+                  }}
+                  onKeyDown={handleKeyDown}
+                />
+              </label>
 
-          <ul
-            ref={listRef}
-            role="listbox"
-            className="menu mt-2 max-h-64 w-full flex-nowrap overflow-y-auto p-0"
-          >
-            {filtered.length === 0 ? (
-              <li className="w-full break-all px-3 py-2 text-sm text-base-content/50">
-                No countries match “{query.trim()}”
-              </li>
-            ) : (
-              filtered.map((option, index) => {
-                const isSelected = option.code === value;
-                return (
-                  <li
-                    key={option.code}
-                    role="option"
-                    aria-selected={isSelected}
-                  >
-                    <button
-                      type="button"
-                      className={`w-full ${index === activeIndex ? "menu-focus" : ""}`}
-                      onClick={() => select(option)}
-                      onMouseEnter={() => setActiveIndex(index)}
-                    >
-                      <span className="flex-1 truncate">
-                        {displayLabel(option)}
-                      </span>
-                      {isSelected ? (
-                        <Check className="size-4 shrink-0 text-primary" />
-                      ) : null}
-                    </button>
+              <ul
+                ref={listRef}
+                role="listbox"
+                className="menu mt-2 min-h-0 max-h-64 w-full flex-nowrap overflow-y-auto p-0"
+              >
+                {filtered.length === 0 ? (
+                  <li className="w-full break-all px-3 py-2 text-sm text-base-content/50">
+                    No countries match “{query.trim()}”
                   </li>
-                );
-              })
-            )}
-          </ul>
-        </div>
-      ) : null}
+                ) : (
+                  filtered.map((option, index) => {
+                    const isSelected = option.code === value;
+                    return (
+                      <li
+                        key={option.code}
+                        role="option"
+                        aria-selected={isSelected}
+                      >
+                        <button
+                          type="button"
+                          className={`w-full ${index === activeIndex ? "menu-focus" : ""}`}
+                          onClick={() => select(option)}
+                          onMouseEnter={() => setActiveIndex(index)}
+                        >
+                          <span className="flex-1 truncate">
+                            {displayLabel(option)}
+                          </span>
+                          {isSelected ? (
+                            <Check className="size-4 shrink-0 text-primary" />
+                          ) : null}
+                        </button>
+                      </li>
+                    );
+                  })
+                )}
+              </ul>
+            </div>,
+            containerRef.current?.closest("dialog") ?? document.body,
+          )
+        : null}
     </div>
   );
 }
