@@ -17,9 +17,8 @@ const projectDomainField = z
   .transform((value) => value || undefined)
   .optional();
 
-// Default market for the project's data calls. The location/language PAIR is
-// validated in the service (an update may change one side and needs the
-// stored row for the other).
+// Project country and language are independent; data tools validate their own
+// provider-specific country/language restrictions.
 const projectLocationCodeField = z
   .number()
   .int()

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ProjectAutomationSettings } from "./ProjectAutomationSettings";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -35,6 +36,10 @@ export function ProjectGeneralSettings({ projectId }: { projectId: string }) {
     <div className="space-y-8">
       {/* key resets the form's local state when switching between projects */}
       <GeneralSection key={project.id} project={project} />
+      <ProjectAutomationSettings
+        key={`automation-${project.id}`}
+        projectId={project.id}
+      />
       <DangerSection project={project} canArchive={projects.length > 1} />
     </div>
   );

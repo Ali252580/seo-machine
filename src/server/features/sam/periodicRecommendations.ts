@@ -10,6 +10,10 @@ import {
   or,
 } from "drizzle-orm";
 import { generateText } from "ai";
+import {
+  enabledAutomationProjects,
+  getAutomationEnabled,
+} from "./automationSettings";
 import { z } from "zod";
 import { db } from "@/db";
 import {
@@ -322,6 +326,7 @@ export async function refreshPeriodicRecommendations(
   projectId: string,
   force = false,
 ): Promise<boolean> {
+  if (!force && !(await getAutomationEnabled(projectId))) return false;
   const claimedAt = await claim(
     projectId,
     new Date(Date.now() - (force ? 60 * 60 * 1000 : WEEK_MS)).toISOString(),
@@ -387,6 +392,7 @@ export async function runDuePeriodicRecommendations(limit = 3) {
     .where(
       and(
         isNull(projects.archivedAt),
+        inArray(projects.id, enabledAutomationProjects()),
         isNotNull(projects.domain),
         or(
           isNull(projectContextSections.projectId),

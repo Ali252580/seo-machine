@@ -1,8 +1,5 @@
 import { LocationSelect } from "@/client/components/LocationSelect";
-import {
-  getLanguageCode,
-  getLanguageOptions,
-} from "@/client/features/keywords/locations";
+import { getLanguageCode, SERP_LANGUAGE_OPTIONS } from "@/shared/keyword-locations";
 import type { ProjectMarket } from "@/client/features/projects/types";
 
 /**
@@ -20,7 +17,6 @@ export function ProjectMarketFields({
   onChange: (market: ProjectMarket) => void;
   hideLanguageOnMobile?: boolean;
 }) {
-  const languageOptions = getLanguageOptions(value.locationCode);
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -45,12 +41,9 @@ export function ProjectMarketFields({
           onChange={(event) =>
             onChange({ ...value, languageCode: event.target.value })
           }
-          // Most countries have exactly one language DataForSEO serves, so the
-          // select is only a real choice where there's more than one.
-          disabled={languageOptions.length <= 1}
           className="select select-bordered w-full"
         >
-          {languageOptions.map((option) => (
+          {SERP_LANGUAGE_OPTIONS.map((option) => (
             <option key={option.code} value={option.code}>
               {option.label}
             </option>

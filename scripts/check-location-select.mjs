@@ -69,6 +69,10 @@ try {
     for (const width of [320, 390, 1280]) {
       await page.setViewportSize({ width, height: 480 });
       await page.goto("http://127.0.0.1:4198/" + mode);
+      if (mode === "#project") {
+        await page.getByRole("combobox").selectOption("en");
+        await expect(page.getByRole("combobox")).toHaveValue("en");
+      }
       await page.locator('[aria-haspopup="listbox"]').click();
       await page.getByPlaceholder("Search countries").waitFor();
       for (const height of [480, 250, 740]) {

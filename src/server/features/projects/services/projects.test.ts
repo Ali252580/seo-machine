@@ -108,18 +108,32 @@ describe("project service", () => {
       ).rejects.toThrow();
       expect(mocks.updateProjectWebsite).not.toHaveBeenCalled();
     });
-    it("rejects a mismatched market before writing the website", async () => {
+    it("rejects an unknown language before writing the website", async () => {
       const { setProjectWebsite } = await import("./projects");
       await expect(
         setProjectWebsite("org_1", {
           projectId: "project_acme",
           domain: "acme.com",
           locationCode: 2826,
-          languageCode: "fr",
+          languageCode: "invalid",
         }),
       ).rejects.toThrow();
       expect(mocks.updateProjectWebsite).not.toHaveBeenCalled();
     });
+  });
+
+  it("preserves an independently chosen language when creating, editing and setting a website", async () => {
+    mocks.createProject.mockResolvedValue(namedProject);
+    mocks.updateProject.mockResolvedValue(namedProject);
+    mocks.updateProjectWebsite.mockResolvedValue(namedProject);
+    const { createProject, updateProject, setProjectWebsite } = await import("./projects");
+    const market = {locationCode: 2276, languageCode: "en"};
+    await createProject("org_1", {name: "Acme", ...market});
+    expect(mocks.createProject).toHaveBeenCalledWith("org_1", "Acme", null, market);
+    await updateProject("org_1", {projectId: "project_acme", name: "Acme", ...market});
+    expect(mocks.updateProject).toHaveBeenCalledWith("project_acme", "org_1", expect.objectContaining({market}));
+    await setProjectWebsite("org_1", {projectId: "project_acme", domain: "acme.com", ...market});
+    expect(mocks.updateProjectWebsite).toHaveBeenCalledWith("project_acme", "org_1", "acme.com", market);
   });
 
   describe("createProject", () => {
@@ -155,14 +169,14 @@ describe("project service", () => {
       );
     });
 
-    it("rejects a language DataForSEO does not serve for the location", async () => {
+    it("rejects an unknown project language", async () => {
       const { createProject } = await import("./projects");
 
       await expect(
         createProject("org_1", {
           name: "Acme",
           locationCode: 2840,
-          languageCode: "vi",
+          languageCode: "invalid",
         }),
       ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
       expect(mocks.createProject).not.toHaveBeenCalled();

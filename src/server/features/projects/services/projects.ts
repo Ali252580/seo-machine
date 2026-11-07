@@ -8,10 +8,10 @@ import type {
 import { ProjectRepository } from "@/server/features/projects/repositories/ProjectRepository";
 import { normalizeBacklinksTarget } from "@/server/lib/dataforseoBacklinksTarget";
 import { AppError } from "@/server/lib/errors";
-import { assertLanguageForLocation } from "@/server/lib/market";
 import {
   DEFAULT_LOCATION_CODE,
   getLanguageCode,
+  isSupportedLanguageCode,
 } from "@/shared/keyword-locations";
 
 function mapProject(project: {
@@ -46,7 +46,9 @@ function resolveMarketInput(input: {
   if (input.locationCode == null) return undefined;
   const locationCode = input.locationCode;
   const languageCode = input.languageCode ?? getLanguageCode(locationCode);
-  assertLanguageForLocation(locationCode, languageCode);
+  if (!isSupportedLanguageCode(languageCode)) {
+    throw new AppError("VALIDATION_ERROR", "Unsupported language code");
+  }
   return { locationCode, languageCode };
 }
 
@@ -229,12 +231,12 @@ export async function setProjectWebsite(
 ) {
   const domain = normalizeProjectDomain(input.domain);
   if (!domain) throw new AppError("VALIDATION_ERROR", "Enter a valid domain.");
-  assertLanguageForLocation(input.locationCode, input.languageCode);
+  const market = resolveMarketInput(input);
   const row = await ProjectRepository.updateProjectWebsite(
     input.projectId,
     organizationId,
     domain,
-    { locationCode: input.locationCode, languageCode: input.languageCode },
+    market!,
   );
   return mapProject(row);
 }

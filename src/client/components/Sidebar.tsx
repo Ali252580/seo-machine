@@ -5,7 +5,6 @@ import { useEffect, useState, type ComponentType } from "react";
 import {
   ArrowLeftRight,
   Check,
-  CircleHelp,
   CreditCard,
   LayoutGrid,
   LogOut,
@@ -271,13 +270,6 @@ function SidebarFooter({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="shrink-0 border-t border-base-300 px-2 py-2 pb-safe">
-      <SidebarNavLink
-        icon={CircleHelp}
-        label="راهنما و انجمن"
-        onNavigate={onNavigate}
-        linkProps={{ to: "/support" }}
-      />
-
       {email ? (
         <div className="dropdown dropdown-top w-full">
           <button

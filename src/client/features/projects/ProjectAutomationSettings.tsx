@@ -1,0 +1,76 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import {
+  getProjectAutomation,
+  saveProjectAutomation,
+} from "@/serverFunctions/automation";
+import { getStandardErrorMessage } from "@/client/lib/error-messages";
+
+export function ProjectAutomationSettings({
+  projectId,
+}: {
+  projectId: string;
+}) {
+  const client = useQueryClient();
+  const queryKey = ["projectAutomation", projectId];
+  const settings = useQuery({
+    queryKey,
+    queryFn: () => getProjectAutomation({ data: { projectId } }),
+  });
+  const save = useMutation({
+    mutationFn: (enabled: boolean) =>
+      saveProjectAutomation({ data: { projectId, enabled } }),
+    onSuccess: () => client.invalidateQueries({ queryKey }),
+  });
+  return (
+    <section className="space-y-3 rounded-xl border border-base-300 p-4">
+      <h2 className="font-medium">خودکارسازی سئو</h2>
+      <p className="text-sm text-base-content/70">
+        بررسی هفتگی داده‌های موجود سرچ کنسول، آنالیتیکس و رتبه‌ها و تهیهٔ
+        پیشنهادهای سئو برای همین سایت. اولین بررسی در اجرای زمان‌بندی‌شدهٔ بعدی
+        انجام می‌شود. تحلیل هوش مصنوعی از اعتبار همین حساب مصرف می‌کند؛ بدون
+        اعتبار، فقط پیشنهادهای مبتنی بر داده تهیه می‌شوند. محتوا منتشر نمی‌شود.
+      </p>
+      <label className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          className="toggle toggle-primary"
+          checked={settings.data?.enabled ?? false}
+          disabled={
+            !settings.data?.canManage || settings.isFetching || save.isPending
+          }
+          onChange={(event) => save.mutate(event.target.checked)}
+        />
+        بررسی خودکار هفتگی این سایت
+      </label>
+      {settings.isPending && <p role="status">در حال دریافت تنظیمات…</p>}
+      {save.isPending && <p role="status">در حال ذخیره…</p>}
+      {settings.data && !settings.data.canManage && (
+        <p className="text-sm">
+          مدیر یا مالک حساب می‌تواند این تنظیم را تغییر دهد.
+        </p>
+      )}
+      {(settings.error || save.error) && (
+        <p role="alert" className="text-error">
+          {getStandardErrorMessage(settings.error || save.error)}
+        </p>
+      )}
+      {settings.isError && (
+        <button className="btn btn-sm" onClick={() => void settings.refetch()}>
+          تلاش مجدد
+        </button>
+      )}
+      <Link
+        className="link text-sm"
+        to="/p/$projectId/recommendations"
+        params={{ projectId }}
+      >
+        مشاهدهٔ نتیجه و پیشنهادها
+      </Link>
+      <p className="text-xs text-base-content/60">
+        خاموش‌کردن، اجراهای بعدی را متوقف می‌کند؛ بررسی در حال اجرا ممکن است
+        تکمیل شود.
+      </p>
+    </section>
+  );
+}
