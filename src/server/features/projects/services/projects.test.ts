@@ -126,14 +126,37 @@ describe("project service", () => {
     mocks.createProject.mockResolvedValue(namedProject);
     mocks.updateProject.mockResolvedValue(namedProject);
     mocks.updateProjectWebsite.mockResolvedValue(namedProject);
-    const { createProject, updateProject, setProjectWebsite } = await import("./projects");
-    const market = {locationCode: 2276, languageCode: "en"};
-    await createProject("org_1", {name: "Acme", ...market});
-    expect(mocks.createProject).toHaveBeenCalledWith("org_1", "Acme", null, market);
-    await updateProject("org_1", {projectId: "project_acme", name: "Acme", ...market});
-    expect(mocks.updateProject).toHaveBeenCalledWith("project_acme", "org_1", expect.objectContaining({market}));
-    await setProjectWebsite("org_1", {projectId: "project_acme", domain: "acme.com", ...market});
-    expect(mocks.updateProjectWebsite).toHaveBeenCalledWith("project_acme", "org_1", "acme.com", market);
+    const { createProject, updateProject, setProjectWebsite } =
+      await import("./projects");
+    const market = { locationCode: 2276, languageCode: "en" };
+    await createProject("org_1", { name: "Acme", ...market });
+    expect(mocks.createProject).toHaveBeenCalledWith(
+      "org_1",
+      "Acme",
+      undefined,
+      market,
+    );
+    await updateProject("org_1", {
+      projectId: "project_acme",
+      name: "Acme",
+      ...market,
+    });
+    expect(mocks.updateProject).toHaveBeenCalledWith(
+      "project_acme",
+      "org_1",
+      expect.objectContaining({ market }),
+    );
+    await setProjectWebsite("org_1", {
+      projectId: "project_acme",
+      domain: "acme.com",
+      ...market,
+    });
+    expect(mocks.updateProjectWebsite).toHaveBeenCalledWith(
+      "project_acme",
+      "org_1",
+      "acme.com",
+      market,
+    );
   });
 
   describe("createProject", () => {
