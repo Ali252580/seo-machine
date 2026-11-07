@@ -37,7 +37,7 @@ const projectNavItems = [
   },
   {
     to: "/p/$projectId/recommendations" as const,
-    label: "پیشنهادهای دوره‌ای سئو",
+    label: "خودکارسازی سئو",
     icon: Sparkles,
   },
   {
@@ -138,6 +138,10 @@ export function getProjectNavGroups(projectId: string) {
       items: [byPath("/p/$projectId"), byPath("/p/$projectId/context")],
     },
     {
+      label: "خودکارسازی",
+      items: [byPath("/p/$projectId/recommendations")],
+    },
+    {
       label: "پژوهش",
       items: [
         byPath("/p/$projectId/keywords"),
@@ -159,7 +163,6 @@ export function getProjectNavGroups(projectId: string) {
     {
       label: "محتوا و بهبود سایت",
       items: [
-        byPath("/p/$projectId/recommendations"),
         byPath("/p/$projectId/content"),
         byPath("/p/$projectId/blog"),
         byPath("/p/$projectId/reports"),

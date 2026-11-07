@@ -24,7 +24,19 @@ export function ProjectAutomationSettings({
   });
   return (
     <section className="space-y-3 rounded-xl border border-base-300 p-4">
-      <h2 className="font-medium">خودکارسازی سئو</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">تنظیمات بررسی خودکار</h2>
+        {settings.data && (
+          <span
+            role="status"
+            className={`badge ${settings.data.enabled ? "badge-success" : "badge-neutral"}`}
+          >
+            {settings.data.enabled
+              ? "بررسی هفتگی فعال است"
+              : "بررسی خودکار خاموش است"}
+          </span>
+        )}
+      </div>
       <p className="text-sm text-base-content/70">
         بررسی هفتگی داده‌های موجود سرچ کنسول، آنالیتیکس و رتبه‌ها و تهیهٔ
         پیشنهادهای سئو برای همین سایت. اولین بررسی در اجرای زمان‌بندی‌شدهٔ بعدی
@@ -64,6 +76,7 @@ export function ProjectAutomationSettings({
         className="link text-sm"
         to="/p/$projectId/recommendations"
         params={{ projectId }}
+        hash="seo-proposals"
       >
         مشاهدهٔ نتیجه و پیشنهادها
       </Link>
