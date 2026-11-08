@@ -52,6 +52,7 @@ import { Route as ProjectPProjectIdAuditRouteImport } from './routes/_project/p/
 import { Route as ProjectPProjectIdBacklinksRouteImport } from './routes/_project/p/$projectId/backlinks'
 import { Route as ProjectPProjectIdBlogRouteImport } from './routes/_project/p/$projectId/blog'
 import { Route as ProjectPProjectIdBrandLookupRouteImport } from './routes/_project/p/$projectId/brand-lookup'
+import { Route as ProjectPProjectIdClustersRouteImport } from './routes/_project/p/$projectId/clusters'
 import { Route as ProjectPProjectIdContentRouteImport } from './routes/_project/p/$projectId/content'
 import { Route as ProjectPProjectIdContextRouteImport } from './routes/_project/p/$projectId/context'
 import { Route as ProjectPProjectIdDomainRouteImport } from './routes/_project/p/$projectId/domain'
@@ -293,6 +294,12 @@ const ProjectPProjectIdBrandLookupRoute =
     path: '/brand-lookup',
     getParentRoute: () => ProjectPProjectIdRouteRoute,
   } as any)
+const ProjectPProjectIdClustersRoute =
+  ProjectPProjectIdClustersRouteImport.update({
+    id: '/clusters',
+    path: '/clusters',
+    getParentRoute: () => ProjectPProjectIdRouteRoute,
+  } as any)
 const ProjectPProjectIdContentRoute =
   ProjectPProjectIdContentRouteImport.update({
     id: '/content',
@@ -472,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/p/$projectId/backlinks': typeof ProjectPProjectIdBacklinksRoute
   '/p/$projectId/blog': typeof ProjectPProjectIdBlogRoute
   '/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
+  '/p/$projectId/clusters': typeof ProjectPProjectIdClustersRoute
   '/p/$projectId/content': typeof ProjectPProjectIdContentRoute
   '/p/$projectId/context': typeof ProjectPProjectIdContextRoute
   '/p/$projectId/domain': typeof ProjectPProjectIdDomainRoute
@@ -534,6 +542,7 @@ export interface FileRoutesByTo {
   '/p/$projectId/backlinks': typeof ProjectPProjectIdBacklinksRoute
   '/p/$projectId/blog': typeof ProjectPProjectIdBlogRoute
   '/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
+  '/p/$projectId/clusters': typeof ProjectPProjectIdClustersRoute
   '/p/$projectId/content': typeof ProjectPProjectIdContentRoute
   '/p/$projectId/context': typeof ProjectPProjectIdContextRoute
   '/p/$projectId/domain': typeof ProjectPProjectIdDomainRoute
@@ -602,6 +611,7 @@ export interface FileRoutesById {
   '/_project/p/$projectId/backlinks': typeof ProjectPProjectIdBacklinksRoute
   '/_project/p/$projectId/blog': typeof ProjectPProjectIdBlogRoute
   '/_project/p/$projectId/brand-lookup': typeof ProjectPProjectIdBrandLookupRoute
+  '/_project/p/$projectId/clusters': typeof ProjectPProjectIdClustersRoute
   '/_project/p/$projectId/content': typeof ProjectPProjectIdContentRoute
   '/_project/p/$projectId/context': typeof ProjectPProjectIdContextRoute
   '/_project/p/$projectId/domain': typeof ProjectPProjectIdDomainRoute
@@ -669,6 +679,7 @@ export interface FileRouteTypes {
     | '/p/$projectId/backlinks'
     | '/p/$projectId/blog'
     | '/p/$projectId/brand-lookup'
+    | '/p/$projectId/clusters'
     | '/p/$projectId/content'
     | '/p/$projectId/context'
     | '/p/$projectId/domain'
@@ -731,6 +742,7 @@ export interface FileRouteTypes {
     | '/p/$projectId/backlinks'
     | '/p/$projectId/blog'
     | '/p/$projectId/brand-lookup'
+    | '/p/$projectId/clusters'
     | '/p/$projectId/content'
     | '/p/$projectId/context'
     | '/p/$projectId/domain'
@@ -798,6 +810,7 @@ export interface FileRouteTypes {
     | '/_project/p/$projectId/backlinks'
     | '/_project/p/$projectId/blog'
     | '/_project/p/$projectId/brand-lookup'
+    | '/_project/p/$projectId/clusters'
     | '/_project/p/$projectId/content'
     | '/_project/p/$projectId/context'
     | '/_project/p/$projectId/domain'
@@ -1154,6 +1167,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectPProjectIdBrandLookupRouteImport
       parentRoute: typeof ProjectPProjectIdRouteRoute
     }
+    '/_project/p/$projectId/clusters': {
+      id: '/_project/p/$projectId/clusters'
+      path: '/clusters'
+      fullPath: '/p/$projectId/clusters'
+      preLoaderRoute: typeof ProjectPProjectIdClustersRouteImport
+      parentRoute: typeof ProjectPProjectIdRouteRoute
+    }
     '/_project/p/$projectId/content': {
       id: '/_project/p/$projectId/content'
       path: '/content'
@@ -1429,6 +1449,7 @@ interface ProjectPProjectIdRouteRouteChildren {
   ProjectPProjectIdBacklinksRoute: typeof ProjectPProjectIdBacklinksRoute
   ProjectPProjectIdBlogRoute: typeof ProjectPProjectIdBlogRoute
   ProjectPProjectIdBrandLookupRoute: typeof ProjectPProjectIdBrandLookupRoute
+  ProjectPProjectIdClustersRoute: typeof ProjectPProjectIdClustersRoute
   ProjectPProjectIdContentRoute: typeof ProjectPProjectIdContentRoute
   ProjectPProjectIdContextRoute: typeof ProjectPProjectIdContextRoute
   ProjectPProjectIdDomainRoute: typeof ProjectPProjectIdDomainRoute
@@ -1452,6 +1473,7 @@ const ProjectPProjectIdRouteRouteChildren: ProjectPProjectIdRouteRouteChildren =
     ProjectPProjectIdBacklinksRoute: ProjectPProjectIdBacklinksRoute,
     ProjectPProjectIdBlogRoute: ProjectPProjectIdBlogRoute,
     ProjectPProjectIdBrandLookupRoute: ProjectPProjectIdBrandLookupRoute,
+    ProjectPProjectIdClustersRoute: ProjectPProjectIdClustersRoute,
     ProjectPProjectIdContentRoute: ProjectPProjectIdContentRoute,
     ProjectPProjectIdContextRoute: ProjectPProjectIdContextRoute,
     ProjectPProjectIdDomainRoute: ProjectPProjectIdDomainRoute,

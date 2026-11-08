@@ -17,10 +17,28 @@ export function ArticleClusterSummary({
         مقاله‌های مرتبط وصل می‌شود.
       </p>
       <p className="text-sm leading-7">
-        SAM با مهارت keyword-clustering نقش پیشنهادی صفحه را بررسی می‌کند. هنوز
-        نقشهٔ خوشه‌بندی تأییدشده یا انتخاب دستی نقش نداریم. لینک‌سازی در متن
-        پیشنهادی انجام می‌شود؛ صفحات دیگر سایت خودکار ویرایش نمی‌شوند.
+        نقشه را از منوی «نقشهٔ پیلار و کلاستر» بسازید و ذخیره کنید. SAM در نگارش
+        صفحهٔ انتخاب‌شده، مقصدهای همان نقشه را در اولویت قرار می‌دهد. صفحات دیگر
+        سایت خودکار ویرایش نمی‌شوند.
       </p>
+      {evidence?.clusterPlan && (
+        <div className="rounded-lg bg-base-100 p-3">
+          <h3 className="font-medium">
+            نقش ذخیره‌شده:{" "}
+            {evidence.clusterPlan.role === "pillar" ? "پیلار" : "کلاستر"}
+          </h3>
+          <ul className="mt-2 space-y-2">
+            {evidence.clusterPlan.targets.map((page) => (
+              <li key={page.url}>
+                {page.title}
+                <span dir="ltr" className="block break-all text-xs">
+                  {page.url}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {!evidence ? (
         <p role="status">
           پس از «نگارش»، صفحات مرتبط با عنوان و کلمهٔ هدف در این بخش نمایش داده

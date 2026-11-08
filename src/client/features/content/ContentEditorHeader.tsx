@@ -45,6 +45,13 @@ export function ContentEditorHeader({
           </p>
         </div>
         <Link
+          to="/p/$projectId/clusters"
+          params={{ projectId }}
+          className="btn btn-primary btn-sm shrink-0"
+        >
+          نقشهٔ پیلار و کلاستر
+        </Link>
+        <Link
           to="/p/$projectId/sam"
           params={{ projectId }}
           className="btn btn-outline btn-sm shrink-0"

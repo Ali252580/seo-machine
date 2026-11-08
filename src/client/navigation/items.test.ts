@@ -10,6 +10,7 @@ it("keeps every project section reachable once and scoped to the selected projec
     expect(items.map((item) => item.to)).toEqual(
       expect.arrayContaining([
         "/p/$projectId/content",
+        "/p/$projectId/clusters",
         "/p/$projectId/blog",
         "/p/$projectId/context",
         "/p/$projectId/recommendations",

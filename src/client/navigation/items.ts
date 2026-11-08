@@ -18,6 +18,11 @@ import { GoogleGlyphMuted } from "@/client/features/gsc/GoogleGlyph";
 
 const projectNavItems = [
   {
+    to: "/p/$projectId/clusters" as const,
+    label: "نقشهٔ پیلار و کلاستر",
+    icon: Globe,
+  },
+  {
     to: "/p/$projectId/content" as const,
     label: "نگارش و بازنویسی صفحات",
     icon: FileText,
@@ -163,6 +168,7 @@ export function getProjectNavGroups(projectId: string) {
     {
       label: "محتوا و بهبود سایت",
       items: [
+        byPath("/p/$projectId/clusters"),
         byPath("/p/$projectId/content"),
         byPath("/p/$projectId/blog"),
         byPath("/p/$projectId/reports"),

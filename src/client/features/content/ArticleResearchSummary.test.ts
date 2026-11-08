@@ -5,6 +5,7 @@ import { ArticleResearchSummary } from "./ArticleResearchSummary";
 
 it("renders a project article's observed search trend on the server", () => {
   const evidence = {
+    clusterPlan: null,
     wordpressChecked: false,
     pages: [],
     existingPage: null,
@@ -39,6 +40,7 @@ it("renders a project article's observed search trend on the server", () => {
 
 it("explains why an existing page should be reviewed using observed rank data", () => {
   const evidence = {
+    clusterPlan: null,
     wordpressChecked: true,
     pages: [],
     existingPage: { url: "https://site.test/page", title: "صفحه", text: "متن" },
@@ -68,6 +70,7 @@ it("explains why an existing page should be reviewed using observed rank data", 
 
 it("explains a search opportunity without treating low CTR as proof of weak content", () => {
   const evidence = {
+    clusterPlan: null,
     wordpressChecked: true,
     pages: [
       {

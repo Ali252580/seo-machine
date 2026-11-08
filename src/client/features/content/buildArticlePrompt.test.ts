@@ -1,8 +1,31 @@
 import { expect, it } from "vitest";
 import { buildArticlePrompt } from "./buildArticlePrompt";
 
+it("prioritizes the saved cluster's pillar in website drafting but not blog drafting", () => {
+  const evidence = {
+    wordpressChecked: true,
+    pages: [],
+    existingPage: null,
+    searchConsole: { status: "not_connected" },
+    analytics: { status: "not_connected" },
+    rankTracking: { status: "not_tracked" },
+    clusterPlan: {
+      role: "cluster",
+      targets: [{ url: "https://site.test/hub", title: "مرجع نقشه" }],
+    },
+  } as Parameters<typeof buildArticlePrompt>[2];
+  const prompt = buildArticlePrompt("موضوع", "عنوان", evidence);
+  expect(prompt).toContain("نقشهٔ ذخیره‌شده: cluster");
+  expect(prompt).toContain("https://site.test/hub");
+  expect(prompt.length).toBeLessThanOrEqual(4000);
+  expect(buildArticlePrompt("موضوع", "عنوان", evidence, "post")).not.toContain(
+    "https://site.test/hub",
+  );
+});
+
 it("supplies complete published link candidates for website articles only", () => {
   const evidence = {
+    clusterPlan: null,
     wordpressChecked: true,
     pages: [
       {
@@ -55,6 +78,7 @@ it("supplies complete published link candidates for website articles only", () =
 
 it("keeps a researched existing-page prompt within SAM's 4,000-character limit", () => {
   const evidence = {
+    clusterPlan: null,
     wordpressChecked: false,
     pages: [],
     searchConsole: {
@@ -114,6 +138,7 @@ it("keeps a researched existing-page prompt within SAM's 4,000-character limit",
 
 it("includes saved keyword rank evidence in the article request", () => {
   const evidence = {
+    clusterPlan: null,
     wordpressChecked: true,
     pages: [],
     existingPage: null,
@@ -140,6 +165,7 @@ it("includes saved keyword rank evidence in the article request", () => {
 
 it("keeps specialized profiles distinct and bounded with a full brief", () => {
   const evidence = {
+    clusterPlan: null,
     wordpressChecked: false,
     pages: [],
     existingPage: {
