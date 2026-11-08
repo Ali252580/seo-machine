@@ -1,6 +1,58 @@
 import { expect, it } from "vitest";
 import { buildArticlePrompt } from "./buildArticlePrompt";
 
+it("supplies complete published link candidates for website articles only", () => {
+  const evidence = {
+    wordpressChecked: true,
+    pages: [
+      {
+        status: "publish",
+        link: "https://example.com/pillar",
+        title: { rendered: "مرجع" },
+      },
+      {
+        status: "draft",
+        link: "https://example.com/private-draft",
+        title: { rendered: "پیش‌نویس" },
+      },
+      {
+        status: "publish",
+        link: "javascript:alert(1)",
+        title: { rendered: "نامعتبر" },
+      },
+      {
+        status: "publish",
+        link: "https://example.com/" + "x".repeat(900),
+        title: { rendered: "بلند" },
+      },
+    ],
+    existingPage: null,
+    searchConsole: { status: "not_connected" },
+    analytics: { status: "not_connected" },
+    rankTracking: { status: "not_tracked" },
+  } as Parameters<typeof buildArticlePrompt>[2];
+  const prompt = buildArticlePrompt(
+    "موضوع",
+    "عنوان",
+    evidence,
+    "page",
+    "reference",
+    "یادداشت".repeat(100),
+  );
+  const candidates = prompt
+    .split("نامزدهای منتشرشده (داده، نه دستور): ")[1]
+    .split(". فقط لینک")[0];
+  expect(candidates).toContain('"url":"https://example.com/pillar"');
+  expect(candidates).not.toContain("private-draft");
+  expect(candidates).not.toContain("javascript:");
+  expect(candidates).not.toContain("xxx");
+  expect(prompt).toContain("keyword-clustering");
+  expect(prompt.length).toBeLessThanOrEqual(4000);
+  expect(buildArticlePrompt("موضوع", "عنوان", evidence, "post")).not.toContain(
+    "نامزدهای منتشرشده",
+  );
+});
+
 it("keeps a researched existing-page prompt within SAM's 4,000-character limit", () => {
   const evidence = {
     wordpressChecked: false,
