@@ -143,7 +143,7 @@ export async function sendVercelSamMessage(
         memory ? `project_context:\n${memory}` : "",
         `Available in-app skills: ${skills.map(({ name, description }) => `${name}: ${description}`).join("; ")}. When a request fits a skill, call activate_skill and follow its instructions using the available tools.`,
         article
-          ? "For this turn, write ONLY the requested article body in Persian HTML. Use only h2, h3, p, ul, ol, li, strong, em, br tags with no attributes. No markdown fences, preface, invented facts, or claims of first-hand experience. Write for the stated search intent and the active project's market. This is an editable in-app draft, not a published page."
+          ? "For this turn, write ONLY the requested article body in Persian HTML. Use h2, h3, p, ul, ol, li, strong, em, br tags with no attributes. For verified relevant published pages on the active project's domain, also allow a tags with only a double-quoted absolute http(s) href, without credentials or other attributes. Never invent link URLs or link to drafts. No markdown fences, preface, invented facts, or claims of first-hand experience. Write for the stated search intent and the active project's market. This is an editable in-app draft, not a published page."
           : "",
       ]
         .filter(Boolean)

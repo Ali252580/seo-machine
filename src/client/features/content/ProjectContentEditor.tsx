@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
+import { ArticleClusterSummary } from "./ArticleClusterSummary";
 import { ArticlePreview } from "@/client/features/content/ArticlePreview";
 import { ArticleTextEditor } from "./ArticleTextEditor";
 import { confirmArticleReplacement } from "./confirmArticleReplacement";
@@ -366,6 +367,7 @@ export function ProjectContentEditor({
                 اعتبار SAM را بررسی کنید.
               </p>
             )}
+            {kind === "page" && <ArticleClusterSummary evidence={research} />}
             {research && <ArticleResearchSummary evidence={research} />}
             {matchingPages.length > 0 && (
               <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
@@ -375,8 +377,8 @@ export function ProjectContentEditor({
                   کنید:
                 </p>
                 <ul className="mt-2 list-inside list-disc space-y-1">
-                  {matchingPages.slice(0, 8).map((page) => (
-                    <li key={page.id}>
+                  {matchingPages.map((page) => (
+                    <li key={`${page.kind}-${page.id}`}>
                       <a
                         href={page.link}
                         target="_blank"

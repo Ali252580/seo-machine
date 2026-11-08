@@ -1,11 +1,14 @@
 import { AppError } from "@/server/lib/errors";
+import { isArticleLinkTag } from "@/shared/articleLink";
 
-/** Allow only simple article elements, without attributes or active content. */
+/** Allow simple article elements and HTTP(S) links, without active content. */
 export function validateArticleHtml(content: string) {
   const tags = content.match(/<[^>]*>/g) ?? [];
   if (
     tags.some(
-      (tag) => !/^<\/?(?:h2|h3|p|ul|ol|li|strong|em|br)>$/i.test(tag),
+      (tag) =>
+        !/^<\/?(?:h2|h3|p|ul|ol|li|strong|em|br)>$/i.test(tag) &&
+        !isArticleLinkTag(tag),
     ) ||
     /[<>]/.test(content.replace(/<[^>]*>/g, ""))
   ) {
