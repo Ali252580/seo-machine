@@ -88,9 +88,8 @@ async function fetchText(url: string): Promise<string | null> {
 
 /**
  * Pulls page URLs from a sitemap body. Resolves relative/protocol-relative
- * <loc> entries against the origin and keeps same-origin HTML pages only. Nested
- * sitemap files (a sitemap index) are skipped rather than fetched as pages —
- * good enough for v1; we fall back to the homepage if nothing usable is found.
+ * <loc> entries against the origin and keeps same-origin URLs only.
+ * The caller distinguishes index entries from page entries.
  */
 function parseSitemapUrls(xml: string, origin: string): string[] {
   const urls: string[] = [];
@@ -99,11 +98,15 @@ function parseSitemapUrls(xml: string, origin: string): string[] {
   while ((match = regex.exec(xml)) !== null) {
     let resolved: string;
     try {
-      resolved = new URL(match[1], origin).toString();
+      resolved = new URL(decodeEntities(match[1]), origin).toString();
     } catch {
       continue;
     }
-    if (resolved.startsWith(origin) && !resolved.endsWith(".xml")) {
+    if (
+      new URL(resolved).origin === origin &&
+      !new URL(resolved).username &&
+      !new URL(resolved).password
+    ) {
       urls.push(resolved);
     }
   }
@@ -201,10 +204,37 @@ export async function discoverSiteUrls(
   }
   const origin = new URL(rootUrl).origin;
 
-  const sitemap = await fetchText(`${origin}/sitemap.xml`);
-  const discovered = sitemap ? parseSitemapUrls(sitemap, origin) : [];
+  const discovered: string[] = [];
+  const robots = await fetchText(`${origin}/robots.txt`);
+  const declared = [...(robots ?? "").matchAll(/^sitemap:\s*(\S+)/gim)]
+    .map((match) => match[1])
+    .filter((url) => {
+      try {
+        return new URL(url).origin === origin;
+      } catch {
+        return false;
+      }
+    });
+  const queue = [
+    ...declared,
+    `${origin}/sitemap.xml`,
+    `${origin}/sitemap_index.xml`,
+    `${origin}/wp-sitemap.xml`,
+  ];
+  const visited = new Set<string>();
+  // shortcut: inspect at most eight sitemap files; larger inventories need pagination.
+  while (queue.length && visited.size < 8 && discovered.length < limit) {
+    const next = queue.shift()!;
+    if (visited.has(next)) continue;
+    visited.add(next);
+    const xml = await fetchText(next);
+    if (!xml) continue;
+    const entries = parseSitemapUrls(xml, origin);
+    if (/<sitemapindex\b/i.test(xml)) queue.unshift(...entries.slice(0, 8));
+    else if (/<urlset\b/i.test(xml)) discovered.push(...entries);
+  }
   const urls = [rootUrl, ...discovered.filter((url) => url !== rootUrl)];
-  return { urls: urls.slice(0, limit), blocked: false };
+  return { urls: [...new Set(urls)].slice(0, limit), blocked: false };
 }
 
 /**

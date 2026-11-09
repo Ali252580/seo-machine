@@ -3,15 +3,14 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getContentClusters,
-  discoverClusterPages,
   saveContentClusters,
 } from "@/serverFunctions/contentClusters";
 import {
   suggestClusterPages,
-  clusterSearchTopic,
   type ContentCluster,
 } from "@/shared/contentClusters";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
+import { ClusterPageDiscovery } from "./ClusterPageDiscovery";
 
 function ClusterGraph({ cluster }: { cluster: ContentCluster }) {
   return (
@@ -77,18 +76,11 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
     queryKey: key,
     queryFn: () => getContentClusters({ data: { projectId } }),
   });
-  const [search, setSearch] = useState("");
+  const [pages, setPages] = useState<{ url: string; title: string }[]>([]);
   const [pillarUrl, setPillarUrl] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [draft, setDraft] = useState<ContentCluster[] | null>(null);
   const clusters = draft ?? query.data?.clusters ?? [];
-  const discover = useMutation({
-    mutationFn: () => discoverClusterPages({ data: { projectId, search } }),
-    onSuccess: () => {
-      setPillarUrl("");
-      setSelected([]);
-    },
-  });
   const save = useMutation({
     mutationFn: () => saveContentClusters({ data: { projectId, clusters } }),
     onSuccess: async () => {
@@ -96,10 +88,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
       setDraft(null);
     },
   });
-  const pages = discover.data ?? [];
   const pillar = pages.find((page) => page.url === pillarUrl);
-  const topic = clusterSearchTopic(search);
-  const invalidTopic = topic.length > 100 || /^https?:\/\//i.test(topic);
   const error = query.error || save.error;
   return (
     <main dir="rtl" className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-7">
@@ -124,81 +113,16 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
       )}
       <section className="space-y-4 rounded-xl border border-base-300 p-4">
         <h2 className="text-lg font-semibold">شناسایی صفحات موجود</h2>
-        {query.data?.wordpressConnected === false && (
-          <p role="status" className="text-warning">
-            برای دریافت مقالات، ابتدا وردپرس همین سایت را در{" "}
-            <Link
-              className="link"
-              to="/p/$projectId/settings/integrations"
-              params={{ projectId }}
-            >
-              تنظیمات اتصال‌ها
-            </Link>{" "}
-            وصل کنید.
-          </p>
-        )}
-        <p className="text-sm text-base-content/70">
-          از وردپرس متصل، حداکثر ۵۰ برگه و ۵۰ نوشته در هر جست‌وجو دریافت می‌شود.
-          خالی‌گذاشتن موضوع، اولین مجموعهٔ صفحات را می‌آورد؛ برای صفحات بیشتر
-          جست‌وجو را دقیق‌تر کنید.
-        </p>
-        <form
-          className="flex flex-wrap gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (invalidTopic) return;
-            discover.mutate();
-          }}
-        >
-          <input
-            aria-label="موضوع یا آدرس صفحه"
-            className="input input-bordered min-w-0 flex-1"
-            maxLength={4000}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="مثلاً طراحی روف گاردن"
-          />
-          <button
-            className="btn btn-primary"
-            disabled={
-              discover.isPending ||
-              invalidTopic ||
-              !query.data?.wordpressConnected
-            }
-          >
-            {discover.isPending ? "در حال شناسایی…" : "دریافت صفحات"}
-          </button>
-        </form>
-        {topic !== search.trim() && (
-          <p className="text-sm">
-            موضوع استخراج‌شده از آدرس: «{topic || "همهٔ موضوع‌ها"}». جست‌وجو
-            براساس متن است و به اعضای آن دسته‌بندی محدود نمی‌شود.
-          </p>
-        )}
-        {invalidTopic && (
-          <p role="alert" className="text-error">
-            موضوع را کوتاه‌تر از ۱۰۱ نویسه بنویسید یا یک آدرس کامل و معتبر وارد
-            کنید.
-          </p>
-        )}
-        {discover.error && (
-          <div role="alert" className="space-y-2 text-error">
-            <p>
-              دریافت صفحات از وردپرس انجام نشد. موضوع جست‌وجو، اتصال وردپرس و
-              دسترسی حساب به نوشته‌ها و برگه‌ها را بررسی کنید.
-            </p>
-            <Link
-              className="link"
-              to="/p/$projectId/settings/integrations"
-              params={{ projectId }}
-            >
-              بررسی اتصال وردپرس
-            </Link>
-          </div>
-        )}
-        {discover.isSuccess && !pages.length && (
-          <p>صفحهٔ منتشرشده‌ای برای این جست‌وجو پیدا نشد.</p>
-        )}
+        <ClusterPageDiscovery
+          projectId={projectId}
+          onPages={(incoming) =>
+            setPages((current) => [
+              ...new Map(
+                [...current, ...incoming].map((page) => [page.url, page]),
+              ).values(),
+            ])
+          }
+        />
         {pages.length > 0 && (
           <>
             <label className="block space-y-2">

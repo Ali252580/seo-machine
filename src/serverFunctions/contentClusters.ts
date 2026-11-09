@@ -8,15 +8,12 @@ import {
   writeContentClusters,
 } from "@/server/features/content/contentClusters";
 import {
-  getWordPressConnection,
-  listWordPressPages,
-} from "@/server/features/wordpress/WordPressService";
-import {
   clusterSearchTopic,
   contentClustersSchema,
   sameSitePage,
 } from "@/shared/contentClusters";
 import { AppError } from "@/server/lib/errors";
+import { discoverContentPages } from "@/server/features/content/discoverClusterPages";
 const input = z.object({ projectId: z.string().min(1) });
 export const getContentClusters = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
@@ -24,14 +21,12 @@ export const getContentClusters = createServerFn({ method: "POST" })
   .handler(async ({ context }) => ({
     clusters: await readContentClusters(context.projectId),
     canManage: hasOrgPermission(context.role, { integration: ["manage"] }),
-    wordpressConnected: Boolean(
-      await getWordPressConnection(context.projectId),
-    ),
   }));
 export const discoverClusterPages = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
   .validator(
     input.extend({
+      source: z.enum(["sitemap", "gsc", "wordpress"]).default("sitemap"),
       search: z
         .string()
         .max(4000)
@@ -39,21 +34,13 @@ export const discoverClusterPages = createServerFn({ method: "POST" })
         .pipe(z.string().max(100)),
     }),
   )
-  .handler(async ({ context, data }) => {
-    const pages = await listWordPressPages(context.projectId, data.search);
-    return pages
-      .filter(
-        (page) =>
-          page.status === "publish" &&
-          sameSitePage(page.link, context.project.domain ?? ""),
-      )
-      .map((page) => ({
-        url: page.link,
-        title:
-          page.title.rendered.replace(/<[^>]*>/g, "").slice(0, 180) ||
-          page.slug,
-      }));
-  });
+  .handler(({ context, data }) =>
+    discoverContentPages(
+      { id: context.projectId, domain: context.project.domain },
+      data.source,
+      data.search,
+    ),
+  );
 export const saveContentClusters = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
   .validator(input.extend({ clusters: contentClustersSchema }))
