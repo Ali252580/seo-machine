@@ -4,7 +4,20 @@ import {
   suggestClusterPages,
   contentClustersSchema,
   clusterSearchTopic,
+  suggestContentClusters,
 } from "./contentClusters";
+it("proposes disjoint groups, deduplicates URLs and leaves unrelated pages unassigned", () => {
+  const pages = [
+    { url: "https://example.com/a", title: "طراحی باغ" },
+    { url: "https://example.com/b", title: "هزینه طراحی باغ" },
+    { url: "https://example.com/c", title: "تعمیر موتور" },
+  ];
+  expect(suggestContentClusters([...pages, pages[0]])).toEqual([
+    { pillar: pages[0], pages: [pages[1]] },
+  ]);
+  expect(suggestContentClusters([])).toEqual([]);
+  expect(suggestContentClusters([pages[0], pages[2]])).toEqual([]);
+});
 it("decodes category URLs into search topics without fetching the supplied URL", () => {
   expect(
     clusterSearchTopic(

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/shared/contentClusters";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { ClusterPageDiscovery } from "./ClusterPageDiscovery";
+import { ClusterSuggestions } from "./ClusterSuggestions";
 
 function ClusterGraph({ cluster }: { cluster: ContentCluster }) {
   return (
@@ -78,8 +79,27 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
   });
   const [pages, setPages] = useState<{ url: string; title: string }[]>([]);
   const [pillarUrl, setPillarUrl] = useState("");
+  const [editingUrl, setEditingUrl] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [draft, setDraft] = useState<ContentCluster[] | null>(null);
+  const editor = useRef<HTMLDetailsElement>(null);
+  const editCluster = (cluster: ContentCluster) => {
+    setEditingUrl(cluster.pillar.url);
+    setPages((current) => [
+      ...new Map(
+        [...current, cluster.pillar, ...cluster.pages].map((page) => [
+          page.url,
+          page,
+        ]),
+      ).values(),
+    ]);
+    setPillarUrl(cluster.pillar.url);
+    setSelected(cluster.pages.map((page) => page.url));
+    if (editor.current) {
+      editor.current.open = true;
+      editor.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
   const clusters = draft ?? query.data?.clusters ?? [];
   const save = useMutation({
     mutationFn: () => saveContentClusters({ data: { projectId, clusters } }),
@@ -95,11 +115,25 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
       <header>
         <h1 className="text-2xl font-bold">نقشهٔ پیلار و کلاستر</h1>
         <p className="mt-3 max-w-3xl text-sm leading-7">
-          صفحهٔ مرجع را به مقاله‌های زیرموضوع وصل کنید. خطوط این نقشه، برنامهٔ
-          لینک‌سازی شما هستند؛ وجود لینک در سایت را نشان نمی‌دهند. نقشهٔ
-          ذخیره‌شده در نگارش صفحات سایت استفاده می‌شود.
+          مشخص کنید هر مقاله زیرمجموعهٔ کدام موضوع است و هنگام نگارش به چه
+          صفحاتی لینک بدهد. ابتدا صفحات را دریافت کنید، گروه‌های پیشنهادی را
+          بررسی کنید و نقشه را ذخیره کنید.
         </p>
       </header>
+      <ol className="grid gap-3 sm:grid-cols-3" aria-label="مراحل ساخت نقشه">
+        <li className="rounded-lg bg-base-200 p-3">
+          ۱. دریافت صفحات · {pages.length} صفحه
+        </li>
+        <li className="rounded-lg bg-base-200 p-3">
+          ۲. بررسی گروه‌ها · {clusters.length} گروه
+        </li>
+        <li className="rounded-lg bg-base-200 p-3">
+          ۳.{" "}
+          {draft === null
+            ? "ذخیره و استفاده در نگارش"
+            : "تغییرات منتظر ذخیره‌اند"}
+        </li>
+      </ol>
       {query.isPending && <p role="status">در حال دریافت نقشه…</p>}
       {error && (
         <div role="alert" className="alert alert-error">
@@ -112,7 +146,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
         </div>
       )}
       <section className="space-y-4 rounded-xl border border-base-300 p-4">
-        <h2 className="text-lg font-semibold">شناسایی صفحات موجود</h2>
+        <h2 className="text-lg font-semibold">۱. صفحات سایت را دریافت کنید</h2>
         <ClusterPageDiscovery
           projectId={projectId}
           onPages={(incoming) =>
@@ -123,8 +157,25 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
             ])
           }
         />
+      </section>
+      <ClusterSuggestions
+        pages={pages}
+        clusters={clusters}
+        disabled={!query.data?.canManage || save.isPending}
+        onChoose={editCluster}
+      />
+      <details
+        ref={editor}
+        className="space-y-4 rounded-xl border border-base-300 p-4"
+      >
+        <summary className="cursor-pointer font-semibold">
+          ساخت یا اصلاح دستی گروه
+        </summary>
         {pages.length > 0 && (
-          <>
+          <fieldset
+            className="space-y-4"
+            disabled={save.isPending || !query.data?.canManage}
+          >
             <label className="block space-y-2">
               <span>صفحهٔ پیلار (مرجع اصلی)</span>
               <select
@@ -205,10 +256,12 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
                 save.isPending
               }
               onClick={() => {
-                if (pillar)
+                if (pillar) {
                   setDraft([
                     ...clusters.filter(
-                      (cluster) => cluster.pillar.url !== pillar.url,
+                      (cluster) =>
+                        cluster.pillar.url !== pillar.url &&
+                        cluster.pillar.url !== editingUrl,
                     ),
                     {
                       pillar,
@@ -217,6 +270,11 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
                       ),
                     },
                   ]);
+                  setEditingUrl(null);
+                  setPillarUrl("");
+                  setSelected([]);
+                  if (editor.current) editor.current.open = false;
+                }
               }}
             >
               افزودن / جایگزینی خوشه در نقشه
@@ -224,12 +282,18 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
             <p className="text-xs">
               حداکثر ۲۰ زیرموضوع برای هر پیلار؛ سپس «ذخیرهٔ نقشه» را بزنید.
             </p>
-          </>
+          </fieldset>
         )}
-      </section>
+        {!pages.length && (
+          <p>
+            ابتدا صفحات را دریافت کنید یا «اصلاح گروه» را در نقشهٔ ذخیره‌شده
+            بزنید.
+          </p>
+        )}
+      </details>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">
-          اتصال پیشنهادی صفحات · {clusters.length.toLocaleString("fa-IR")} پیلار
+          ۳. نقشه را ذخیره کنید · {clusters.length.toLocaleString("fa-IR")} گروه
         </h2>
         <button
           className="btn btn-primary"
@@ -251,7 +315,8 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
       )}
       {draft !== null && (
         <p role="status" className="text-warning">
-          تغییرات نقشه هنوز ذخیره نشده‌اند.
+          تغییرات هنوز ذخیره نشده‌اند. برای استفاده از این گروه‌ها در نگارش،
+          «ذخیرهٔ نقشه» را بزنید.
         </p>
       )}
       {!clusters.length && (
@@ -266,6 +331,13 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="font-semibold">پیلار: {cluster.pillar.title}</h3>
+            <button
+              className="btn btn-outline btn-sm"
+              disabled={!query.data?.canManage || save.isPending}
+              onClick={() => editCluster(cluster)}
+            >
+              اصلاح گروه
+            </button>
             <button
               className="btn btn-ghost btn-sm"
               disabled={!query.data?.canManage || save.isPending}
@@ -291,14 +363,20 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
                 className="flex flex-wrap items-center justify-between gap-2 border-t border-base-200 pt-2"
               >
                 <span>{page.title}</span>
-                <Link
-                  className="link text-sm"
-                  to="/p/$projectId/content"
-                  params={{ projectId }}
-                  search={{ page: page.url, title: page.title }}
-                >
-                  نگارش و لینک‌سازی این صفحه
-                </Link>
+                {draft === null ? (
+                  <Link
+                    className="link text-sm"
+                    to="/p/$projectId/content"
+                    params={{ projectId }}
+                    search={{ page: page.url, title: page.title }}
+                  >
+                    نگارش این صفحه با لینک‌های گروه
+                  </Link>
+                ) : (
+                  <span className="text-xs text-warning">
+                    برای نگارش، ابتدا نقشه را ذخیره کنید
+                  </span>
+                )}
               </li>
             ))}
           </ul>

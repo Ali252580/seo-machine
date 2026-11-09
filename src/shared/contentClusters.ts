@@ -65,3 +65,34 @@ export function suggestClusterPages(
     )
     .slice(0, 20);
 }
+
+/** Draft groups from labels only; users confirm the pillar and intent before saving. */
+export function suggestContentClusters(
+  pages: { url: string; title: string }[],
+) {
+  let remaining = [...new Map(pages.map((page) => [page.url, page])).values()];
+  const groups: ContentCluster[] = [];
+  while (remaining.length > 1 && groups.length < 20) {
+    let best: ContentCluster | null = null;
+    for (const pillar of remaining) {
+      const related = suggestClusterPages(pillar, remaining);
+      if (
+        related.length &&
+        (!best ||
+          related.length > best.pages.length ||
+          (related.length === best.pages.length &&
+            pillar.title.length < best.pillar.title.length))
+      ) {
+        best = { pillar, pages: related };
+      }
+    }
+    if (!best) break;
+    groups.push(best);
+    const used = new Set([
+      best.pillar.url,
+      ...best.pages.map((page) => page.url),
+    ]);
+    remaining = remaining.filter((page) => !used.has(page.url));
+  }
+  return groups;
+}
