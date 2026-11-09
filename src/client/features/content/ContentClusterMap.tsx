@@ -8,10 +8,68 @@ import {
 } from "@/serverFunctions/contentClusters";
 import {
   suggestClusterPages,
+  clusterSearchTopic,
   type ContentCluster,
 } from "@/shared/contentClusters";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 
+function ClusterGraph({ cluster }: { cluster: ContentCluster }) {
+  return (
+    <div className="overflow-x-auto" dir="ltr">
+      <svg
+        viewBox={`0 0 760 ${Math.max(160, cluster.pages.length * 80)}`}
+        className="min-w-[600px] w-full"
+        role="img"
+        aria-label={`روابط دوطرفهٔ پیشنهادی ${cluster.pillar.title}`}
+      >
+        {cluster.pages.map((page, index) => (
+          <g key={page.url}>
+            <path
+              d={`M 260 ${Math.max(160, cluster.pages.length * 80) / 2} C 360 ${Math.max(160, cluster.pages.length * 80) / 2}, 360 ${index * 80 + 40}, 440 ${index * 80 + 40}`}
+              fill="none"
+              stroke="currentColor"
+              className="text-primary/40"
+              strokeWidth="2"
+              strokeDasharray="6 4"
+            />
+            <rect
+              x="440"
+              y={index * 80 + 12}
+              width="300"
+              height="56"
+              rx="8"
+              className="fill-base-200 stroke-base-300"
+            />
+            <text
+              x="590"
+              y={index * 80 + 46}
+              textAnchor="middle"
+              className="fill-base-content text-sm"
+            >
+              {page.title.slice(0, 38)}
+            </text>
+          </g>
+        ))}
+        <rect
+          x="10"
+          y={Math.max(160, cluster.pages.length * 80) / 2 - 32}
+          width="250"
+          height="64"
+          rx="10"
+          className="fill-primary"
+        />
+        <text
+          x="135"
+          y={Math.max(160, cluster.pages.length * 80) / 2 + 5}
+          textAnchor="middle"
+          className="fill-primary-content text-sm"
+        >
+          {cluster.pillar.title.slice(0, 30)}
+        </text>
+      </svg>
+    </div>
+  );
+}
 export function ContentClusterMap({ projectId }: { projectId: string }) {
   const client = useQueryClient();
   const key = ["contentClusters", projectId];
@@ -40,7 +98,9 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
   });
   const pages = discover.data ?? [];
   const pillar = pages.find((page) => page.url === pillarUrl);
-  const error = query.error || discover.error || save.error;
+  const topic = clusterSearchTopic(search);
+  const invalidTopic = topic.length > 100 || /^https?:\/\//i.test(topic);
+  const error = query.error || save.error;
   return (
     <main dir="rtl" className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-7">
       <header>
@@ -55,13 +115,28 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
       {error && (
         <div role="alert" className="alert alert-error">
           {getStandardErrorMessage(error)}
-          <button className="btn btn-sm" onClick={() => void query.refetch()}>
-            دریافت دوبارهٔ نقشه
-          </button>
+          {query.error && (
+            <button className="btn btn-sm" onClick={() => void query.refetch()}>
+              دریافت دوبارهٔ نقشه
+            </button>
+          )}
         </div>
       )}
       <section className="space-y-4 rounded-xl border border-base-300 p-4">
         <h2 className="text-lg font-semibold">شناسایی صفحات موجود</h2>
+        {query.data?.wordpressConnected === false && (
+          <p role="status" className="text-warning">
+            برای دریافت مقالات، ابتدا وردپرس همین سایت را در{" "}
+            <Link
+              className="link"
+              to="/p/$projectId/settings/integrations"
+              params={{ projectId }}
+            >
+              تنظیمات اتصال‌ها
+            </Link>{" "}
+            وصل کنید.
+          </p>
+        )}
         <p className="text-sm text-base-content/70">
           از وردپرس متصل، حداکثر ۵۰ برگه و ۵۰ نوشته در هر جست‌وجو دریافت می‌شود.
           خالی‌گذاشتن موضوع، اولین مجموعهٔ صفحات را می‌آورد؛ برای صفحات بیشتر
@@ -71,21 +146,56 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           className="flex flex-wrap gap-2"
           onSubmit={(event) => {
             event.preventDefault();
+            if (invalidTopic) return;
             discover.mutate();
           }}
         >
           <input
-            aria-label="موضوع صفحات"
+            aria-label="موضوع یا آدرس صفحه"
             className="input input-bordered min-w-0 flex-1"
-            maxLength={100}
+            maxLength={4000}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="مثلاً طراحی روف گاردن"
           />
-          <button className="btn btn-primary" disabled={discover.isPending}>
+          <button
+            className="btn btn-primary"
+            disabled={
+              discover.isPending ||
+              invalidTopic ||
+              !query.data?.wordpressConnected
+            }
+          >
             {discover.isPending ? "در حال شناسایی…" : "دریافت صفحات"}
           </button>
         </form>
+        {topic !== search.trim() && (
+          <p className="text-sm">
+            موضوع استخراج‌شده از آدرس: «{topic || "همهٔ موضوع‌ها"}». جست‌وجو
+            براساس متن است و به اعضای آن دسته‌بندی محدود نمی‌شود.
+          </p>
+        )}
+        {invalidTopic && (
+          <p role="alert" className="text-error">
+            موضوع را کوتاه‌تر از ۱۰۱ نویسه بنویسید یا یک آدرس کامل و معتبر وارد
+            کنید.
+          </p>
+        )}
+        {discover.error && (
+          <div role="alert" className="space-y-2 text-error">
+            <p>
+              دریافت صفحات از وردپرس انجام نشد. موضوع جست‌وجو، اتصال وردپرس و
+              دسترسی حساب به نوشته‌ها و برگه‌ها را بررسی کنید.
+            </p>
+            <Link
+              className="link"
+              to="/p/$projectId/settings/integrations"
+              params={{ projectId }}
+            >
+              بررسی اتصال وردپرس
+            </Link>
+          </div>
+        )}
         {discover.isSuccess && !pages.length && (
           <p>صفحهٔ منتشرشده‌ای برای این جست‌وجو پیدا نشد.</p>
         )}
@@ -246,59 +356,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
               حذف از نقشه
             </button>
           </div>
-          <div className="overflow-x-auto" dir="ltr">
-            <svg
-              viewBox={`0 0 760 ${Math.max(160, cluster.pages.length * 80)}`}
-              className="min-w-[600px] w-full"
-              role="img"
-              aria-label={`روابط دوطرفهٔ پیشنهادی ${cluster.pillar.title}`}
-            >
-              {cluster.pages.map((page, index) => (
-                <g key={page.url}>
-                  <path
-                    d={`M 260 ${Math.max(160, cluster.pages.length * 80) / 2} C 360 ${Math.max(160, cluster.pages.length * 80) / 2}, 360 ${index * 80 + 40}, 440 ${index * 80 + 40}`}
-                    fill="none"
-                    stroke="currentColor"
-                    className="text-primary/40"
-                    strokeWidth="2"
-                    strokeDasharray="6 4"
-                  />
-                  <rect
-                    x="440"
-                    y={index * 80 + 12}
-                    width="300"
-                    height="56"
-                    rx="8"
-                    className="fill-base-200 stroke-base-300"
-                  />
-                  <text
-                    x="590"
-                    y={index * 80 + 46}
-                    textAnchor="middle"
-                    className="fill-base-content text-sm"
-                  >
-                    {page.title.slice(0, 38)}
-                  </text>
-                </g>
-              ))}
-              <rect
-                x="10"
-                y={Math.max(160, cluster.pages.length * 80) / 2 - 32}
-                width="250"
-                height="64"
-                rx="10"
-                className="fill-primary"
-              />
-              <text
-                x="135"
-                y={Math.max(160, cluster.pages.length * 80) / 2 + 5}
-                textAnchor="middle"
-                className="fill-primary-content text-sm"
-              >
-                {cluster.pillar.title.slice(0, 30)}
-              </text>
-            </svg>
-          </div>
+          <ClusterGraph cluster={cluster} />
           <p className="text-xs text-base-content/60">
             خط‌چین: لینک پیشنهادی پیلار ↔ کلاستر؛ نه لینک تأییدشدهٔ سایت.
           </p>

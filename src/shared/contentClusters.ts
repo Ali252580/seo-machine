@@ -14,6 +14,18 @@ export const contentClustersSchema = z
   .max(20);
 export type ContentCluster = z.infer<typeof contentClustersSchema>[number];
 
+export function clusterSearchTopic(input: string): string {
+  const value = input.trim();
+  if (!/^https?:\/\//i.test(value)) return value;
+  try {
+    const url = new URL(value);
+    const slug = url.pathname.split("/").filter(Boolean).at(-1) ?? "";
+    return decodeURIComponent(slug).replace(/[-_]+/g, " ").trim();
+  } catch {
+    return value;
+  }
+}
+
 export function sameSitePage(raw: string, domain: string): boolean {
   try {
     const url = new URL(raw);

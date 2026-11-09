@@ -3,7 +3,20 @@ import {
   sameSitePage,
   suggestClusterPages,
   contentClustersSchema,
+  clusterSearchTopic,
 } from "./contentClusters";
+it("decodes category URLs into search topics without fetching the supplied URL", () => {
+  expect(
+    clusterSearchTopic(
+      "https://example.com/category/%D8%B1%D9%88%D9%81-%DA%AF%D8%A7%D8%B1%D8%AF%D9%86/",
+    ),
+  ).toBe("روف گاردن");
+  expect(clusterSearchTopic("  طراحی باغ  ")).toBe("طراحی باغ");
+  expect(clusterSearchTopic("https://example.com/")).toBe("");
+  expect(clusterSearchTopic("https://example.com/%invalid")).toBe(
+    "https://example.com/%invalid",
+  );
+});
 it("restricts cluster pages to the project host and safe protocols", () => {
   expect(sameSitePage("https://www.example.com/article", "example.com")).toBe(
     true,
