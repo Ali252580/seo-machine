@@ -4,27 +4,31 @@ import { projectContextSections } from "@/db/schema";
 
 // Internal key cannot be edited through the public project-memory schema.
 export const AUTOMATION_KEY = "system:weekly-seo-automation";
+export const SKILL_AUTOMATION_KEY = "system:seo-skill-automation";
 
-export function enabledAutomationProjects() {
+export function enabledAutomationProjects(key = AUTOMATION_KEY) {
   return db
     .select({ id: projectContextSections.projectId })
     .from(projectContextSections)
     .where(
       and(
-        eq(projectContextSections.key, AUTOMATION_KEY),
+        eq(projectContextSections.key, key),
         eq(projectContextSections.content, "true"),
       ),
     );
 }
 
-export async function getAutomationEnabled(projectId: string) {
+export async function getAutomationEnabled(
+  projectId: string,
+  key = AUTOMATION_KEY,
+) {
   const [row] = await db
     .select({ content: projectContextSections.content })
     .from(projectContextSections)
     .where(
       and(
         eq(projectContextSections.projectId, projectId),
-        eq(projectContextSections.key, AUTOMATION_KEY),
+        eq(projectContextSections.key, key),
       ),
     )
     .limit(1);
@@ -34,6 +38,7 @@ export async function getAutomationEnabled(projectId: string) {
 export async function setAutomationEnabled(
   projectId: string,
   enabled: boolean,
+  key = AUTOMATION_KEY,
 ) {
   const values = {
     content: String(enabled),
@@ -42,7 +47,7 @@ export async function setAutomationEnabled(
   };
   await db
     .insert(projectContextSections)
-    .values({ projectId, key: AUTOMATION_KEY, ...values })
+    .values({ projectId, key, ...values })
     .onConflictDoUpdate({
       target: [projectContextSections.projectId, projectContextSections.key],
       set: values,

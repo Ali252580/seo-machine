@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { withPgClient } from "@/db";
 import { getOptionalEnvValue } from "@/server/lib/runtime-env";
 import { runDuePeriodicRecommendations } from "@/server/features/sam/periodicRecommendations";
+import { runDueAutomaticSkills } from "@/server/features/sam/automaticSkills";
 
 export const Route = createFileRoute("/api/recommendations/tick")({
   server: {
@@ -24,9 +25,13 @@ export const Route = createFileRoute("/api/recommendations/tick")({
             }),
           );
         }
-        const result = await withPgClient(() =>
-          runDuePeriodicRecommendations(),
-        );
+        const result = await withPgClient(async () => {
+          const [recommendations, skills] = await Promise.all([
+            runDuePeriodicRecommendations(),
+            runDueAutomaticSkills(),
+          ]);
+          return { recommendations, skills };
+        });
         return Response.json(result);
       },
     },

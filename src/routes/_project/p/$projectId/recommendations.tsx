@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PeriodicRecommendationsCard } from "@/client/features/dashboard/PeriodicRecommendationsCard";
 import { ProjectAutomationSettings } from "@/client/features/projects/ProjectAutomationSettings";
+import { AutomaticSkillReports } from "@/client/features/projects/AutomaticSkillReports";
 export const Route = createFileRoute("/_project/p/$projectId/recommendations")({
   component: RecommendationsPage,
 });
@@ -40,6 +41,10 @@ function RecommendationsPage() {
           projectId={projectId}
         />
         <PeriodicRecommendationsCard key={projectId} projectId={projectId} />
+        <AutomaticSkillReports
+          key={`skills-${projectId}`}
+          projectId={projectId}
+        />
       </div>
     </main>
   );

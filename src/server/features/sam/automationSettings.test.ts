@@ -18,6 +18,24 @@ beforeAll(async () => {
 });
 afterAll(() => client.close());
 
+it("keeps paid skill consent separate from weekly recommendations", async () => {
+  await settings.setAutomationEnabled(
+    "skills",
+    true,
+    settings.SKILL_AUTOMATION_KEY,
+  );
+  expect(await settings.getAutomationEnabled("skills")).toBe(false);
+  expect(
+    await settings.getAutomationEnabled(
+      "skills",
+      settings.SKILL_AUTOMATION_KEY,
+    ),
+  ).toBe(true);
+  expect(
+    await settings.enabledAutomationProjects(settings.SKILL_AUTOMATION_KEY),
+  ).toEqual([{ id: "skills" }]);
+});
+
 it("defaults off, isolates project opt-ins, and removes disabled projects from the scheduler selection", async () => {
   expect(await settings.getAutomationEnabled("a")).toBe(false);
   expect(await settings.enabledAutomationProjects()).toEqual([]);
