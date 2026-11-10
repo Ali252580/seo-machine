@@ -103,7 +103,7 @@ export function WritingPagePicker({
           params={{ projectId }}
           search={{}}
         >
-          بازگشت به پیش‌نویس عمومی
+          بازگشت به پیشنهادها و پیش‌نویس‌ها
         </Link>
       )}
     </section>

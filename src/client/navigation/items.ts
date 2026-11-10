@@ -24,12 +24,12 @@ const projectNavItems = [
   },
   {
     to: "/p/$projectId/content" as const,
-    label: "نگارش و بازنویسی صفحات",
+    label: "صفحات خدمات و مرجع",
     icon: FileText,
   },
   {
     to: "/p/$projectId/blog" as const,
-    label: "نگارش وبلاگ",
+    label: "مقالات آموزشی و وبلاگ",
     icon: BookOpen,
   },
   {

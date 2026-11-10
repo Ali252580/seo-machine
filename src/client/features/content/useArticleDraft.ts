@@ -37,8 +37,9 @@ export function articleDraftKey(
   projectId: string,
   targetPage?: string,
   blog = false,
+  draftId?: string,
 ) {
-  return `openseo-${blog ? "blog" : "article"}-${projectId}${targetPage ? `:${targetPage}` : ""}`;
+  return `openseo-${blog ? "blog" : "article"}-${projectId}${targetPage ? `:${targetPage}` : draftId ? `:draft:${draftId}` : ""}`;
 }
 
 /** Resolve a complete snapshot so missing drafts never inherit another page's fields. */
@@ -109,6 +110,7 @@ export function useArticleDraft(
   targetPage?: string,
   suggestedTitle?: string,
   blog = false,
+  draftId?: string,
 ) {
   const [brief, setBrief] = useState("");
   const [profile, setProfile] = useState<WritingProfile>(
@@ -122,7 +124,7 @@ export function useArticleDraft(
   const [image, setImage] = useState<ArticleImage | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [storageError, setStorageError] = useState(false);
-  const storageKey = articleDraftKey(projectId, targetPage, blog);
+  const storageKey = articleDraftKey(projectId, targetPage, blog, draftId);
 
   useEffect(() => {
     const loaded = loadArticleDraft(

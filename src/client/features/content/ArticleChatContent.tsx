@@ -64,6 +64,7 @@ export function ArticleChatPreview({
             void navigate({
               to: "/p/$projectId/content",
               params: { projectId },
+              search: { draft: crypto.randomUUID() },
             });
           }}
         >

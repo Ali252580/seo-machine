@@ -30,11 +30,13 @@ export function ProjectContentEditor({
   targetPage,
   suggestedTitle,
   blog = false,
+  draftId,
 }: {
   projectId: string;
   targetPage?: string;
   suggestedTitle?: string;
   blog?: boolean;
+  draftId?: string;
 }) {
   const {
     storageError,
@@ -54,7 +56,7 @@ export function ProjectContentEditor({
     setKind,
     image,
     setImage,
-  } = useArticleDraft(projectId, targetPage, suggestedTitle, blog);
+  } = useArticleDraft(projectId, targetPage, suggestedTitle, blog, draftId);
   const kind = blog ? "post" : savedKind;
   useEffect(() => {
     if (blog) return;
@@ -161,6 +163,21 @@ export function ProjectContentEditor({
           targetPage={targetPage}
           blog={blog}
         />
+        <Link
+          className="btn btn-sm btn-outline"
+          to={blog ? "/p/$projectId/blog" : "/p/$projectId/content"}
+          params={{ projectId }}
+          search={{}}
+        >
+          بازگشت به پیشنهادها و پیش‌نویس‌های قبلی
+        </Link>
+        {content && !/<a\s[^>]*href=/i.test(content) && (
+          <p className="alert alert-info text-sm">
+            در این پیش‌نویس لینکی پیدا نشد. متن‌های قبلی خودکار تغییر نمی‌کنند؛
+            برای بررسی مقصدهای فعلی و افزودن لینک در متن، دکمهٔ نگارش مجدد را
+            بزنید و نتیجه را بازبینی کنید.
+          </p>
+        )}
         {!blog && (
           <WritingPagePicker projectId={projectId} targetPage={targetPage} />
         )}
@@ -359,11 +376,13 @@ export function ProjectContentEditor({
             >
               {generate.isPending
                 ? "در حال بررسی و نگارش…"
-                : targetPage
-                  ? "تحلیل صفحه و نگارش بهبود با SAM"
-                  : blog
-                    ? "بررسی موضوع و نگارش وبلاگ"
-                    : "تولید پیش‌نویس با SAM"}
+                : content.trim()
+                  ? "نگارش مجدد با بررسی لینک‌های داخلی"
+                  : targetPage
+                    ? "تحلیل صفحه و نگارش بهبود با SAM"
+                    : blog
+                      ? "بررسی موضوع و نگارش وبلاگ"
+                      : "تولید پیش‌نویس با SAM"}
             </button>
             {generate.isError && (
               <p role="alert" className="text-error text-sm">
