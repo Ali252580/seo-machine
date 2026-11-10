@@ -1,8 +1,37 @@
 import { expect, it } from "vitest";
 import { buildArticlePrompt } from "./buildArticlePrompt";
 
-it("prioritizes the saved cluster's pillar in website drafting but not blog drafting", () => {
+it("uses verified discovered pages without WordPress for both article kinds", () => {
   const evidence = {
+    wordpressChecked: false,
+    pages: [],
+    existingPage: null,
+    searchConsole: { status: "not_connected" },
+    analytics: { status: "not_connected" },
+    rankTracking: { status: "not_tracked" },
+    clusterPlan: null,
+    discoveredPageCount: 10,
+    internalLinks: [
+      {
+        url: "https://site.test/existing-article",
+        title: "مقالهٔ موجود",
+        excerpt: "متن واقعی",
+      },
+    ],
+  } as Parameters<typeof buildArticlePrompt>[2];
+  for (const kind of ["page", "post"] as const) {
+    const prompt = buildArticlePrompt("موضوع", "عنوان", evidence, kind);
+    expect(prompt).toContain("https://site.test/existing-article");
+    expect(prompt.length).toBeLessThanOrEqual(4000);
+  }
+});
+
+it("includes verified mapped targets in both article kinds", () => {
+  const evidence = {
+    discoveredPageCount: 0,
+    internalLinks: [
+      { url: "https://site.test/hub", title: "مرجع نقشه", excerpt: "متن" },
+    ],
     wordpressChecked: true,
     pages: [],
     existingPage: null,
@@ -18,13 +47,22 @@ it("prioritizes the saved cluster's pillar in website drafting but not blog draf
   expect(prompt).toContain("نقشهٔ ذخیره‌شده: cluster");
   expect(prompt).toContain("https://site.test/hub");
   expect(prompt.length).toBeLessThanOrEqual(4000);
-  expect(buildArticlePrompt("موضوع", "عنوان", evidence, "post")).not.toContain(
+  expect(buildArticlePrompt("موضوع", "عنوان", evidence, "post")).toContain(
     "https://site.test/hub",
   );
 });
 
 it("supplies complete published link candidates for website articles only", () => {
   const evidence = {
+    discoveredPageCount: 0,
+    internalLinks: [
+      { url: "https://example.com/pillar", title: "مرجع", excerpt: "متن" },
+      {
+        url: "https://example.com/" + "x".repeat(900),
+        title: "بلند",
+        excerpt: "متن",
+      },
+    ],
     clusterPlan: null,
     wordpressChecked: true,
     pages: [
@@ -78,6 +116,8 @@ it("supplies complete published link candidates for website articles only", () =
 
 it("keeps a researched existing-page prompt within SAM's 4,000-character limit", () => {
   const evidence = {
+    discoveredPageCount: 0,
+    internalLinks: [],
     clusterPlan: null,
     wordpressChecked: false,
     pages: [],
@@ -138,6 +178,8 @@ it("keeps a researched existing-page prompt within SAM's 4,000-character limit",
 
 it("includes saved keyword rank evidence in the article request", () => {
   const evidence = {
+    discoveredPageCount: 0,
+    internalLinks: [],
     clusterPlan: null,
     wordpressChecked: true,
     pages: [],
@@ -165,6 +207,8 @@ it("includes saved keyword rank evidence in the article request", () => {
 
 it("keeps specialized profiles distinct and bounded with a full brief", () => {
   const evidence = {
+    discoveredPageCount: 0,
+    internalLinks: [],
     clusterPlan: null,
     wordpressChecked: false,
     pages: [],

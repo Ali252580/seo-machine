@@ -2,7 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { ContentResearchService } from "@/server/features/content/ContentResearchService";
 import { requireProjectContext } from "@/serverFunctions/middleware";
-import { readContentClusters } from "@/server/features/content/contentClusters";
+import {
+  readContentClusters,
+  readDiscoveredPages,
+} from "@/server/features/content/contentClusters";
+import {
+  selectArticleLinks,
+  verifyArticleLinks,
+} from "@/server/features/content/articleLinkCandidates";
 import { sameSitePage } from "@/shared/contentClusters";
 
 export const researchContentTarget = createServerFn({ method: "POST" })
@@ -41,5 +48,24 @@ export const researchContentTarget = createServerFn({ method: "POST" })
           ),
         }
       : null;
-    return { ...evidence, clusterPlan };
+    const discovered = await readDiscoveredPages(context.projectId);
+    const candidates = selectArticleLinks({
+      domain: context.project.domain ?? "",
+      topic: `${data.keyword} ${data.title}`,
+      target: data.targetPage,
+      mapped: clusterPlan?.targets ?? [],
+      pages: [
+        ...discovered,
+        ...evidence.pages
+          .filter((page) => page.status === "publish")
+          .map((page) => ({ url: page.link, title: page.title.rendered })),
+      ],
+    });
+    const internalLinks = await verifyArticleLinks(candidates);
+    return {
+      ...evidence,
+      clusterPlan,
+      internalLinks,
+      discoveredPageCount: discovered.length,
+    };
   });

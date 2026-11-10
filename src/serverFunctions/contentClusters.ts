@@ -6,6 +6,7 @@ import { hasOrgPermission } from "@/lib/org-permissions";
 import {
   readContentClusters,
   writeContentClusters,
+  rememberDiscoveredPages,
 } from "@/server/features/content/contentClusters";
 import {
   clusterSearchTopic,
@@ -34,13 +35,15 @@ export const discoverClusterPages = createServerFn({ method: "POST" })
         .pipe(z.string().max(100)),
     }),
   )
-  .handler(({ context, data }) =>
-    discoverContentPages(
+  .handler(async ({ context, data }) => {
+    const pages = await discoverContentPages(
       { id: context.projectId, domain: context.project.domain },
       data.source,
       data.search,
-    ),
-  );
+    );
+    await rememberDiscoveredPages(context.projectId, pages);
+    return pages;
+  });
 export const saveContentClusters = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
   .validator(input.extend({ clusters: contentClustersSchema }))

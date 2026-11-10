@@ -16,6 +16,32 @@ export function ArticleClusterSummary({
         جزئی‌تر لینک می‌دهد؛ کلاستر، یک زیرموضوع را پوشش می‌دهد و به مرجع و
         مقاله‌های مرتبط وصل می‌شود.
       </p>
+      {evidence?.internalLinks && (
+        <div className="space-y-2 rounded-lg bg-base-100 p-3">
+          <h3 className="font-medium">لینک‌های داخلی از صفحات شناسایی‌شده</h3>
+          <p className="text-sm">
+            {evidence.discoveredPageCount} صفحه از دریافت‌های قبلی ذخیره شده
+            است. {evidence.internalLinks.length} مقصد مرتبط اکنون خوانده شد؛ درج
+            لینک فقط در صورت ارتباط با متن انجام می‌شود.
+          </p>
+          <ul className="space-y-2">
+            {evidence.internalLinks.map((page) => (
+              <li key={page.url}>
+                {page.title}
+                <span dir="ltr" className="block break-all text-xs">
+                  {page.url}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {!evidence.internalLinks.length && (
+            <p className="text-sm">
+              مقصد مرتبط و قابل خواندن پیدا نشد؛ نشانی حدسی به مقاله اضافه
+              نمی‌شود.
+            </p>
+          )}
+        </div>
+      )}
       <p className="text-sm leading-7">
         نقشه را از منوی «نقشهٔ پیلار و کلاستر» بسازید و ذخیره کنید. SAM در نگارش
         صفحهٔ انتخاب‌شده، مقصدهای همان نقشه را در اولویت قرار می‌دهد. صفحات دیگر
@@ -58,7 +84,7 @@ export function ArticleClusterSummary({
             <p>
               {evidence.wordpressChecked
                 ? "جست‌وجوی وردپرس نتیجه‌ای نداشت؛ مقصد لینک تأیید نشده است."
-                : "وردپرس متصل نیست؛ فهرست مقالات موجود دریافت نشده است."}
+                : "وردپرس متصل نیست؛ مقصدهای منابع دیگر در بخش لینک‌های داخلی بالا بررسی می‌شوند."}
             </p>
           )}
           <ul className="max-h-80 space-y-2 overflow-auto">

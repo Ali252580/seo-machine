@@ -1,11 +1,70 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, like } from "drizzle-orm";
 import { db } from "@/db";
 import { projectContextSections } from "@/db/schema";
 import {
   contentClustersSchema,
   type ContentCluster,
+  clusterPageSchema,
 } from "@/shared/contentClusters";
 const KEY = "system:content-clusters";
+const PAGE_KEY = "system:discovered-page:";
+
+export async function rememberDiscoveredPages(
+  projectId: string,
+  pages: { url: string; title: string }[],
+) {
+  const valid = [
+    ...new Map(
+      pages
+        .filter((page) => clusterPageSchema.safeParse(page).success)
+        .map((page) => [page.url, page]),
+    ).values(),
+  ];
+  // Store independently so concurrent discovery requests cannot overwrite another source's pages.
+  for (const page of valid) {
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(page.url),
+    );
+    const key =
+      PAGE_KEY +
+      [...new Uint8Array(digest)]
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+    const values = {
+      content: JSON.stringify({ url: page.url, title: page.title }),
+      updatedAt: new Date().toISOString(),
+      updatedBy: "sam" as const,
+    };
+    await db
+      .insert(projectContextSections)
+      .values({ projectId, key, ...values })
+      .onConflictDoUpdate({
+        target: [projectContextSections.projectId, projectContextSections.key],
+        set: values,
+      });
+  }
+}
+
+export async function readDiscoveredPages(projectId: string) {
+  const rows = await db
+    .select({ content: projectContextSections.content })
+    .from(projectContextSections)
+    .where(
+      and(
+        eq(projectContextSections.projectId, projectId),
+        like(projectContextSections.key, `${PAGE_KEY}%`),
+      ),
+    );
+  return rows.flatMap((row) => {
+    try {
+      const page = clusterPageSchema.safeParse(JSON.parse(row.content));
+      return page.success ? [page.data] : [];
+    } catch {
+      return [];
+    }
+  });
+}
 export async function readContentClusters(projectId: string) {
   const [row] = await db
     .select({ content: projectContextSections.content })

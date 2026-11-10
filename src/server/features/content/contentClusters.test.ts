@@ -14,6 +14,21 @@ beforeAll(async () => {
   store = await import("./contentClusters");
 });
 afterAll(() => client.close());
+it("remembers discovered pages across sources without leaking between projects", async () => {
+  await store.rememberDiscoveredPages("links-a", [
+    { url: "https://example.com/a", title: "A" },
+  ]);
+  await store.rememberDiscoveredPages("links-a", [
+    { url: "https://example.com/b", title: "B" },
+    { url: "https://example.com/a", title: "Updated" },
+  ]);
+  expect(await store.readDiscoveredPages("links-a")).toHaveLength(2);
+  expect(await store.readDiscoveredPages("links-a")).toContainEqual({
+    url: "https://example.com/a",
+    title: "Updated",
+  });
+  expect(await store.readDiscoveredPages("links-b")).toEqual([]);
+});
 it("persists maps independently per project and supports replacing and clearing a map", async () => {
   const clusters = [
     {
