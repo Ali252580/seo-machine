@@ -1,7 +1,16 @@
 import { GscService } from "@/server/features/gsc/services/GscService";
-import { listWordPressPages } from "@/server/features/wordpress/WordPressService";
+import {
+  listWordPressPages,
+  listWordPressCategories,
+} from "@/server/features/wordpress/WordPressService";
 import { discoverSiteUrls, readPages } from "@/server/lib/scrape";
-import { sameSitePage, clusterSearchTopic } from "@/shared/contentClusters";
+import {
+  sameSitePage,
+  clusterSearchTopic,
+  mergeDiscoveredPages,
+  type DiscoveredClusterPage,
+} from "@/shared/contentClusters";
+import { discoverSiteCategories, taxonomyPages } from "./siteCategories";
 
 export async function discoverContentPages(
   project: { id: string; domain: string | null },
@@ -11,7 +20,10 @@ export async function discoverContentPages(
   const domain = project.domain ?? "";
   if (source === "wordpress") {
     const pages = await listWordPressPages(project.id, search);
-    return pages
+    const categories = await listWordPressCategories(project.id).catch(
+      () => null,
+    );
+    const published = pages
       .filter(
         (page) => page.status === "publish" && sameSitePage(page.link, domain),
       )
@@ -21,6 +33,18 @@ export async function discoverContentPages(
           page.title.rendered.replace(/<[^>]*>/g, "").slice(0, 180) ||
           page.slug,
       }));
+    const taxonomy = taxonomyPages(
+      categories,
+      pages
+        .filter((page) => page.status === "publish")
+        .map((page) => ({ ...page, categories: page.categories ?? [] })),
+      domain,
+    );
+    return mergeDiscoveredPages([
+      ...published,
+      ...(await discoverSiteCategories(domain, published)),
+      ...taxonomy,
+    ]);
   }
   let urls: string[];
   const queries = new Map<string, string[]>();
@@ -68,12 +92,22 @@ export async function discoverContentPages(
         .map((page) => [page.url, page.title!] as const),
     ),
   );
-  return pages
-    .map((page) => ({
-      ...page,
-      title: (titles.get(page.url) ?? page.title).slice(0, 180),
-    }))
-    .filter((page) =>
-      matches(`${page.title} ${(queries.get(page.url) ?? []).join(" ")}`),
-    );
+  const titled: DiscoveredClusterPage[] = pages.map((page) => ({
+    ...page,
+    title: (titles.get(page.url) ?? page.title).slice(0, 180),
+  }));
+  const combined = mergeDiscoveredPages([
+    ...titled,
+    ...(await discoverSiteCategories(domain, titled)),
+  ]);
+  const matchingCategories = new Set(
+    combined
+      .filter((page) => page.kind === "category" && matches(page.title))
+      .map((page) => page.url),
+  );
+  return combined.filter(
+    (page) =>
+      matches(`${page.title} ${(queries.get(page.url) ?? []).join(" ")}`) ||
+      page.categoryUrls?.some((url) => matchingCategories.has(url)),
+  );
 }

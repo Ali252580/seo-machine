@@ -18,6 +18,7 @@ type Page = {
   title: { rendered: string };
   status: string;
   kind?: "page" | "post";
+  categories?: number[];
 };
 type Credentials = { siteUrl: string; username: string; password: string };
 
@@ -230,7 +231,7 @@ export async function listWordPressPages(projectId: string, search: string) {
     per_page: "50",
     status: "any",
     search,
-    _fields: "id,link,slug,title,status",
+    _fields: "id,link,slug,title,status,categories",
   });
   // A competing blog post can be as duplicative as a service page. Include
   // published and draft content of both kinds in the pre-writing check.
@@ -242,6 +243,13 @@ export async function listWordPressPages(projectId: string, search: string) {
     ...pages.map((page) => ({ ...page, kind: "page" as const })),
     ...posts.map((post) => ({ ...post, kind: "post" as const })),
   ];
+}
+
+export async function listWordPressCategories(projectId: string) {
+  return request<unknown>(
+    await client(projectId),
+    "categories?per_page=100&_fields=id,name,link,parent",
+  );
 }
 
 export async function createWordPressDraft(

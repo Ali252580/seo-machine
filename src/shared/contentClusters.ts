@@ -13,6 +13,40 @@ export const contentClustersSchema = z
   )
   .max(20);
 export type ContentCluster = z.infer<typeof contentClustersSchema>[number];
+export type DiscoveredClusterPage = {
+  url: string;
+  title: string;
+  kind?: "category" | "navigation";
+  categoryLevel?: "root" | "child";
+  parentUrl?: string;
+  categoryUrls?: string[];
+};
+
+export function mergeDiscoveredPages(pages: DiscoveredClusterPage[]) {
+  const merged = new Map<string, DiscoveredClusterPage>();
+  for (const page of pages) {
+    const previous = merged.get(page.url);
+    merged.set(page.url, {
+      ...previous,
+      ...page,
+      kind:
+        previous?.kind === "category"
+          ? "category"
+          : (page.kind ?? previous?.kind),
+      ...(previous?.categoryUrls?.length || page.categoryUrls?.length
+        ? {
+            categoryUrls: [
+              ...new Set([
+                ...(previous?.categoryUrls ?? []),
+                ...(page.categoryUrls ?? []),
+              ]),
+            ],
+          }
+        : {}),
+    });
+  }
+  return [...merged.values()];
+}
 
 export function clusterSearchTopic(input: string): string {
   const value = input.trim();
@@ -53,9 +87,18 @@ const words = (title: string) =>
   );
 /** Title overlap is a suggestion, never SERP validation. */
 export function suggestClusterPages(
-  pillar: { url: string; title: string },
-  pages: { url: string; title: string }[],
+  pillar: DiscoveredClusterPage,
+  pages: DiscoveredClusterPage[],
 ) {
+  if (pillar.kind === "category")
+    return pages
+      .filter(
+        (page) =>
+          page.url !== pillar.url &&
+          (page.categoryUrls?.includes(pillar.url) ||
+            page.parentUrl === pillar.url),
+      )
+      .slice(0, 20);
   const terms = words(pillar.title);
   return pages
     .filter(
@@ -67,11 +110,25 @@ export function suggestClusterPages(
 }
 
 /** Draft groups from labels only; users confirm the pillar and intent before saving. */
-export function suggestContentClusters(
-  pages: { url: string; title: string }[],
-) {
-  let remaining = [...new Map(pages.map((page) => [page.url, page])).values()];
-  const groups: ContentCluster[] = [];
+export function suggestContentClusters(pages: DiscoveredClusterPage[]) {
+  const categories = pages.filter((page) => page.kind === "category");
+  const groups: ContentCluster[] = categories
+    .map((pillar) => ({ pillar, pages: suggestClusterPages(pillar, pages) }))
+    .filter((group) => group.pages.length > 0)
+    .slice(0, 20);
+  const assigned = new Set(
+    groups.flatMap((group) => [
+      group.pillar.url,
+      ...group.pages.map((page) => page.url),
+    ]),
+  );
+  let remaining = [
+    ...new Map(
+      pages
+        .filter((page) => !page.kind && !assigned.has(page.url))
+        .map((page) => [page.url, page]),
+    ).values(),
+  ];
   while (remaining.length > 1 && groups.length < 20) {
     let best: ContentCluster | null = null;
     for (const pillar of remaining) {

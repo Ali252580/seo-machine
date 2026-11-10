@@ -7,6 +7,8 @@ import {
 } from "@/serverFunctions/contentClusters";
 import {
   suggestClusterPages,
+  mergeDiscoveredPages,
+  type DiscoveredClusterPage,
   type ContentCluster,
 } from "@/shared/contentClusters";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
@@ -77,7 +79,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
     queryKey: key,
     queryFn: () => getContentClusters({ data: { projectId } }),
   });
-  const [pages, setPages] = useState<{ url: string; title: string }[]>([]);
+  const [pages, setPages] = useState<DiscoveredClusterPage[]>([]);
   const [pillarUrl, setPillarUrl] = useState("");
   const [editingUrl, setEditingUrl] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
@@ -150,11 +152,9 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
         <ClusterPageDiscovery
           projectId={projectId}
           onPages={(incoming) =>
-            setPages((current) => [
-              ...new Map(
-                [...current, ...incoming].map((page) => [page.url, page]),
-              ).values(),
-            ])
+            setPages((current) =>
+              mergeDiscoveredPages([...current, ...incoming]),
+            )
           }
         />
       </section>

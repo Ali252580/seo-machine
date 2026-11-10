@@ -4,6 +4,24 @@ vi.mock("@/server/lib/audit/url-policy", () => ({
 }));
 import { discoverSiteUrls } from "./scrape";
 afterEach(() => vi.unstubAllGlobals());
+it("reads category sitemaps before a full post sitemap exhausts the URL budget", async () => {
+  const bodies: Record<string, string> = {
+    "https://example.com/sitemap.xml":
+      "<sitemapindex><loc>https://example.com/post.xml</loc><loc>https://example.com/category.xml</loc></sitemapindex>",
+    "https://example.com/category.xml":
+      "<urlset><loc>https://example.com/category/roof/</loc></urlset>",
+    "https://example.com/post.xml":
+      "<urlset><loc>https://example.com/one/</loc><loc>https://example.com/two/</loc></urlset>",
+  };
+  vi.stubGlobal(
+    "fetch",
+    async (url: string) =>
+      new Response(bodies[url] ?? "", { status: bodies[url] ? 200 : 404 }),
+  );
+  expect((await discoverSiteUrls("https://example.com/", 3)).urls).toContain(
+    "https://example.com/category/roof/",
+  );
+});
 it("follows a robots-declared index, deduplicates pages, and rejects lookalike origins", async () => {
   const bodies: Record<string, string> = {
     "https://example.com/robots.txt": "Sitemap: https://example.com/custom.xml",

@@ -1,12 +1,20 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import type * as SiteCategories from "./siteCategories";
 const mocks = vi.hoisted(() => ({
   wp: vi.fn(),
   gsc: vi.fn(),
   discover: vi.fn(),
   read: vi.fn(),
+  categories: vi.fn(),
+  structure: vi.fn(),
 }));
 vi.mock("@/server/features/wordpress/WordPressService", () => ({
   listWordPressPages: mocks.wp,
+  listWordPressCategories: mocks.categories,
+}));
+vi.mock("./siteCategories", async (importOriginal) => ({
+  ...(await importOriginal<typeof SiteCategories>()),
+  discoverSiteCategories: mocks.structure,
 }));
 vi.mock("@/server/features/gsc/services/GscService", () => ({
   GscService: { getPerformance: mocks.gsc },
@@ -20,6 +28,8 @@ const project = { id: "p1", domain: "example.com" };
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.read.mockResolvedValue({ pages: [] });
+  mocks.categories.mockResolvedValue([]);
+  mocks.structure.mockResolvedValue([]);
 });
 it("discovers public pages without calling either integration and excludes external URLs", async () => {
   mocks.discover.mockResolvedValue({

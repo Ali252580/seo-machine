@@ -2,14 +2,17 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { discoverClusterPages } from "@/serverFunctions/contentClusters";
-import { clusterSearchTopic } from "@/shared/contentClusters";
+import {
+  clusterSearchTopic,
+  type DiscoveredClusterPage,
+} from "@/shared/contentClusters";
 
 export function ClusterPageDiscovery({
   projectId,
   onPages,
 }: {
   projectId: string;
-  onPages: (pages: { url: string; title: string }[]) => void;
+  onPages: (pages: DiscoveredClusterPage[]) => void;
 }) {
   const [source, setSource] = useState<"sitemap" | "gsc" | "wordpress">(
     "sitemap",
@@ -48,6 +51,12 @@ export function ClusterPageDiscovery({
             : "از وردپرس متصل، حداکثر ۵۰ برگه و ۵۰ نوشته در هر جست‌وجو دریافت می‌شود؛ فقط موارد منتشرشده نمایش داده می‌شوند."}
         {source !== "wordpress" &&
           " عنوان حداکثر ۱۲ صفحه خوانده می‌شود؛ نام سایر صفحات از نشانی استخراج می‌شود. وجود نشانی در این منابع تأیید انتشار یا سلامت فعلی صفحه نیست."}
+      </p>
+      <p className="text-sm leading-7">
+        در هر روش، دسته‌بندی‌ها و منوی عمومی سایت هم بررسی می‌شوند. تا ۱۰۰ دسته
+        و ۱۰۰ مقاله از API عمومی وردپرس و صفحهٔ اولِ حداکثر ۸ دسته خوانده
+        می‌شود؛ نیازی به رمز نیست. دسته‌بندی، نامزد پیلار است و لزوماً مقالهٔ
+        مرجع نیست.
       </p>
       <form
         className="flex flex-wrap gap-2"

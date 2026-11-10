@@ -86,6 +86,15 @@ async function fetchText(url: string): Promise<string | null> {
   }
 }
 
+/** Public reads keep the same DNS, redirect, timeout and response-size guards. */
+export async function readPublicText(url: string): Promise<string | null> {
+  try {
+    return await fetchText(await normalizeAndValidateStartUrl(url));
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Pulls page URLs from a sitemap body. Resolves relative/protocol-relative
  * <loc> entries against the origin and keeps same-origin URLs only.
@@ -230,8 +239,17 @@ export async function discoverSiteUrls(
     const xml = await fetchText(next);
     if (!xml) continue;
     const entries = parseSitemapUrls(xml, origin);
-    if (/<sitemapindex\b/i.test(xml)) queue.unshift(...entries.slice(0, 8));
-    else if (/<urlset\b/i.test(xml)) discovered.push(...entries);
+    if (/<sitemapindex\b/i.test(xml)) {
+      const taxonomy = entries.filter((url) =>
+        /categor|taxonomy|product_cat/i.test(url),
+      );
+      queue.unshift(
+        ...[
+          ...taxonomy,
+          ...entries.filter((url) => !taxonomy.includes(url)),
+        ].slice(0, 8),
+      );
+    } else if (/<urlset\b/i.test(xml)) discovered.push(...entries);
   }
   const urls = [rootUrl, ...discovered.filter((url) => url !== rootUrl)];
   return { urls: [...new Set(urls)].slice(0, limit), blocked: false };
