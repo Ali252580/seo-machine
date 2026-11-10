@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
 import { ArticleClusterSummary } from "./ArticleClusterSummary";
+import { WritingPagePicker } from "./WritingPagePicker";
 import { ArticlePreview } from "@/client/features/content/ArticlePreview";
 import { ArticleTextEditor } from "./ArticleTextEditor";
 import { confirmArticleReplacement } from "./confirmArticleReplacement";
@@ -160,6 +161,9 @@ export function ProjectContentEditor({
           targetPage={targetPage}
           blog={blog}
         />
+        {!blog && (
+          <WritingPagePicker projectId={projectId} targetPage={targetPage} />
+        )}
         <nav
           aria-label="بخش‌های نگارش مقاله"
           className="flex flex-wrap gap-2 text-sm"

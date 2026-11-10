@@ -7,6 +7,7 @@ import {
   readContentClusters,
   writeContentClusters,
   rememberDiscoveredPages,
+  readDiscoveredPages,
 } from "@/server/features/content/contentClusters";
 import {
   clusterSearchTopic,
@@ -16,6 +17,27 @@ import {
 import { AppError } from "@/server/lib/errors";
 import { discoverContentPages } from "@/server/features/content/discoverClusterPages";
 const input = z.object({ projectId: z.string().min(1) });
+export const getWritingPages = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(input)
+  .handler(async ({ context }) => {
+    const [discovered, clusters] = await Promise.all([
+      readDiscoveredPages(context.projectId),
+      readContentClusters(context.projectId),
+    ]);
+    return [
+      ...new Map(
+        [
+          ...discovered,
+          ...clusters.flatMap((cluster) => [cluster.pillar, ...cluster.pages]),
+        ]
+          .filter((page) =>
+            sameSitePage(page.url, context.project.domain ?? ""),
+          )
+          .map((page) => [page.url, page]),
+      ).values(),
+    ];
+  });
 export const getContentClusters = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
   .validator(input)
