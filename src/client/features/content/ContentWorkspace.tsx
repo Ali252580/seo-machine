@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
+import { ArrowLeft, FilePenLine, HardDrive } from "lucide-react";
 import { getWritingPages } from "@/serverFunctions/contentClusters";
 import { ContentEditorHeader } from "./ContentEditorHeader";
 import { WritingPagePicker } from "./WritingPagePicker";
@@ -152,35 +153,99 @@ export function ContentWorkspace({
         {!blog && <WritingPagePicker projectId={projectId} />}
         <section
           id="previous-drafts"
-          className="space-y-3 rounded-xl border border-base-300 p-5"
+          className="overflow-hidden rounded-xl border border-base-300 bg-base-100"
         >
-          <h2 className="text-lg font-bold">پیش‌نویس‌های قبلی</h2>
-          <p className="text-sm">
-            ذخیره‌شده در همین مرورگر؛ ممکن است هنوز در سایت منتشر نشده باشند.
-            افزودن قابلیت لینک‌سازی، متن قدیمی را خودکار تغییر نمی‌دهد.
-          </p>
+          <header className="flex flex-wrap items-start justify-between gap-4 p-5 sm:p-6">
+            <div className="space-y-2">
+              <h2 className="text-lg font-bold sm:text-xl">
+                پیش‌نویس‌های قبلی
+              </h2>
+              <p className="text-sm leading-7 text-base-content/75">
+                از جایی که متوقف شدید ادامه دهید؛ پیش‌نویس را برای بازبینی و
+                ویرایش باز کنید.
+              </p>
+            </div>
+            <span className="badge badge-outline h-auto shrink-0 border-base-300 px-3 py-2 text-xs">
+              {drafts.length.toLocaleString("fa-IR")} پیش‌نویس
+            </span>
+          </header>
+          <div className="flex items-start gap-2 border-y border-base-300 bg-base-200/60 px-5 py-3 text-xs leading-6 text-base-content/75 sm:px-6">
+            <HardDrive size={16} aria-hidden="true" className="mt-1 shrink-0" />
+            <p>
+              ذخیره‌شده در همین مرورگر؛ وضعیت انتشار در سایت از این فهرست مشخص
+              نیست.
+            </p>
+          </div>
           {storageError && (
-            <p role="alert">
+            <p
+              role="alert"
+              className="m-5 rounded-lg border border-error/40 p-4 text-sm"
+            >
               دسترسی به ذخیره‌سازی مرورگر ممکن نشد؛ پیش‌نویس‌ها حذف نشده‌اند.
             </p>
           )}
           {!drafts.length && !storageError && (
-            <p>پیش‌نویس قبلی در این مرورگر پیدا نشد.</p>
+            <div className="space-y-2 p-8 text-center">
+              <FilePenLine
+                size={28}
+                aria-hidden="true"
+                className="mx-auto mb-3 text-base-content/60"
+              />
+              <p className="font-medium">
+                پیش‌نویس قبلی در این مرورگر پیدا نشد.
+              </p>
+              <p className="text-sm text-base-content/75">
+                با شروع نگارش، پیش‌نویس شما در این بخش قرار می‌گیرد.
+              </p>
+            </div>
           )}
-          <ul className="space-y-2">
+          <ul className="divide-y divide-base-300">
             {drafts.map((draft, index) => (
               <li key={`${draft.page ?? draft.draft}-${index}`}>
                 <Link
-                  className="link"
+                  className="group flex min-w-0 flex-col gap-3 px-5 py-4 transition-colors hover:bg-base-200/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary sm:flex-row sm:items-center sm:gap-5 sm:px-6"
                   to={to}
                   params={{ projectId }}
                   search={{ ...draft, title: draft.title.slice(0, 180) }}
                 >
-                  {draft.title} — بازکردن و ویرایش
+                  <FilePenLine
+                    size={20}
+                    aria-hidden="true"
+                    className="hidden shrink-0 text-base-content/60 sm:block"
+                  />
+                  <span className="min-w-0 flex-1 space-y-1.5">
+                    <span className="block break-words text-sm font-semibold leading-7">
+                      {draft.title}
+                    </span>
+                    {draft.page ? (
+                      <span
+                        dir="ltr"
+                        title={draft.page}
+                        className="block truncate text-right text-xs leading-6 text-base-content/70"
+                      >
+                        {draft.page}
+                      </span>
+                    ) : (
+                      <span className="block text-xs leading-6 text-base-content/70">
+                        {blog ? "مقالهٔ آموزشی" : "محتوای جدید"} · بدون صفحهٔ
+                        مقصد
+                      </span>
+                    )}
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2 self-start rounded-lg border border-base-300 px-3 py-2.5 text-xs font-medium group-hover:border-primary group-hover:text-primary sm:self-center">
+                    ادامهٔ ویرایش
+                    <ArrowLeft size={15} aria-hidden="true" />
+                  </span>
                 </Link>
               </li>
             ))}
           </ul>
+          {!!drafts.length && (
+            <p className="border-t border-base-300 px-5 py-3 text-xs leading-6 text-base-content/75 sm:px-6">
+              برای بررسی لینک‌های داخلیِ متن قدیمی، پیش‌نویس را باز کنید و
+              «نگارش مجدد با بررسی لینک‌های داخلی» را بزنید.
+            </p>
+          )}
         </section>
       </div>
     </main>

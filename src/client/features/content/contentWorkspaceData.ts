@@ -13,11 +13,17 @@ export function savedDraftEntries(
       if (!value || typeof value.content !== "string" || !value.content.trim())
         continue;
       const suffix = key.slice(prefix.length + 1);
+      const heading = value.content
+        .match(/<h[12]\b[^>]*>([\s\S]*?)<\/h[12]>/i)?.[1]
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
       drafts.push({
         title:
-          typeof value.title === "string" && value.title
-            ? value.title
-            : "پیش‌نویس بدون عنوان",
+          (typeof value.title === "string" && value.title.trim()) ||
+          heading ||
+          (typeof value.keyword === "string" && value.keyword.trim()) ||
+          "پیش‌نویس بدون عنوان",
         ...(suffix.startsWith("draft:")
           ? { draft: suffix.slice(6) }
           : /^https?:\/\//.test(suffix)

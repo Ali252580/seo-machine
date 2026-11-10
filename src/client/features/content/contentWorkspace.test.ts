@@ -39,3 +39,18 @@ it("suggests different angles for reference pages and educational articles", () 
   expect(articleIdeas(pages, false)).toEqual(["راهنمای انتخاب بام سبز"]);
   expect(articleIdeas(pages, true)).toEqual(["پرسش‌های رایج دربارهٔ بام سبز"]);
 });
+it("uses an existing heading for untitled drafts without changing saved content", () => {
+  const saved = JSON.stringify({
+    title: "  ",
+    content: "<h1>راهنمای <strong>بام سبز</strong></h1><p>متن</p>",
+  });
+  const storage = {
+    length: 1,
+    key: () => "openseo-article-a",
+    getItem: () => saved,
+  } as unknown as Storage;
+  expect(savedDraftEntries(storage, "a", false)).toEqual([
+    { title: "راهنمای بام سبز", draft: "legacy" },
+  ]);
+  expect(storage.getItem("openseo-article-a")).toBe(saved);
+});
