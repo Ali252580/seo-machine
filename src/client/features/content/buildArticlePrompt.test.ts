@@ -23,6 +23,12 @@ it("uses verified discovered pages without WordPress for both article kinds", ()
     const prompt = buildArticlePrompt("موضوع", "عنوان", evidence, kind);
     expect(prompt).toContain("https://site.test/existing-article");
     expect(prompt.length).toBeLessThanOrEqual(4000);
+    if (kind === "page") {
+      expect(prompt).toContain("داخل جملهٔ مرتبط در پاراگراف متن");
+      expect(prompt).toContain(
+        "بخش یا فهرست جداگانهٔ لینک‌ها، منابع و مطالب مرتبط نساز",
+      );
+    }
   }
 });
 

@@ -6,13 +6,13 @@ import {
   saveContentClusters,
 } from "@/serverFunctions/contentClusters";
 import {
-  suggestClusterPages,
   mergeDiscoveredPages,
   type DiscoveredClusterPage,
   type ContentCluster,
 } from "@/shared/contentClusters";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { ClusterPageDiscovery } from "./ClusterPageDiscovery";
+import { ClusterPagePicker } from "./ClusterPagePicker";
 import { ClusterSuggestions } from "./ClusterSuggestions";
 
 function ClusterGraph({ cluster }: { cluster: ContentCluster }) {
@@ -79,13 +79,23 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
     queryKey: key,
     queryFn: () => getContentClusters({ data: { projectId } }),
   });
-  const [pages, setPages] = useState<DiscoveredClusterPage[]>([]);
+  const [incomingPages, setPages] = useState<DiscoveredClusterPage[]>([]);
   const [pillarUrl, setPillarUrl] = useState("");
   const [editingUrl, setEditingUrl] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [draft, setDraft] = useState<ContentCluster[] | null>(null);
+  const [validationError, setValidationError] = useState("");
+  const pages = mergeDiscoveredPages([
+    ...(query.data?.pages ?? []),
+    ...(query.data?.clusters ?? []).flatMap((cluster) => [
+      cluster.pillar,
+      ...cluster.pages,
+    ]),
+    ...incomingPages,
+  ]);
   const editor = useRef<HTMLDetailsElement>(null);
   const editCluster = (cluster: ContentCluster) => {
+    setValidationError("");
     setEditingUrl(cluster.pillar.url);
     setPages((current) => [
       ...new Map(
@@ -104,13 +114,41 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
   };
   const clusters = draft ?? query.data?.clusters ?? [];
   const save = useMutation({
-    mutationFn: () => saveContentClusters({ data: { projectId, clusters } }),
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: key });
+    mutationFn: (next: ContentCluster[]) =>
+      saveContentClusters({ data: { projectId, clusters: next } }),
+    onSuccess: (result) => {
+      client.setQueryData(key, { ...query.data, clusters: result.clusters });
       setDraft(null);
+      setEditingUrl(null);
+      setPillarUrl("");
+      setSelected([]);
+      if (editor.current) editor.current.open = false;
     },
   });
   const pillar = pages.find((page) => page.url === pillarUrl);
+  const otherClusters = clusters.filter(
+    (cluster) =>
+      cluster.pillar.url !== pillarUrl && cluster.pillar.url !== editingUrl,
+  );
+  const saveGroup = () => {
+    const chosen = pages.filter(
+      (page) => page.url !== pillarUrl && selected.includes(page.url),
+    );
+    const message = !pillar
+      ? "ابتدا صفحهٔ پیلار را انتخاب کنید."
+      : !chosen.length
+        ? "حداقل یک مقالهٔ کلاستر را انتخاب کنید."
+        : chosen.length > 20
+          ? "برای هر پیلار حداکثر ۲۰ مقاله انتخاب کنید."
+          : otherClusters.length >= 20
+            ? "نقشه حداکثر ۲۰ گروه دارد؛ یک گروه موجود را اصلاح یا حذف کنید."
+            : "";
+    setValidationError(message);
+    if (message || !pillar) return;
+    const next = [...otherClusters, { pillar, pages: chosen }];
+    setDraft(next);
+    save.mutate(next);
+  };
   const error = query.error || save.error;
   return (
     <main dir="rtl" className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-7">
@@ -171,116 +209,45 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
         <summary className="cursor-pointer font-semibold">
           ساخت یا اصلاح دستی گروه
         </summary>
+        {query.data && !query.data.canManage && (
+          <p role="status">
+            برای ذخیرهٔ نقشه به دسترسی مدیر یا مالک پروژه نیاز دارید.
+          </p>
+        )}
+        {(validationError || save.error) && (
+          <p role="alert" className="text-error">
+            {validationError || getStandardErrorMessage(save.error)}
+          </p>
+        )}
         {pages.length > 0 && (
           <fieldset
             className="space-y-4"
             disabled={save.isPending || !query.data?.canManage}
           >
-            <label className="block space-y-2">
-              <span>صفحهٔ پیلار (مرجع اصلی)</span>
-              <select
-                className="select select-bordered w-full"
-                value={pillarUrl}
-                onChange={(event) => {
-                  setPillarUrl(event.target.value);
-                  setSelected([]);
-                }}
-              >
-                <option value="">انتخاب صفحهٔ مرجع</option>
-                {pages.map((page) => (
-                  <option key={page.url} value={page.url}>
-                    {page.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              className="btn btn-sm btn-outline"
-              disabled={!pillar}
-              onClick={() =>
-                pillar &&
-                setSelected(
-                  suggestClusterPages(pillar, pages).map((page) => page.url),
-                )
-              }
-            >
-              پیشنهاد زیرموضوع‌ها از عنوان‌ها
-            </button>
-            <p className="text-xs text-base-content/60">
-              این پیشنهاد فقط از اشتراک واژه‌های عنوان است؛ تحلیل SERP نیست.
-              ارتباط موضوعی را بازبینی کنید.
-            </p>
-            <fieldset
-              disabled={!pillar}
-              className="max-h-72 space-y-2 overflow-auto"
-            >
-              <legend className="mb-2 font-medium">مقالات کلاستر</legend>
-              {pages
-                .filter((page) => page.url !== pillarUrl)
-                .map((page) => (
-                  <label
-                    key={page.url}
-                    className="flex items-start gap-3 rounded-lg border border-base-300 p-3"
-                  >
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm"
-                      checked={selected.includes(page.url)}
-                      onChange={(event) =>
-                        setSelected(
-                          event.target.checked
-                            ? [...selected, page.url]
-                            : selected.filter((url) => url !== page.url),
-                        )
-                      }
-                    />
-                    <span className="min-w-0">
-                      <span className="block">{page.title}</span>
-                      <span
-                        dir="ltr"
-                        className="block break-all text-xs text-base-content/60"
-                      >
-                        {page.url}
-                      </span>
-                    </span>
-                  </label>
-                ))}
-            </fieldset>
+            <ClusterPagePicker
+              pages={pages}
+              pillarUrl={pillarUrl}
+              selected={selected}
+              setPillarUrl={(url) => {
+                setPillarUrl(url);
+                setValidationError("");
+              }}
+              setSelected={(urls) => {
+                setSelected(urls);
+                setValidationError("");
+              }}
+            />
             <button
               className="btn btn-outline"
-              disabled={
-                !query.data?.canManage ||
-                !pillar ||
-                !selected.length ||
-                selected.length > 20 ||
-                save.isPending
-              }
-              onClick={() => {
-                if (pillar) {
-                  setDraft([
-                    ...clusters.filter(
-                      (cluster) =>
-                        cluster.pillar.url !== pillar.url &&
-                        cluster.pillar.url !== editingUrl,
-                    ),
-                    {
-                      pillar,
-                      pages: pages.filter((page) =>
-                        selected.includes(page.url),
-                      ),
-                    },
-                  ]);
-                  setEditingUrl(null);
-                  setPillarUrl("");
-                  setSelected([]);
-                  if (editor.current) editor.current.open = false;
-                }
-              }}
+              type="button"
+              disabled={!query.data?.canManage || save.isPending}
+              onClick={saveGroup}
             >
-              افزودن / جایگزینی خوشه در نقشه
+              {save.isPending ? "در حال ذخیره…" : "ذخیرهٔ گروه در نقشه"}
             </button>
             <p className="text-xs">
-              حداکثر ۲۰ زیرموضوع برای هر پیلار؛ سپس «ذخیرهٔ نقشه» را بزنید.
+              حداکثر ۲۰ گروه و ۲۰ زیرموضوع برای هر پیلار؛ گروه مستقیماً ذخیره
+              می‌شود.
             </p>
           </fieldset>
         )}
@@ -299,11 +266,13 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           className="btn btn-primary"
           disabled={
             !query.data?.canManage ||
-            draft === null ||
+            (draft === null && !pillarUrl && !selected.length) ||
             save.isPending ||
             clusters.length > 20
           }
-          onClick={() => save.mutate()}
+          onClick={() =>
+            pillarUrl || selected.length ? saveGroup() : save.mutate(clusters)
+          }
         >
           {save.isPending ? "در حال ذخیره…" : "ذخیرهٔ نقشه"}
         </button>
