@@ -16,6 +16,12 @@ const mocks = vi.hoisted(() => ({
   mutate: vi.fn(),
   setQueryData: vi.fn(),
   save: vi.fn(),
+  discover: vi.fn(),
+  alternatives: [] as { url: string; title: string }[],
+  discoveryOptions: null as unknown as {
+    queryFn: () => Promise<unknown>;
+    enabled: boolean;
+  },
   options: null as unknown as {
     mutationFn: (clusters: ContentCluster[]) => Promise<unknown>;
     onSuccess: (result: { clusters: ContentCluster[] }) => void;
@@ -31,7 +37,17 @@ vi.mock("react", async (original) => ({
 }));
 vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ setQueryData: mocks.setQueryData }),
-  useQuery: () => ({ data: mocks.data }),
+  useQuery: (options: {
+    queryKey: string[];
+    queryFn: () => Promise<unknown>;
+    enabled: boolean;
+  }) => {
+    if (options.queryKey[0] === "clusterReplacementPages") {
+      mocks.discoveryOptions = options;
+      return { data: mocks.alternatives };
+    }
+    return { data: mocks.data };
+  },
   useMutation: (options: typeof mocks.options) => {
     mocks.options = options;
     return { mutate: mocks.mutate, isPending: false };
@@ -40,6 +56,7 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("@/serverFunctions/contentClusters", () => ({
   getContentClusters: vi.fn(),
   saveContentClusters: mocks.save,
+  discoverClusterPages: mocks.discover,
 }));
 vi.mock("./ClusterPageDiscovery", () => ({ ClusterPageDiscovery: () => null }));
 
@@ -49,6 +66,7 @@ const cluster = {
 };
 beforeEach(() => {
   mocks.index = 0;
+  mocks.alternatives = [];
   mocks.data = { clusters: [], pages: [], canManage: true };
   mocks.states = [
     [cluster.pillar, ...cluster.pages],
@@ -58,6 +76,25 @@ beforeEach(() => {
     null,
     "",
   ];
+});
+
+it("loads unfiltered site pages and saves a replacement outside the suggested group", async () => {
+  const replacement = {
+    url: "https://example.com/another-topic",
+    title: "Different topic",
+  };
+  mocks.alternatives = [replacement];
+  mocks.states[3] = [replacement.url];
+  const button = findSave(ContentClusterMap({ projectId: "project-a" }));
+  expect(mocks.discoveryOptions.enabled).toBe(true);
+  await mocks.discoveryOptions.queryFn();
+  expect(mocks.discover).toHaveBeenCalledWith({
+    data: { projectId: "project-a", source: "sitemap", search: "" },
+  });
+  button!.onClick();
+  expect(mocks.mutate).toHaveBeenCalledWith([
+    { pillar: cluster.pillar, pages: [replacement] },
+  ]);
 });
 
 function findSave(

@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getContentClusters,
+  discoverClusterPages,
   saveContentClusters,
 } from "@/serverFunctions/contentClusters";
 import {
@@ -85,8 +86,19 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [draft, setDraft] = useState<ContentCluster[] | null>(null);
   const [validationError, setValidationError] = useState("");
+  const alternatives = useQuery({
+    queryKey: ["clusterReplacementPages", projectId],
+    queryFn: () =>
+      discoverClusterPages({
+        data: { projectId, source: "sitemap", search: "" },
+      }),
+    enabled: Boolean(pillarUrl),
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: alternativePages = [] } = alternatives;
   const pages = mergeDiscoveredPages([
     ...(query.data?.pages ?? []),
+    ...alternativePages,
     ...(query.data?.clusters ?? []).flatMap((cluster) => [
       cluster.pillar,
       ...cluster.pages,
@@ -149,6 +161,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
     setDraft(next);
     save.mutate(next);
   };
+  const cannotEdit = !query.data?.canManage || save.isPending;
   const error = query.error || save.error;
   return (
     <main dir="rtl" className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-7">
@@ -199,7 +212,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
       <ClusterSuggestions
         pages={pages}
         clusters={clusters}
-        disabled={!query.data?.canManage || save.isPending}
+        disabled={cannotEdit}
         onChoose={editCluster}
       />
       <details
@@ -219,11 +232,23 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
             {validationError || getStandardErrorMessage(save.error)}
           </p>
         )}
+        {alternatives.isFetching && (
+          <p role="status">در حال دریافت صفحات دیگر سایت برای جایگزینی…</p>
+        )}
+        {alternatives.error && (
+          <p role="alert">
+            دریافت صفحات دیگر سایت انجام نشد؛ انتخاب‌های فعلی حفظ شده‌اند.
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => void alternatives.refetch()}
+            >
+              تلاش دوباره
+            </button>
+          </p>
+        )}
         {pages.length > 0 && (
-          <fieldset
-            className="space-y-4"
-            disabled={save.isPending || !query.data?.canManage}
-          >
+          <fieldset className="space-y-4" disabled={cannotEdit}>
             <ClusterPagePicker
               pages={pages}
               pillarUrl={pillarUrl}
@@ -240,7 +265,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
             <button
               className="btn btn-outline"
               type="button"
-              disabled={!query.data?.canManage || save.isPending}
+              disabled={cannotEdit}
               onClick={saveGroup}
             >
               {save.isPending ? "در حال ذخیره…" : "ذخیرهٔ گروه در نقشه"}
@@ -302,14 +327,14 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
             <h3 className="font-semibold">پیلار: {cluster.pillar.title}</h3>
             <button
               className="btn btn-outline btn-sm"
-              disabled={!query.data?.canManage || save.isPending}
+              disabled={cannotEdit}
               onClick={() => editCluster(cluster)}
             >
               اصلاح گروه
             </button>
             <button
               className="btn btn-ghost btn-sm"
-              disabled={!query.data?.canManage || save.isPending}
+              disabled={cannotEdit}
               onClick={() =>
                 setDraft(
                   clusters.filter(
