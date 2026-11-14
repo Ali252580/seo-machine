@@ -1,16 +1,7 @@
 import { sort } from "remeda";
-import { sameSitePage } from "@/shared/contentClusters";
+import { sameSitePage, titleOverlap } from "@/shared/contentClusters";
 import { readPages } from "@/server/lib/scrape";
 
-const tokens = (text: string) =>
-  new Set(
-    text
-      .toLowerCase()
-      .replace(/ي/g, "ی")
-      .replace(/ك/g, "ک")
-      .split(/[^\p{L}\p{N}]+/u)
-      .filter((word) => word.length > 2),
-  );
 const normalize = (url: string) => {
   const parsed = new URL(url);
   parsed.hash = "";
@@ -23,7 +14,6 @@ export function selectArticleLinks(input: {
   pages: { url: string; title: string }[];
   mapped: { url: string; title: string }[];
 }) {
-  const terms = tokens(input.topic);
   const mapped = new Set(input.mapped.map((page) => page.url));
   const unique = new Map<
     string,
@@ -34,8 +24,7 @@ export function selectArticleLinks(input: {
     const url = normalize(page.url);
     if (input.target && url === normalize(input.target)) continue;
     const score =
-      [...tokens(page.title)].filter((word) => terms.has(word)).length +
-      (mapped.has(page.url) ? 100 : 0);
+      titleOverlap(input.topic, page.title) + (mapped.has(page.url) ? 100 : 0);
     if (score > 0 && !unique.has(url)) unique.set(url, { ...page, score });
   }
   return sort([...unique.values()], (a, b) => b.score - a.score)

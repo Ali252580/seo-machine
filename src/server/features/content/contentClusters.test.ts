@@ -14,6 +14,22 @@ beforeAll(async () => {
   store = await import("./contentClusters");
 });
 afterAll(() => client.close());
+it("retains article identity and category membership after reopening", async () => {
+  const page = {
+    url: "https://example.com/article",
+    title: "نگهداری روف گاردن",
+    kind: "article" as const,
+    categoryUrls: ["https://example.com/category/roof"],
+  };
+  await store.rememberDiscoveredPages("metadata", [page]);
+  expect(await store.readDiscoveredPages("metadata")).toEqual([page]);
+  await store.rememberDiscoveredPages("metadata", [
+    { url: page.url, title: "عنوان تازه" },
+  ]);
+  expect(await store.readDiscoveredPages("metadata")).toEqual([
+    { ...page, title: "عنوان تازه" },
+  ]);
+});
 it("remembers discovered pages across sources without leaking between projects", async () => {
   await store.rememberDiscoveredPages("links-a", [
     { url: "https://example.com/a", title: "A" },

@@ -36,7 +36,7 @@ export async function discoverContentPages(
     const taxonomy = taxonomyPages(
       categories,
       pages
-        .filter((page) => page.status === "publish")
+        .filter((page) => page.status === "publish" && page.kind === "post")
         .map((page) => ({ ...page, categories: page.categories ?? [] })),
       domain,
     );

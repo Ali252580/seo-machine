@@ -4,20 +4,26 @@ import { projectContextSections } from "@/db/schema";
 import {
   contentClustersSchema,
   type ContentCluster,
-  clusterPageSchema,
+  type DiscoveredClusterPage,
+  discoveredClusterPageSchema,
+  mergeDiscoveredPages,
 } from "@/shared/contentClusters";
 const KEY = "system:content-clusters";
 const PAGE_KEY = "system:discovered-page:";
 
 export async function rememberDiscoveredPages(
   projectId: string,
-  pages: { url: string; title: string }[],
+  pages: DiscoveredClusterPage[],
 ) {
+  const known = new Map(
+    (await readDiscoveredPages(projectId)).map((page) => [page.url, page]),
+  );
   const valid = [
     ...new Map(
-      pages
-        .filter((page) => clusterPageSchema.safeParse(page).success)
-        .map((page) => [page.url, page]),
+      pages.flatMap((page) => {
+        const parsed = discoveredClusterPageSchema.safeParse(page);
+        return parsed.success ? [[page.url, parsed.data] as const] : [];
+      }),
     ).values(),
   ];
   // Store independently so concurrent discovery requests cannot overwrite another source's pages.
@@ -32,7 +38,12 @@ export async function rememberDiscoveredPages(
         .map((byte) => byte.toString(16).padStart(2, "0"))
         .join("");
     const values = {
-      content: JSON.stringify({ url: page.url, title: page.title }),
+      content: JSON.stringify(
+        mergeDiscoveredPages([
+          ...(known.has(page.url) ? [known.get(page.url)!] : []),
+          page,
+        ])[0],
+      ),
       updatedAt: new Date().toISOString(),
       updatedBy: "sam" as const,
     };
@@ -58,7 +69,9 @@ export async function readDiscoveredPages(projectId: string) {
     );
   return rows.flatMap((row) => {
     try {
-      const page = clusterPageSchema.safeParse(JSON.parse(row.content));
+      const page = discoveredClusterPageSchema.safeParse(
+        JSON.parse(row.content),
+      );
       return page.success ? [page.data] : [];
     } catch {
       return [];

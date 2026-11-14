@@ -346,7 +346,12 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
               حذف از نقشه
             </button>
           </div>
-          <ClusterGraph cluster={cluster} />
+          <details>
+            <summary className="mt-3 cursor-pointer text-sm">
+              نمایش نمودار روابط گروه
+            </summary>
+            <ClusterGraph cluster={cluster} />
+          </details>
           <p className="text-xs text-base-content/60">
             خط‌چین: لینک پیشنهادی پیلار ↔ کلاستر؛ نه لینک تأییدشدهٔ سایت.
           </p>

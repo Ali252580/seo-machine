@@ -18,6 +18,37 @@ it("proposes disjoint groups, deduplicates URLs and leaves unrelated pages unass
   expect(suggestContentClusters([])).toEqual([]);
   expect(suggestContentClusters([pages[0], pages[2]])).toEqual([]);
 });
+
+it("ranks article titles even outside category membership and ignores generic title words", () => {
+  const pillar = {
+    url: "https://example.com/category/roof",
+    title: "روف گاردن",
+    kind: "category" as const,
+  };
+  const article = {
+    url: "https://example.com/care",
+    title: "راهنمای نگهداری روف گاردن",
+    kind: "article" as const,
+  };
+  expect(suggestClusterPages(pillar, [pillar, article])).toEqual([article]);
+  expect(suggestContentClusters([pillar, article])[0].pages).toEqual([article]);
+  expect(
+    suggestContentClusters([
+      { ...article, title: "راهنمای خرید خودرو" },
+      {
+        ...article,
+        url: "https://example.com/other",
+        title: "راهنمای نگهداری باغ",
+      },
+    ]),
+  ).toEqual([]);
+  expect(
+    suggestClusterPages({ ...pillar, kind: undefined }, [
+      { ...article, url: "https://example.com/weak", title: "طراحی گاردن" },
+      article,
+    ])[0],
+  ).toEqual(article);
+});
 it("decodes category URLs into search topics without fetching the supplied URL", () => {
   expect(
     clusterSearchTopic(

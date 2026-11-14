@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sort } from "remeda";
 
 export const clusterPageSchema = z.object({
   url: z.string().url().max(1000),
@@ -13,14 +14,13 @@ export const contentClustersSchema = z
   )
   .max(20);
 export type ContentCluster = z.infer<typeof contentClustersSchema>[number];
-export type DiscoveredClusterPage = {
-  url: string;
-  title: string;
-  kind?: "category" | "navigation";
-  categoryLevel?: "root" | "child";
-  parentUrl?: string;
-  categoryUrls?: string[];
-};
+export const discoveredClusterPageSchema = clusterPageSchema.extend({
+  kind: z.enum(["category", "navigation", "article"]).optional(),
+  categoryLevel: z.enum(["root", "child"]).optional(),
+  parentUrl: z.string().url().optional(),
+  categoryUrls: z.array(z.string().url()).optional(),
+});
+export type DiscoveredClusterPage = z.infer<typeof discoveredClusterPageSchema>;
 
 export function mergeDiscoveredPages(pages: DiscoveredClusterPage[]) {
   const merged = new Map<string, DiscoveredClusterPage>();
@@ -32,7 +32,9 @@ export function mergeDiscoveredPages(pages: DiscoveredClusterPage[]) {
       kind:
         previous?.kind === "category"
           ? "category"
-          : (page.kind ?? previous?.kind),
+          : previous?.kind === "article" && page.kind === "navigation"
+            ? "article"
+            : (page.kind ?? previous?.kind),
       ...(previous?.categoryUrls?.length || page.categoryUrls?.length
         ? {
             categoryUrls: [
@@ -75,6 +77,11 @@ export function sameSitePage(raw: string, domain: string): boolean {
   }
 }
 
+const titleStopWords = new Set(
+  "برای درباره راهنمای مقاله بهترین چیست چگونه های است با از در به و the and for with guide how".split(
+    " ",
+  ),
+);
 const words = (title: string) =>
   new Set(
     title
@@ -83,30 +90,35 @@ const words = (title: string) =>
       .replace(/ك/g, "ک")
       .toLowerCase()
       .split(/[^\p{L}\p{N}]+/u)
-      .filter((word) => word.length > 2),
+      .filter((word) => word.length > 2 && !titleStopWords.has(word)),
   );
+// shortcut: title words only; use content evidence when semantic relevance is required.
+export function titleOverlap(left: string, right: string) {
+  const terms = words(left);
+  return [...words(right)].filter((word) => terms.has(word)).length;
+}
 /** Title overlap is a suggestion, never SERP validation. */
 export function suggestClusterPages(
   pillar: DiscoveredClusterPage,
   pages: DiscoveredClusterPage[],
 ) {
-  if (pillar.kind === "category")
-    return pages
-      .filter(
-        (page) =>
-          page.url !== pillar.url &&
-          (page.categoryUrls?.includes(pillar.url) ||
-            page.parentUrl === pillar.url),
-      )
-      .slice(0, 20);
-  const terms = words(pillar.title);
-  return pages
-    .filter(
-      (page) =>
-        page.url !== pillar.url &&
-        [...words(page.title)].some((word) => terms.has(word)),
-    )
-    .slice(0, 20);
+  const ranked = pages
+    .filter((page) => page.url !== pillar.url)
+    .map((page) => ({
+      page,
+      score:
+        pillar.kind === "category" &&
+        (page.categoryUrls?.includes(pillar.url) ||
+          page.parentUrl === pillar.url)
+          ? 100 + titleOverlap(pillar.title, page.title)
+          : page.kind === "category" || page.kind === "navigation"
+            ? 0
+            : titleOverlap(pillar.title, page.title),
+    }))
+    .filter(({ score }) => score > 0);
+  return sort(ranked, (a, b) => b.score - a.score)
+    .slice(0, 20)
+    .map(({ page }) => page);
 }
 
 /** Draft groups from labels only; users confirm the pillar and intent before saving. */
@@ -125,7 +137,10 @@ export function suggestContentClusters(pages: DiscoveredClusterPage[]) {
   let remaining = [
     ...new Map(
       pages
-        .filter((page) => !page.kind && !assigned.has(page.url))
+        .filter(
+          (page) =>
+            (!page.kind || page.kind === "article") && !assigned.has(page.url),
+        )
         .map((page) => [page.url, page]),
     ).values(),
   ];

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   suggestContentClusters,
   type ContentCluster,
@@ -15,6 +16,7 @@ export function ClusterSuggestions({
   disabled: boolean;
   onChoose: (cluster: ContentCluster) => void;
 }) {
+  const [search, setSearch] = useState("");
   const used = new Set(
     clusters.flatMap((cluster) => [
       cluster.pillar.url,
@@ -22,7 +24,13 @@ export function ClusterSuggestions({
     ]),
   );
   const available = pages.filter((page) => !used.has(page.url));
-  const suggestions = suggestContentClusters(available);
+  const suggestions = suggestContentClusters(available).filter((cluster) =>
+    [cluster.pillar, ...cluster.pages].some((page) =>
+      `${page.title} ${page.url}`
+        .toLocaleLowerCase()
+        .includes(search.trim().toLocaleLowerCase()),
+    ),
+  );
   const categories = pages.filter((page) => page.kind === "category");
   const navigation = pages.filter((page) => page.kind === "navigation");
   return (
@@ -33,10 +41,11 @@ export function ClusterSuggestions({
         پاسخ می‌دهند. دسته‌بندی واقعی و عضویت مقاله‌ها بر شباهت عنوان اولویت
         دارند؛ انتخاب مرجع اصلی و ارتباط موضوعی نیاز به بررسی شما دارد.
       </p>
-      <div className="rounded-lg border border-base-300 bg-base-100 p-4">
-        <h3 className="font-semibold">
-          دسته‌بندی‌های شناسایی‌شده · {categories.length}
-        </h3>
+      <details className="rounded-lg border border-base-300 bg-base-100 p-4">
+        <summary className="cursor-pointer font-semibold">
+          دسته‌بندی‌ها و منوی سایت · {categories.length} دسته ·{" "}
+          {navigation.length} صفحهٔ منو
+        </summary>
         {!categories.length && (
           <p className="text-sm">
             هنوز دسته‌ای شناسایی نشده است. ممکن است سایت دسترسی عمومی را بسته
@@ -44,7 +53,7 @@ export function ClusterSuggestions({
             دسته‌بندی نیست.
           </p>
         )}
-        <ul className="mt-2 space-y-2">
+        <ul className="mt-3 max-h-64 space-y-3 overflow-y-auto">
           {categories.map((page) => (
             <li key={page.url}>
               <a
@@ -78,12 +87,35 @@ export function ClusterSuggestions({
             </summary>
             <ul>
               {navigation.map((page) => (
-                <li key={page.url}>{page.title}</li>
+                <li key={page.url} className="break-words">
+                  <a
+                    className="link"
+                    href={page.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {page.title}
+                  </a>
+                </li>
               ))}
             </ul>
           </details>
         )}
-      </div>
+      </details>
+      <label className="block space-y-2">
+        <span>جست‌وجوی گروه با عنوان مقاله یا صفحه</span>
+        <input
+          className="input input-bordered w-full"
+          placeholder="مثلاً نگهداری روف گاردن"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </label>
+      <p className="text-sm">
+        {suggestions.length} گروه پیشنهادی ·{" "}
+        {pages.filter((page) => page.kind === "article").length} مقالهٔ
+        شناسایی‌شده. برای دیدن مقصدهای لینک، هر گروه را باز کنید.
+      </p>
       {!pages.length ? (
         <p>ابتدا در مرحلهٔ ۱ صفحات سایت را دریافت کنید.</p>
       ) : !suggestions.length ? (
@@ -93,22 +125,34 @@ export function ClusterSuggestions({
         </p>
       ) : (
         suggestions.map((cluster) => (
-          <article
+          <details
             key={cluster.pillar.url}
             className="space-y-2 rounded-lg border border-base-300 bg-base-100 p-4"
           >
-            <h3 className="font-semibold">
-              مرجع پیشنهادی: {cluster.pillar.title}
-            </h3>
+            <summary className="cursor-pointer break-words font-semibold">
+              {cluster.pillar.title}
+              <span className="ms-2 text-sm font-normal text-base-content/60">
+                {cluster.pages.length} مقصد پیشنهادی لینک
+              </span>
+            </summary>
             <p className="text-sm">
               {cluster.pages.length} زیرموضوع ·{" "}
               {categories.some((page) => page.url === cluster.pillar.url)
-                ? "دلیل: عضویت در دسته یا پیوند مقاله در صفحهٔ آرشیو؛ این دسته نامزد مرجع است، نه پیلار قطعی."
+                ? "دلیل: عضویت در دسته و شباهت عنوان مقاله‌ها؛ دسته فقط نامزد پیلار است."
                 : "دلیل: شباهت عنوان‌ها؛ نیازمند بررسی موضوع و قصد جست‌وجو."}
             </p>
-            <ul className="list-inside list-disc text-sm">
+            <ul className="max-h-72 space-y-2 overflow-y-auto text-sm">
               {cluster.pages.map((page) => (
-                <li key={page.url}>{page.title}</li>
+                <li key={page.url} className="break-words">
+                  <a
+                    className="link"
+                    href={page.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {page.title}
+                  </a>
+                </li>
               ))}
             </ul>
             <button
@@ -118,13 +162,13 @@ export function ClusterSuggestions({
             >
               بررسی و اصلاح این گروه
             </button>
-          </article>
+          </details>
         ))
       )}
       <p className="text-xs text-base-content/60">
         {available.length} صفحه خارج از گروه‌های فعلی. این پیشنهاد تحلیل محتوای
-        کامل یا نتایج گوگل نیست؛ فقط ارتباطات دسته‌بندی بررسی شده‌اند، نه تمام
-        لینک‌های داخلی سایت.
+        کامل یا نتایج گوگل نیست؛ ارتباط از دسته‌بندی و عنوان‌ها پیشنهاد شده و
+        هنوز روی سایت اجرا نشده است.
       </p>
     </section>
   );

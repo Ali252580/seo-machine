@@ -79,3 +79,25 @@ it("only exposes published same-site WordPress entries", async () => {
   expect(mocks.gsc).not.toHaveBeenCalled();
   expect(mocks.discover).not.toHaveBeenCalled();
 });
+
+it("includes uncategorized published posts as articles without misclassifying pages", async () => {
+  mocks.wp.mockResolvedValue(
+    ["page", "post"].map((kind) => ({
+      kind,
+      status: "publish",
+      link: `https://example.com/${kind}`,
+      title: { rendered: kind },
+      slug: kind,
+    })),
+  );
+  const result = await discoverContentPages(project, "wordpress", "");
+  expect(result).toEqual([
+    { url: "https://example.com/page", title: "page" },
+    {
+      url: "https://example.com/post",
+      title: "post",
+      kind: "article",
+      categoryUrls: [],
+    },
+  ]);
+});
