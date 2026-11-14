@@ -65,7 +65,7 @@ export function buildArticlePrompt(
           .join("؛ ")
       : "بررسی شد؛ نتیجه‌ای نداشت"
     : "وصل نیست؛ نبود محتوای مشابه تأیید نشده";
-  // The server accepts at most 4,000 characters. Bound observed rows, never
+  // Keep article requests near 4,000 characters (server ceiling: 8,000). Bound observed rows, never
   // the instructions at the end that prohibit unsupported claims and filler.
   const evidenceSummary =
     `وردپرس: ${cmsRows.slice(0, 250)}. سرچ کنسول: ${searchRows.slice(0, 400)}. ردیابی رتبه: ${rankRows.slice(0, 250)}. ${searchTrend.slice(0, 120)}. آنالیتیکس: ${analyticsRows.slice(0, 250)}.`.slice(

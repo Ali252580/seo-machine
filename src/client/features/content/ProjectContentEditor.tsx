@@ -4,6 +4,7 @@ import {
   type WritingProfile,
 } from "./writingProfiles";
 import { Link } from "@tanstack/react-router";
+import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
@@ -89,9 +90,12 @@ export function ProjectContentEditor({
     queryFn: () => getWordPressStatus({ data: { projectId } }),
   });
 
+  const [generationStage, setGenerationStage] = useState("بررسی شواهد");
   const generate = useMutation({
     mutationFn: async () => {
       setCheckedTarget(null);
+      setResearch(undefined);
+      setGenerationStage("بررسی شواهد");
       // Research is a server-side prerequisite, not a claim made by the model.
       const evidence = await researchContentTarget({
         data: {
@@ -103,7 +107,9 @@ export function ProjectContentEditor({
       });
       setResearch(evidence);
       setMatchingPages(evidence.pages);
+      setGenerationStage("ساخت نشست SAM");
       const session = await createSamSession({ data: { projectId } });
+      setGenerationStage("نگارش با SAM");
       const result = await sendSamVercelMessage({
         data: {
           projectId,
@@ -386,8 +392,8 @@ export function ProjectContentEditor({
             </button>
             {generate.isError && (
               <p role="alert" className="text-error text-sm">
-                بررسی شواهد یا نگارش انجام نشد. اتصال وردپرس، ابزارهای گوگل و
-                اعتبار SAM را بررسی کنید.
+                {generationStage} متوقف شد:{" "}
+                {getStandardErrorMessage(generate.error)}
               </p>
             )}
             {kind === "page" && <ArticleClusterSummary evidence={research} />}
