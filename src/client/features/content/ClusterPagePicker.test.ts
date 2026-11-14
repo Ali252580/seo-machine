@@ -33,6 +33,7 @@ it("shows alternatives and filters them without changing selected group members"
   );
   expect(filtered.match(/type="checkbox"/g)).toHaveLength(1);
   expect(filtered).toContain("Another topic");
+  expect(filtered).toContain("حذف Old suggestion از انتخاب‌ها");
   expect(setSelected).not.toHaveBeenCalled();
   state.search = "missing";
   expect(

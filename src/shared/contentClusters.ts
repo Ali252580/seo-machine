@@ -98,6 +98,34 @@ export function titleOverlap(left: string, right: string) {
   return [...words(right)].filter((word) => terms.has(word)).length;
 }
 /** Title overlap is a suggestion, never SERP validation. */
+export function clusterLinkTargets(cluster: ContentCluster, sourceUrl: string) {
+  if (sourceUrl === cluster.pillar.url) return cluster.pages;
+  const source = cluster.pages.find((page) => page.url === sourceUrl);
+  if (!source) return [];
+  const related = sort(
+    cluster.pages
+      .filter((page) => page.url !== sourceUrl)
+      .map((page) => ({ page, score: titleOverlap(source.title, page.title) }))
+      .filter(({ score }) => score > 0),
+    (a, b) => b.score - a.score,
+  )
+    .slice(0, 2)
+    .map(({ page }) => page);
+  return [cluster.pillar, ...related];
+}
+
+export function clusterRelation(
+  pillar: DiscoveredClusterPage,
+  page: DiscoveredClusterPage,
+) {
+  if (page.categoryUrls?.includes(pillar.url)) return "عضو دسته‌بندی";
+  if (page.parentUrl === pillar.url) return "زیر‌دستهٔ ثبت‌شده";
+  const overlap = titleOverlap(pillar.title, page.title);
+  return overlap
+    ? `${overlap} واژهٔ موضوعی مشترک`
+    : "ارتباط نیازمند بررسی دستی";
+}
+
 export function suggestClusterPages(
   pillar: DiscoveredClusterPage,
   pages: DiscoveredClusterPage[],

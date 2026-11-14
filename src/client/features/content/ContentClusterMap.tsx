@@ -15,6 +15,7 @@ import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { ClusterPageDiscovery } from "./ClusterPageDiscovery";
 import { ClusterPagePicker } from "./ClusterPagePicker";
 import { ClusterSuggestions } from "./ClusterSuggestions";
+import { ClusterLinkPlan } from "./ClusterLinkPlan";
 
 function ClusterGraph({ cluster }: { cluster: ContentCluster }) {
   return (
@@ -355,6 +356,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           <p className="text-xs text-base-content/60">
             خط‌چین: لینک پیشنهادی پیلار ↔ کلاستر؛ نه لینک تأییدشدهٔ سایت.
           </p>
+          <ClusterLinkPlan cluster={cluster} />
           <ul className="mt-4 space-y-2">
             {[cluster.pillar, ...cluster.pages].map((page) => (
               <li

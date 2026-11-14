@@ -14,7 +14,7 @@ export function selectArticleLinks(input: {
   pages: { url: string; title: string }[];
   mapped: { url: string; title: string }[];
 }) {
-  const mapped = new Set(input.mapped.map((page) => page.url));
+  const mapped = new Map(input.mapped.map((page, index) => [page.url, index]));
   const unique = new Map<
     string,
     { url: string; title: string; score: number }
@@ -23,8 +23,9 @@ export function selectArticleLinks(input: {
     if (!sameSitePage(page.url, input.domain)) continue;
     const url = normalize(page.url);
     if (input.target && url === normalize(input.target)) continue;
-    const score =
-      titleOverlap(input.topic, page.title) + (mapped.has(page.url) ? 100 : 0);
+    const score = mapped.has(page.url)
+      ? 100 + input.mapped.length - mapped.get(page.url)!
+      : titleOverlap(input.topic, page.title);
     if (score > 0 && !unique.has(url)) unique.set(url, { ...page, score });
   }
   return sort([...unique.values()], (a, b) => b.score - a.score)

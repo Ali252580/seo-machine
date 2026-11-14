@@ -10,7 +10,7 @@ import {
   selectArticleLinks,
   verifyArticleLinks,
 } from "@/server/features/content/articleLinkCandidates";
-import { sameSitePage } from "@/shared/contentClusters";
+import { sameSitePage, clusterLinkTargets } from "@/shared/contentClusters";
 
 export const researchContentTarget = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
@@ -41,7 +41,7 @@ export const researchContentTarget = createServerFn({ method: "POST" })
             cluster.pillar.url === data.targetPage
               ? ("pillar" as const)
               : ("cluster" as const),
-          targets: [cluster.pillar, ...cluster.pages].filter(
+          targets: clusterLinkTargets(cluster, data.targetPage ?? "").filter(
             (page) =>
               page.url !== data.targetPage &&
               sameSitePage(page.url, context.project.domain ?? ""),

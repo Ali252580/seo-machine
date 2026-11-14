@@ -37,6 +37,21 @@ it("excludes pages which cannot currently be read", async () => {
   ]);
 });
 
+it("keeps the pillar first even when a sibling title is a closer match", () => {
+  const mapped = [
+    { url: "https://example.com/hub", title: "مرجع" },
+    { url: "https://example.com/a", title: "آبیاری باغ" },
+  ];
+  expect(
+    selectArticleLinks({
+      domain: "example.com",
+      topic: "آبیاری باغ",
+      mapped,
+      pages: [],
+    }),
+  ).toEqual(mapped);
+});
+
 it("selects articles by topic words rather than shared generic title wording", () => {
   expect(
     selectArticleLinks({

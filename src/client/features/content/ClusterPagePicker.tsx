@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   suggestClusterPages,
+  clusterRelation,
   type DiscoveredClusterPage,
 } from "@/shared/contentClusters";
 
@@ -56,12 +57,40 @@ export function ClusterPagePicker({
           )
         }
       >
-        پیشنهاد زیرموضوع‌ها از عنوان‌ها
+        جایگزینی انتخاب‌ها با پیشنهاد مرتبط
       </button>
       <p className="text-xs text-base-content/60">
         این پیشنهاد فقط از اشتراک واژه‌های عنوان است؛ تحلیل SERP نیست. ارتباط
         موضوعی را بازبینی کنید.
       </p>
+      {selected.length > 0 && (
+        <section
+          aria-label="انتخاب‌های فعلی"
+          className="rounded-lg bg-base-200 p-3"
+        >
+          <p className="mb-2 text-sm font-medium">
+            انتخاب‌های فعلی · مستقل از فیلتر جست‌وجو
+          </p>
+          <ul className="flex flex-wrap gap-2">
+            {pages
+              .filter((page) => selected.includes(page.url))
+              .map((page) => (
+                <li key={page.url}>
+                  <button
+                    type="button"
+                    className="btn btn-sm h-auto whitespace-normal text-start"
+                    onClick={() =>
+                      setSelected(selected.filter((url) => url !== page.url))
+                    }
+                    aria-label={`حذف ${page.title} از انتخاب‌ها`}
+                  >
+                    {page.title} ×
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
       <label className="block space-y-2">
         <span>جست‌وجو در صفحات برای جایگزینی</span>
         <input
@@ -106,6 +135,11 @@ export function ClusterPagePicker({
             />
             <span className="min-w-0">
               <span className="block">{page.title}</span>
+              {pillar && (
+                <span className="block text-xs text-base-content/60">
+                  {clusterRelation(pillar, page)}
+                </span>
+              )}
               <span
                 dir="ltr"
                 className="block break-all text-xs text-base-content/60"

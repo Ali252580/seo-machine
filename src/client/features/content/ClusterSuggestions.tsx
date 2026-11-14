@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   suggestContentClusters,
+  clusterRelation,
   type ContentCluster,
   type DiscoveredClusterPage,
 } from "@/shared/contentClusters";
@@ -152,6 +153,9 @@ export function ClusterSuggestions({
                   >
                     {page.title}
                   </a>
+                  <span className="ms-2 text-xs text-base-content/60">
+                    {clusterRelation(cluster.pillar, page)}
+                  </span>
                 </li>
               ))}
             </ul>

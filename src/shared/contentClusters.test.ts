@@ -5,7 +5,36 @@ import {
   contentClustersSchema,
   clusterSearchTopic,
   suggestContentClusters,
+  clusterLinkTargets,
+  clusterRelation,
 } from "./contentClusters";
+it("plans pillar links and only the two most related sibling articles", () => {
+  const pillar = { url: "https://example.com/hub", title: "مرجع" };
+  const pages = [
+    { url: "https://example.com/a", title: "آبیاری باغ سبز" },
+    { url: "https://example.com/b", title: "نگهداری باغ" },
+    { url: "https://example.com/c", title: "روش آبیاری باغ" },
+    { url: "https://example.com/d", title: "کاشت باغ" },
+    { url: "https://example.com/e", title: "تعمیر خودرو" },
+  ];
+  const cluster = { pillar, pages };
+  expect(clusterLinkTargets(cluster, pillar.url)).toEqual(pages);
+  expect(clusterLinkTargets(cluster, pages[0].url)).toEqual([
+    pillar,
+    pages[2],
+    pages[1],
+  ]);
+  expect(clusterLinkTargets(cluster, pages[4].url)).toEqual([pillar]);
+  expect(clusterLinkTargets(cluster, "unknown")).toEqual([]);
+  expect(
+    clusterRelation(pillar, { ...pages[0], categoryUrls: [pillar.url] }),
+  ).toBe("عضو دسته‌بندی");
+  expect(clusterRelation(pillar, { ...pages[0], parentUrl: pillar.url })).toBe(
+    "زیر‌دستهٔ ثبت‌شده",
+  );
+  expect(clusterRelation(pages[0], pages[2])).toContain("2 واژه");
+  expect(clusterRelation(pillar, pages[4])).toBe("ارتباط نیازمند بررسی دستی");
+});
 it("proposes disjoint groups, deduplicates URLs and leaves unrelated pages unassigned", () => {
   const pages = [
     { url: "https://example.com/a", title: "طراحی باغ" },
