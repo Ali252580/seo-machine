@@ -70,3 +70,23 @@ it("keeps category evidence when another source supplies only a title", () => {
   expect(pages[0].kind).toBe("category");
   expect(taxonomyPages({ error: "blocked" }, [], "example.com")).toEqual([]);
 });
+
+it("keeps articles for title-based linking when categories are unavailable or unmatched", () => {
+  const posts = [
+    {
+      link: "https://example.com/roof-care",
+      title: { rendered: "<b>نگهداری روف گاردن</b>" },
+      categories: [99],
+    },
+  ];
+  for (const categories of [[], { error: "blocked" }]) {
+    expect(taxonomyPages(categories, posts, "example.com")).toEqual([
+      {
+        url: posts[0].link,
+        title: "نگهداری روف گاردن",
+        kind: "article",
+        categoryUrls: [],
+      },
+    ]);
+  }
+});

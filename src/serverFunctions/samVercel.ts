@@ -6,6 +6,7 @@ import {
   sendVercelSamMessage,
 } from "@/server/features/sam/VercelSamService";
 import { AppError } from "@/server/lib/errors";
+import { samMessageInput } from "@/shared/samMessageInput";
 
 const sessionSchema = z.object({
   projectId: z.string().min(1),
@@ -28,12 +29,7 @@ export const getSamVercelMessages = createServerFn({ method: "GET" })
 
 export const sendSamVercelMessage = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
-  .validator(
-    sessionSchema.extend({
-      text: z.string().trim().min(1).max(4_000),
-      article: z.boolean().optional(),
-    }),
-  )
+  .validator(samMessageInput)
   .handler(async ({ data, context }) => {
     requireVercel();
     return sendVercelSamMessage(

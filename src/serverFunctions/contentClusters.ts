@@ -43,6 +43,7 @@ export const getContentClusters = createServerFn({ method: "POST" })
   .validator(input)
   .handler(async ({ context }) => ({
     clusters: await readContentClusters(context.projectId),
+    pages: await readDiscoveredPages(context.projectId),
     canManage: hasOrgPermission(context.role, { integration: ["manage"] }),
   }));
 export const discoverClusterPages = createServerFn({ method: "POST" })
@@ -83,5 +84,5 @@ export const saveContentClusters = createServerFn({ method: "POST" })
         );
     }
     await writeContentClusters(context.projectId, data.clusters);
-    return { ok: true };
+    return { ok: true, clusters: data.clusters };
   });

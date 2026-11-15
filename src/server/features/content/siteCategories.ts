@@ -29,8 +29,9 @@ export function taxonomyPages(
   domain: string,
 ): DiscoveredClusterPage[] {
   const terms = categoriesSchema.safeParse(categories);
-  if (!terms.success) return [];
-  const safe = terms.data.filter((term) => sameSitePage(term.link, domain));
+  const safe = (terms.success ? terms.data : []).filter((term) =>
+    sameSitePage(term.link, domain),
+  );
   const links = new Map(safe.map((term) => [term.id, term.link]));
   const pages: DiscoveredClusterPage[] = safe.map((term) => ({
     url: term.link,
@@ -43,14 +44,11 @@ export function taxonomyPages(
   if (articles.success)
     pages.push(
       ...articles.data
-        .filter(
-          (post) =>
-            sameSitePage(post.link, domain) &&
-            post.categories.some((id) => links.has(id)),
-        )
+        .filter((post) => sameSitePage(post.link, domain))
         .map((post) => ({
           url: post.link,
           title: plain(post.title.rendered) || post.link,
+          kind: "article" as const,
           categoryUrls: post.categories.flatMap((id) =>
             links.has(id) ? [links.get(id)!] : [],
           ),

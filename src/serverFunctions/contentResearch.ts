@@ -10,7 +10,12 @@ import {
   selectArticleLinks,
   verifyArticleLinks,
 } from "@/server/features/content/articleLinkCandidates";
-import { sameSitePage } from "@/shared/contentClusters";
+import {
+  sameSitePage,
+  clusterLinkTargets,
+  mergeDiscoveredPages,
+} from "@/shared/contentClusters";
+import { discoverWritingPages } from "@/server/features/content/discoverClusterPages";
 
 export const researchContentTarget = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
@@ -41,14 +46,21 @@ export const researchContentTarget = createServerFn({ method: "POST" })
             cluster.pillar.url === data.targetPage
               ? ("pillar" as const)
               : ("cluster" as const),
-          targets: [cluster.pillar, ...cluster.pages].filter(
+          targets: clusterLinkTargets(cluster, data.targetPage ?? "").filter(
             (page) =>
               page.url !== data.targetPage &&
               sameSitePage(page.url, context.project.domain ?? ""),
           ),
         }
       : null;
-    const discovered = await readDiscoveredPages(context.projectId);
+    const [stored, fresh] = await Promise.all([
+      readDiscoveredPages(context.projectId),
+      discoverWritingPages({
+        id: context.projectId,
+        domain: context.project.domain,
+      }),
+    ]);
+    const discovered = mergeDiscoveredPages([...stored, ...fresh.pages]);
     const candidates = selectArticleLinks({
       domain: context.project.domain ?? "",
       topic: `${data.keyword} ${data.title}`,
@@ -67,5 +79,6 @@ export const researchContentTarget = createServerFn({ method: "POST" })
       clusterPlan,
       internalLinks,
       discoveredPageCount: discovered.length,
+      articleDiscoveryUnavailable: fresh.unavailable,
     };
   });

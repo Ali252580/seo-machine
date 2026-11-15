@@ -20,10 +20,16 @@ export function ArticleClusterSummary({
         <div className="space-y-2 rounded-lg bg-base-100 p-3">
           <h3 className="font-medium">لینک‌های داخلی از صفحات شناسایی‌شده</h3>
           <p className="text-sm">
-            {evidence.discoveredPageCount} صفحه از دریافت‌های قبلی ذخیره شده
-            است. {evidence.internalLinks.length} مقصد مرتبط اکنون خوانده شد؛ درج
-            لینک فقط در صورت ارتباط با متن انجام می‌شود.
+            {evidence.discoveredPageCount} صفحه از فهرست قبلی و بررسی تازهٔ سایت
+            بررسی شد. {evidence.internalLinks.length} مقصد مرتبط اکنون خوانده
+            شد؛ درج لینک فقط در صورت ارتباط با متن انجام می‌شود.
           </p>
+          {evidence.articleDiscoveryUnavailable && (
+            <p role="status" className="text-sm text-warning">
+              دریافت تازهٔ مقاله‌های سایت انجام نشد؛ از صفحات قبلی و نتایج
+              وردپرس استفاده شد.
+            </p>
+          )}
           <ul className="space-y-2">
             {evidence.internalLinks.map((page) => (
               <li key={page.url}>

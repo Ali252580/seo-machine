@@ -4,23 +4,38 @@ export function ArticlePreview({
   title,
   articleText,
   wordCount,
+  generating = false,
+  generationFailed = false,
 }: {
   content: string;
   keyword: string;
   title: string;
   articleText: string;
   wordCount: number;
+  generating?: boolean;
+  generationFailed?: boolean;
 }) {
   return (
     <section className="min-w-0 rounded-xl border border-base-300 p-4">
       <h2 className="mb-3 font-medium">پیش‌نمایش مقاله</h2>
-      {!content.trim() ? (
+      {generating ? (
+        <p role="status" className="p-6 text-sm leading-7">
+          نگارش مقالهٔ جدید در حال انجام است. پس از پایان، متن تازه اینجا نمایش
+          داده می‌شود؛ پیش‌نویس قبلی تا آن زمان محفوظ است.
+        </p>
+      ) : !content.trim() ? (
         <p className="rounded-lg border border-dashed border-base-300 p-6 text-sm leading-7 text-base-content/70">
           پس از نگارش یا واردکردن متن، پیش‌نمایش مقاله اینجا نمایش داده می‌شود.
           ابتدا کلمهٔ هدف و عنوان را در فرم وارد کنید.
         </p>
       ) : (
         <>
+          {generationFailed && (
+            <p role="status" className="mb-3 text-sm text-warning">
+              نگارش جدید کامل نشد؛ متن زیر پیش‌نویس قبلی است. جزئیات خطا کنار
+              دکمهٔ نگارش نمایش داده شده است.
+            </p>
+          )}
           <div className="mb-4 grid gap-1 rounded-lg bg-base-200 p-3 text-xs text-base-content/70">
             <span>{wordCount.toLocaleString("fa-IR")} واژه</span>
             <span>
@@ -40,6 +55,7 @@ export function ArticlePreview({
             </span>
           </div>
           <iframe
+            key={content}
             title="پیش‌نمایش مقاله"
             sandbox=""
             className="min-h-[650px] w-full rounded-lg border border-base-300 bg-white"

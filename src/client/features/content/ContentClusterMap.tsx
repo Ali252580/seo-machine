@@ -3,75 +3,22 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getContentClusters,
+  discoverClusterPages,
   saveContentClusters,
 } from "@/serverFunctions/contentClusters";
 import {
-  suggestClusterPages,
   mergeDiscoveredPages,
   type DiscoveredClusterPage,
   type ContentCluster,
 } from "@/shared/contentClusters";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { ClusterPageDiscovery } from "./ClusterPageDiscovery";
+import { ClusterPagePicker } from "./ClusterPagePicker";
 import { ClusterSuggestions } from "./ClusterSuggestions";
+import { ClusterLinkPlan } from "./ClusterLinkPlan";
 
-function ClusterGraph({ cluster }: { cluster: ContentCluster }) {
-  return (
-    <div className="overflow-x-auto" dir="ltr">
-      <svg
-        viewBox={`0 0 760 ${Math.max(160, cluster.pages.length * 80)}`}
-        className="min-w-[600px] w-full"
-        role="img"
-        aria-label={`روابط دوطرفهٔ پیشنهادی ${cluster.pillar.title}`}
-      >
-        {cluster.pages.map((page, index) => (
-          <g key={page.url}>
-            <path
-              d={`M 260 ${Math.max(160, cluster.pages.length * 80) / 2} C 360 ${Math.max(160, cluster.pages.length * 80) / 2}, 360 ${index * 80 + 40}, 440 ${index * 80 + 40}`}
-              fill="none"
-              stroke="currentColor"
-              className="text-primary/40"
-              strokeWidth="2"
-              strokeDasharray="6 4"
-            />
-            <rect
-              x="440"
-              y={index * 80 + 12}
-              width="300"
-              height="56"
-              rx="8"
-              className="fill-base-200 stroke-base-300"
-            />
-            <text
-              x="590"
-              y={index * 80 + 46}
-              textAnchor="middle"
-              className="fill-base-content text-sm"
-            >
-              {page.title.slice(0, 38)}
-            </text>
-          </g>
-        ))}
-        <rect
-          x="10"
-          y={Math.max(160, cluster.pages.length * 80) / 2 - 32}
-          width="250"
-          height="64"
-          rx="10"
-          className="fill-primary"
-        />
-        <text
-          x="135"
-          y={Math.max(160, cluster.pages.length * 80) / 2 + 5}
-          textAnchor="middle"
-          className="fill-primary-content text-sm"
-        >
-          {cluster.pillar.title.slice(0, 30)}
-        </text>
-      </svg>
-    </div>
-  );
-}
+import { ClusterGraph } from "./ClusterGraph";
+
 export function ContentClusterMap({ projectId }: { projectId: string }) {
   const client = useQueryClient();
   const key = ["contentClusters", projectId];
@@ -79,13 +26,34 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
     queryKey: key,
     queryFn: () => getContentClusters({ data: { projectId } }),
   });
-  const [pages, setPages] = useState<DiscoveredClusterPage[]>([]);
+  const [incomingPages, setPages] = useState<DiscoveredClusterPage[]>([]);
   const [pillarUrl, setPillarUrl] = useState("");
   const [editingUrl, setEditingUrl] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [draft, setDraft] = useState<ContentCluster[] | null>(null);
+  const [validationError, setValidationError] = useState("");
+  const alternatives = useQuery({
+    queryKey: ["clusterReplacementPages", projectId],
+    queryFn: () =>
+      discoverClusterPages({
+        data: { projectId, source: "sitemap", search: "" },
+      }),
+    enabled: Boolean(pillarUrl),
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: alternativePages = [] } = alternatives;
+  const pages = mergeDiscoveredPages([
+    ...(query.data?.pages ?? []),
+    ...alternativePages,
+    ...(query.data?.clusters ?? []).flatMap((cluster) => [
+      cluster.pillar,
+      ...cluster.pages,
+    ]),
+    ...incomingPages,
+  ]);
   const editor = useRef<HTMLDetailsElement>(null);
   const editCluster = (cluster: ContentCluster) => {
+    setValidationError("");
     setEditingUrl(cluster.pillar.url);
     setPages((current) => [
       ...new Map(
@@ -104,13 +72,42 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
   };
   const clusters = draft ?? query.data?.clusters ?? [];
   const save = useMutation({
-    mutationFn: () => saveContentClusters({ data: { projectId, clusters } }),
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: key });
+    mutationFn: (next: ContentCluster[]) =>
+      saveContentClusters({ data: { projectId, clusters: next } }),
+    onSuccess: (result) => {
+      client.setQueryData(key, { ...query.data, clusters: result.clusters });
       setDraft(null);
+      setEditingUrl(null);
+      setPillarUrl("");
+      setSelected([]);
+      if (editor.current) editor.current.open = false;
     },
   });
   const pillar = pages.find((page) => page.url === pillarUrl);
+  const otherClusters = clusters.filter(
+    (cluster) =>
+      cluster.pillar.url !== pillarUrl && cluster.pillar.url !== editingUrl,
+  );
+  const saveGroup = () => {
+    const chosen = pages.filter(
+      (page) => page.url !== pillarUrl && selected.includes(page.url),
+    );
+    const message = !pillar
+      ? "ابتدا صفحهٔ پیلار را انتخاب کنید."
+      : !chosen.length
+        ? "حداقل یک مقالهٔ کلاستر را انتخاب کنید."
+        : chosen.length > 20
+          ? "برای هر پیلار حداکثر ۲۰ مقاله انتخاب کنید."
+          : otherClusters.length >= 20
+            ? "نقشه حداکثر ۲۰ گروه دارد؛ یک گروه موجود را اصلاح یا حذف کنید."
+            : "";
+    setValidationError(message);
+    if (message || !pillar) return;
+    const next = [...otherClusters, { pillar, pages: chosen }];
+    setDraft(next);
+    save.mutate(next);
+  };
+  const cannotEdit = !query.data?.canManage || save.isPending;
   const error = query.error || save.error;
   return (
     <main dir="rtl" className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-7">
@@ -161,7 +158,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
       <ClusterSuggestions
         pages={pages}
         clusters={clusters}
-        disabled={!query.data?.canManage || save.isPending}
+        disabled={cannotEdit}
         onChoose={editCluster}
       />
       <details
@@ -171,116 +168,57 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
         <summary className="cursor-pointer font-semibold">
           ساخت یا اصلاح دستی گروه
         </summary>
-        {pages.length > 0 && (
-          <fieldset
-            className="space-y-4"
-            disabled={save.isPending || !query.data?.canManage}
-          >
-            <label className="block space-y-2">
-              <span>صفحهٔ پیلار (مرجع اصلی)</span>
-              <select
-                className="select select-bordered w-full"
-                value={pillarUrl}
-                onChange={(event) => {
-                  setPillarUrl(event.target.value);
-                  setSelected([]);
-                }}
-              >
-                <option value="">انتخاب صفحهٔ مرجع</option>
-                {pages.map((page) => (
-                  <option key={page.url} value={page.url}>
-                    {page.title}
-                  </option>
-                ))}
-              </select>
-            </label>
+        {query.data && !query.data.canManage && (
+          <p role="status">
+            برای ذخیرهٔ نقشه به دسترسی مدیر یا مالک پروژه نیاز دارید.
+          </p>
+        )}
+        {(validationError || save.error) && (
+          <p role="alert" className="text-error">
+            {validationError || getStandardErrorMessage(save.error)}
+          </p>
+        )}
+        {alternatives.isFetching && (
+          <p role="status">در حال دریافت صفحات دیگر سایت برای جایگزینی…</p>
+        )}
+        {alternatives.error && (
+          <p role="alert">
+            دریافت صفحات دیگر سایت انجام نشد؛ انتخاب‌های فعلی حفظ شده‌اند.
             <button
-              className="btn btn-sm btn-outline"
-              disabled={!pillar}
-              onClick={() =>
-                pillar &&
-                setSelected(
-                  suggestClusterPages(pillar, pages).map((page) => page.url),
-                )
-              }
+              type="button"
+              className="btn btn-sm"
+              onClick={() => void alternatives.refetch()}
             >
-              پیشنهاد زیرموضوع‌ها از عنوان‌ها
+              تلاش دوباره
             </button>
-            <p className="text-xs text-base-content/60">
-              این پیشنهاد فقط از اشتراک واژه‌های عنوان است؛ تحلیل SERP نیست.
-              ارتباط موضوعی را بازبینی کنید.
-            </p>
-            <fieldset
-              disabled={!pillar}
-              className="max-h-72 space-y-2 overflow-auto"
-            >
-              <legend className="mb-2 font-medium">مقالات کلاستر</legend>
-              {pages
-                .filter((page) => page.url !== pillarUrl)
-                .map((page) => (
-                  <label
-                    key={page.url}
-                    className="flex items-start gap-3 rounded-lg border border-base-300 p-3"
-                  >
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm"
-                      checked={selected.includes(page.url)}
-                      onChange={(event) =>
-                        setSelected(
-                          event.target.checked
-                            ? [...selected, page.url]
-                            : selected.filter((url) => url !== page.url),
-                        )
-                      }
-                    />
-                    <span className="min-w-0">
-                      <span className="block">{page.title}</span>
-                      <span
-                        dir="ltr"
-                        className="block break-all text-xs text-base-content/60"
-                      >
-                        {page.url}
-                      </span>
-                    </span>
-                  </label>
-                ))}
-            </fieldset>
+          </p>
+        )}
+        {pages.length > 0 && (
+          <fieldset className="space-y-4" disabled={cannotEdit}>
+            <ClusterPagePicker
+              pages={pages}
+              pillarUrl={pillarUrl}
+              selected={selected}
+              setPillarUrl={(url) => {
+                setPillarUrl(url);
+                setValidationError("");
+              }}
+              setSelected={(urls) => {
+                setSelected(urls);
+                setValidationError("");
+              }}
+            />
             <button
               className="btn btn-outline"
-              disabled={
-                !query.data?.canManage ||
-                !pillar ||
-                !selected.length ||
-                selected.length > 20 ||
-                save.isPending
-              }
-              onClick={() => {
-                if (pillar) {
-                  setDraft([
-                    ...clusters.filter(
-                      (cluster) =>
-                        cluster.pillar.url !== pillar.url &&
-                        cluster.pillar.url !== editingUrl,
-                    ),
-                    {
-                      pillar,
-                      pages: pages.filter((page) =>
-                        selected.includes(page.url),
-                      ),
-                    },
-                  ]);
-                  setEditingUrl(null);
-                  setPillarUrl("");
-                  setSelected([]);
-                  if (editor.current) editor.current.open = false;
-                }
-              }}
+              type="button"
+              disabled={cannotEdit}
+              onClick={saveGroup}
             >
-              افزودن / جایگزینی خوشه در نقشه
+              {save.isPending ? "در حال ذخیره…" : "ذخیرهٔ گروه در نقشه"}
             </button>
             <p className="text-xs">
-              حداکثر ۲۰ زیرموضوع برای هر پیلار؛ سپس «ذخیرهٔ نقشه» را بزنید.
+              حداکثر ۲۰ گروه و ۲۰ زیرموضوع برای هر پیلار؛ گروه مستقیماً ذخیره
+              می‌شود.
             </p>
           </fieldset>
         )}
@@ -299,11 +237,13 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           className="btn btn-primary"
           disabled={
             !query.data?.canManage ||
-            draft === null ||
+            (draft === null && !pillarUrl && !selected.length) ||
             save.isPending ||
             clusters.length > 20
           }
-          onClick={() => save.mutate()}
+          onClick={() =>
+            pillarUrl || selected.length ? saveGroup() : save.mutate(clusters)
+          }
         >
           {save.isPending ? "در حال ذخیره…" : "ذخیرهٔ نقشه"}
         </button>
@@ -333,14 +273,14 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
             <h3 className="font-semibold">پیلار: {cluster.pillar.title}</h3>
             <button
               className="btn btn-outline btn-sm"
-              disabled={!query.data?.canManage || save.isPending}
+              disabled={cannotEdit}
               onClick={() => editCluster(cluster)}
             >
               اصلاح گروه
             </button>
             <button
               className="btn btn-ghost btn-sm"
-              disabled={!query.data?.canManage || save.isPending}
+              disabled={cannotEdit}
               onClick={() =>
                 setDraft(
                   clusters.filter(
@@ -352,34 +292,45 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
               حذف از نقشه
             </button>
           </div>
-          <ClusterGraph cluster={cluster} />
+          <details>
+            <summary className="mt-3 cursor-pointer text-sm">
+              نمایش نمودار روابط گروه
+            </summary>
+            <ClusterGraph cluster={cluster} />
+          </details>
           <p className="text-xs text-base-content/60">
             خط‌چین: لینک پیشنهادی پیلار ↔ کلاستر؛ نه لینک تأییدشدهٔ سایت.
           </p>
-          <ul className="mt-4 space-y-2">
-            {[cluster.pillar, ...cluster.pages].map((page) => (
-              <li
-                key={page.url}
-                className="flex flex-wrap items-center justify-between gap-2 border-t border-base-200 pt-2"
-              >
-                <span>{page.title}</span>
-                {draft === null ? (
-                  <Link
-                    className="link text-sm"
-                    to="/p/$projectId/content"
-                    params={{ projectId }}
-                    search={{ page: page.url, title: page.title }}
-                  >
-                    نگارش این صفحه با لینک‌های گروه
-                  </Link>
-                ) : (
-                  <span className="text-xs text-warning">
-                    برای نگارش، ابتدا نقشه را ذخیره کنید
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
+          <ClusterLinkPlan cluster={cluster} />
+          <details className="mt-3">
+            <summary className="cursor-pointer text-sm">
+              صفحات گروه و نگارش ({cluster.pages.length + 1})
+            </summary>
+            <ul className="mt-4 max-h-80 space-y-2 overflow-y-auto">
+              {[cluster.pillar, ...cluster.pages].map((page) => (
+                <li
+                  key={page.url}
+                  className="flex flex-wrap items-center justify-between gap-2 border-t border-base-200 pt-2"
+                >
+                  <span>{page.title}</span>
+                  {draft === null ? (
+                    <Link
+                      className="link text-sm"
+                      to="/p/$projectId/content"
+                      params={{ projectId }}
+                      search={{ page: page.url, title: page.title }}
+                    >
+                      نگارش این صفحه با لینک‌های گروه
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-warning">
+                      برای نگارش، ابتدا نقشه را ذخیره کنید
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </details>
         </section>
       ))}
     </main>

@@ -36,3 +36,53 @@ it("excludes pages which cannot currently be read", async () => {
     { url: "https://example.com/ok", title: "Live", excerpt: "Evidence" },
   ]);
 });
+
+it("keeps the pillar first even when a sibling title is a closer match", () => {
+  const mapped = [
+    { url: "https://example.com/hub", title: "مرجع" },
+    { url: "https://example.com/a", title: "آبیاری باغ" },
+  ];
+  expect(
+    selectArticleLinks({
+      domain: "example.com",
+      topic: "آبیاری باغ",
+      mapped,
+      pages: [],
+    }),
+  ).toEqual(mapped);
+});
+it("includes a related site article in the first three even when the map is full", () => {
+  const mapped = Array.from({ length: 8 }, (_, i) => ({
+    url: `https://example.com/map-${i}`,
+    title: "باغ",
+  }));
+  const article = {
+    url: "https://example.com/article",
+    title: "روش آبیاری باغ",
+  };
+  const result = selectArticleLinks({
+    domain: "example.com",
+    topic: "آبیاری باغ",
+    mapped,
+    pages: [article, { url: "https://example.com/car", title: "خودرو" }],
+  });
+  expect(result.slice(0, 3)).toEqual([mapped[0], mapped[1], article]);
+  expect(result).toHaveLength(6);
+  expect(result.map((page) => page.url)).not.toContain(
+    "https://example.com/car",
+  );
+});
+
+it("selects articles by topic words rather than shared generic title wording", () => {
+  expect(
+    selectArticleLinks({
+      domain: "example.com",
+      topic: "راهنمای نگهداری روف گاردن",
+      mapped: [],
+      pages: [
+        { url: "https://example.com/car", title: "راهنمای خرید خودرو" },
+        { url: "https://example.com/roof", title: "آبیاری روف گاردن" },
+      ],
+    }),
+  ).toEqual([{ url: "https://example.com/roof", title: "آبیاری روف گاردن" }]);
+});

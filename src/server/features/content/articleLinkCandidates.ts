@@ -1,16 +1,7 @@
 import { sort } from "remeda";
-import { sameSitePage } from "@/shared/contentClusters";
+import { sameSitePage, titleOverlap } from "@/shared/contentClusters";
 import { readPages } from "@/server/lib/scrape";
 
-const tokens = (text: string) =>
-  new Set(
-    text
-      .toLowerCase()
-      .replace(/ي/g, "ی")
-      .replace(/ك/g, "ک")
-      .split(/[^\p{L}\p{N}]+/u)
-      .filter((word) => word.length > 2),
-  );
 const normalize = (url: string) => {
   const parsed = new URL(url);
   parsed.hash = "";
@@ -23,8 +14,7 @@ export function selectArticleLinks(input: {
   pages: { url: string; title: string }[];
   mapped: { url: string; title: string }[];
 }) {
-  const terms = tokens(input.topic);
-  const mapped = new Set(input.mapped.map((page) => page.url));
+  const mapped = new Map(input.mapped.map((page, index) => [page.url, index]));
   const unique = new Map<
     string,
     { url: string; title: string; score: number }
@@ -33,14 +23,19 @@ export function selectArticleLinks(input: {
     if (!sameSitePage(page.url, input.domain)) continue;
     const url = normalize(page.url);
     if (input.target && url === normalize(input.target)) continue;
-    const score =
-      [...tokens(page.title)].filter((word) => terms.has(word)).length +
-      (mapped.has(page.url) ? 100 : 0);
+    const score = mapped.has(page.url)
+      ? 100 + input.mapped.length - mapped.get(page.url)!
+      : titleOverlap(input.topic, page.title);
     if (score > 0 && !unique.has(url)) unique.set(url, { ...page, score });
   }
-  return sort([...unique.values()], (a, b) => b.score - a.score)
-    .slice(0, 6)
-    .map(({ url, title }) => ({ url, title }));
+  const ranked = sort([...unique.values()], (a, b) => b.score - a.score);
+  // Reserve a prompt slot for a relevant page outside the saved cluster.
+  const outside = ranked.find((page) => !mapped.has(page.url));
+  if (outside && ranked.indexOf(outside) > 2) {
+    ranked.splice(ranked.indexOf(outside), 1);
+    ranked.splice(2, 0, outside);
+  }
+  return ranked.slice(0, 6).map(({ url, title }) => ({ url, title }));
 }
 
 export async function verifyArticleLinks(

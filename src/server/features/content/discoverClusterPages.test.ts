@@ -23,13 +23,36 @@ vi.mock("@/server/lib/scrape", () => ({
   discoverSiteUrls: mocks.discover,
   readPages: mocks.read,
 }));
-import { discoverContentPages } from "./discoverClusterPages";
+import {
+  discoverContentPages,
+  discoverWritingPages,
+} from "./discoverClusterPages";
 const project = { id: "p1", domain: "example.com" };
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.read.mockResolvedValue({ pages: [] });
   mocks.categories.mockResolvedValue([]);
   mocks.structure.mockResolvedValue([]);
+});
+it("finds site articles during writing without requiring prior manual discovery", async () => {
+  mocks.discover.mockResolvedValue({ urls: [] });
+  const article = {
+    url: "https://example.com/care",
+    title: "نگهداری باغ",
+    kind: "article",
+  };
+  mocks.structure.mockResolvedValue([article]);
+  expect(await discoverWritingPages(project)).toEqual({
+    pages: [article],
+    unavailable: false,
+  });
+});
+it("reports fresh discovery failure so writing can use existing evidence", async () => {
+  mocks.discover.mockRejectedValue(new Error("unavailable"));
+  expect(await discoverWritingPages(project)).toEqual({
+    pages: [],
+    unavailable: true,
+  });
 });
 it("discovers public pages without calling either integration and excludes external URLs", async () => {
   mocks.discover.mockResolvedValue({
@@ -78,4 +101,26 @@ it("only exposes published same-site WordPress entries", async () => {
   ]);
   expect(mocks.gsc).not.toHaveBeenCalled();
   expect(mocks.discover).not.toHaveBeenCalled();
+});
+
+it("includes uncategorized published posts as articles without misclassifying pages", async () => {
+  mocks.wp.mockResolvedValue(
+    ["page", "post"].map((kind) => ({
+      kind,
+      status: "publish",
+      link: `https://example.com/${kind}`,
+      title: { rendered: kind },
+      slug: kind,
+    })),
+  );
+  const result = await discoverContentPages(project, "wordpress", "");
+  expect(result).toEqual([
+    { url: "https://example.com/page", title: "page" },
+    {
+      url: "https://example.com/post",
+      title: "post",
+      kind: "article",
+      categoryUrls: [],
+    },
+  ]);
 });
