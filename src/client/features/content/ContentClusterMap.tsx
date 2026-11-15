@@ -17,63 +17,8 @@ import { ClusterPagePicker } from "./ClusterPagePicker";
 import { ClusterSuggestions } from "./ClusterSuggestions";
 import { ClusterLinkPlan } from "./ClusterLinkPlan";
 
-function ClusterGraph({ cluster }: { cluster: ContentCluster }) {
-  return (
-    <div className="overflow-x-auto" dir="ltr">
-      <svg
-        viewBox={`0 0 760 ${Math.max(160, cluster.pages.length * 80)}`}
-        className="min-w-[600px] w-full"
-        role="img"
-        aria-label={`روابط دوطرفهٔ پیشنهادی ${cluster.pillar.title}`}
-      >
-        {cluster.pages.map((page, index) => (
-          <g key={page.url}>
-            <path
-              d={`M 260 ${Math.max(160, cluster.pages.length * 80) / 2} C 360 ${Math.max(160, cluster.pages.length * 80) / 2}, 360 ${index * 80 + 40}, 440 ${index * 80 + 40}`}
-              fill="none"
-              stroke="currentColor"
-              className="text-primary/40"
-              strokeWidth="2"
-              strokeDasharray="6 4"
-            />
-            <rect
-              x="440"
-              y={index * 80 + 12}
-              width="300"
-              height="56"
-              rx="8"
-              className="fill-base-200 stroke-base-300"
-            />
-            <text
-              x="590"
-              y={index * 80 + 46}
-              textAnchor="middle"
-              className="fill-base-content text-sm"
-            >
-              {page.title.slice(0, 38)}
-            </text>
-          </g>
-        ))}
-        <rect
-          x="10"
-          y={Math.max(160, cluster.pages.length * 80) / 2 - 32}
-          width="250"
-          height="64"
-          rx="10"
-          className="fill-primary"
-        />
-        <text
-          x="135"
-          y={Math.max(160, cluster.pages.length * 80) / 2 + 5}
-          textAnchor="middle"
-          className="fill-primary-content text-sm"
-        >
-          {cluster.pillar.title.slice(0, 30)}
-        </text>
-      </svg>
-    </div>
-  );
-}
+import { ClusterGraph } from "./ClusterGraph";
+
 export function ContentClusterMap({ projectId }: { projectId: string }) {
   const client = useQueryClient();
   const key = ["contentClusters", projectId];
@@ -357,30 +302,35 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
             خط‌چین: لینک پیشنهادی پیلار ↔ کلاستر؛ نه لینک تأییدشدهٔ سایت.
           </p>
           <ClusterLinkPlan cluster={cluster} />
-          <ul className="mt-4 space-y-2">
-            {[cluster.pillar, ...cluster.pages].map((page) => (
-              <li
-                key={page.url}
-                className="flex flex-wrap items-center justify-between gap-2 border-t border-base-200 pt-2"
-              >
-                <span>{page.title}</span>
-                {draft === null ? (
-                  <Link
-                    className="link text-sm"
-                    to="/p/$projectId/content"
-                    params={{ projectId }}
-                    search={{ page: page.url, title: page.title }}
-                  >
-                    نگارش این صفحه با لینک‌های گروه
-                  </Link>
-                ) : (
-                  <span className="text-xs text-warning">
-                    برای نگارش، ابتدا نقشه را ذخیره کنید
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
+          <details className="mt-3">
+            <summary className="cursor-pointer text-sm">
+              صفحات گروه و نگارش ({cluster.pages.length + 1})
+            </summary>
+            <ul className="mt-4 max-h-80 space-y-2 overflow-y-auto">
+              {[cluster.pillar, ...cluster.pages].map((page) => (
+                <li
+                  key={page.url}
+                  className="flex flex-wrap items-center justify-between gap-2 border-t border-base-200 pt-2"
+                >
+                  <span>{page.title}</span>
+                  {draft === null ? (
+                    <Link
+                      className="link text-sm"
+                      to="/p/$projectId/content"
+                      params={{ projectId }}
+                      search={{ page: page.url, title: page.title }}
+                    >
+                      نگارش این صفحه با لینک‌های گروه
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-warning">
+                      برای نگارش، ابتدا نقشه را ذخیره کنید
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </details>
         </section>
       ))}
     </main>
