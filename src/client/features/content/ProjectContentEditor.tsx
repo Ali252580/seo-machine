@@ -527,6 +527,8 @@ export function ProjectContentEditor({
               title={title}
               articleText={articleText}
               wordCount={wordCount}
+              generating={generate.isPending}
+              generationFailed={generate.isError}
             />
           </div>
         </div>

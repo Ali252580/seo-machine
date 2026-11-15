@@ -3,6 +3,37 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it } from "vitest";
 import { ArticlePreview } from "./ArticlePreview";
 
+it("does not present the previous draft as the result while generating", () => {
+  const html = renderToStaticMarkup(
+    createElement(ArticlePreview, {
+      content: "<p>previous draft</p>",
+      keyword: "",
+      title: "",
+      articleText: "previous draft",
+      wordCount: 2,
+      generating: true,
+    }),
+  );
+  expect(html).toContain("نگارش مقالهٔ جدید در حال انجام است");
+  expect(html).not.toContain("<iframe");
+  expect(html).not.toContain("previous draft");
+});
+
+it("labels preserved content after failed generation", () => {
+  const html = renderToStaticMarkup(
+    createElement(ArticlePreview, {
+      content: "<p>previous draft</p>",
+      keyword: "",
+      title: "",
+      articleText: "previous draft",
+      wordCount: 2,
+      generationFailed: true,
+    }),
+  );
+  expect(html).toContain("متن زیر پیش‌نویس قبلی است");
+  expect(html).toContain("previous draft");
+});
+
 it("explains an empty draft instead of showing a blank document", () => {
   const html = renderToStaticMarkup(
     createElement(ArticlePreview, {
