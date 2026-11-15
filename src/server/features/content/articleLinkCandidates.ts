@@ -28,9 +28,14 @@ export function selectArticleLinks(input: {
       : titleOverlap(input.topic, page.title);
     if (score > 0 && !unique.has(url)) unique.set(url, { ...page, score });
   }
-  return sort([...unique.values()], (a, b) => b.score - a.score)
-    .slice(0, 6)
-    .map(({ url, title }) => ({ url, title }));
+  const ranked = sort([...unique.values()], (a, b) => b.score - a.score);
+  // Reserve a prompt slot for a relevant page outside the saved cluster.
+  const outside = ranked.find((page) => !mapped.has(page.url));
+  if (outside && ranked.indexOf(outside) > 2) {
+    ranked.splice(ranked.indexOf(outside), 1);
+    ranked.splice(2, 0, outside);
+  }
+  return ranked.slice(0, 6).map(({ url, title }) => ({ url, title }));
 }
 
 export async function verifyArticleLinks(

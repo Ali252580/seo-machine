@@ -51,6 +51,27 @@ it("keeps the pillar first even when a sibling title is a closer match", () => {
     }),
   ).toEqual(mapped);
 });
+it("includes a related site article in the first three even when the map is full", () => {
+  const mapped = Array.from({ length: 8 }, (_, i) => ({
+    url: `https://example.com/map-${i}`,
+    title: "باغ",
+  }));
+  const article = {
+    url: "https://example.com/article",
+    title: "روش آبیاری باغ",
+  };
+  const result = selectArticleLinks({
+    domain: "example.com",
+    topic: "آبیاری باغ",
+    mapped,
+    pages: [article, { url: "https://example.com/car", title: "خودرو" }],
+  });
+  expect(result.slice(0, 3)).toEqual([mapped[0], mapped[1], article]);
+  expect(result).toHaveLength(6);
+  expect(result.map((page) => page.url)).not.toContain(
+    "https://example.com/car",
+  );
+});
 
 it("selects articles by topic words rather than shared generic title wording", () => {
   expect(

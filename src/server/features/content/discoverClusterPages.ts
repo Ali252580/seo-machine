@@ -12,6 +12,20 @@ import {
 } from "@/shared/contentClusters";
 import { discoverSiteCategories, taxonomyPages } from "./siteCategories";
 
+export async function discoverWritingPages(project: {
+  id: string;
+  domain: string | null;
+}) {
+  try {
+    return {
+      pages: await discoverContentPages(project, "sitemap", ""),
+      unavailable: false,
+    };
+  } catch {
+    return { pages: [], unavailable: true };
+  }
+}
+
 export async function discoverContentPages(
   project: { id: string; domain: string | null },
   source: "sitemap" | "gsc" | "wordpress",

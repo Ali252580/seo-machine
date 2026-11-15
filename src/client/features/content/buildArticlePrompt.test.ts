@@ -11,6 +11,7 @@ it("uses verified discovered pages without WordPress for both article kinds", ()
     rankTracking: { status: "not_tracked" },
     clusterPlan: null,
     discoveredPageCount: 10,
+    articleDiscoveryUnavailable: false,
     internalLinks: [
       {
         url: "https://site.test/existing-article",
@@ -35,6 +36,7 @@ it("uses verified discovered pages without WordPress for both article kinds", ()
 it("includes verified mapped targets in both article kinds", () => {
   const evidence = {
     discoveredPageCount: 0,
+    articleDiscoveryUnavailable: false,
     internalLinks: [
       { url: "https://site.test/hub", title: "مرجع نقشه", excerpt: "متن" },
     ],
@@ -61,6 +63,7 @@ it("includes verified mapped targets in both article kinds", () => {
 it("supplies complete published link candidates for website articles only", () => {
   const evidence = {
     discoveredPageCount: 0,
+    articleDiscoveryUnavailable: false,
     internalLinks: [
       { url: "https://example.com/pillar", title: "مرجع", excerpt: "متن" },
       {
@@ -123,6 +126,7 @@ it("supplies complete published link candidates for website articles only", () =
 it("keeps a researched existing-page prompt within SAM's 4,000-character limit", () => {
   const evidence = {
     discoveredPageCount: 0,
+    articleDiscoveryUnavailable: false,
     internalLinks: [],
     clusterPlan: null,
     wordpressChecked: false,
@@ -185,6 +189,7 @@ it("keeps a researched existing-page prompt within SAM's 4,000-character limit",
 it("includes saved keyword rank evidence in the article request", () => {
   const evidence = {
     discoveredPageCount: 0,
+    articleDiscoveryUnavailable: false,
     internalLinks: [],
     clusterPlan: null,
     wordpressChecked: true,
@@ -214,6 +219,7 @@ it("includes saved keyword rank evidence in the article request", () => {
 it("keeps specialized profiles distinct and bounded with a full brief", () => {
   const evidence = {
     discoveredPageCount: 0,
+    articleDiscoveryUnavailable: false,
     internalLinks: [],
     clusterPlan: null,
     wordpressChecked: false,

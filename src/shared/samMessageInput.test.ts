@@ -27,6 +27,7 @@ it("accepts a researched article with long URLs and a full brief", () => {
     ],
     clusterPlan: null,
     discoveredPageCount: 1,
+    articleDiscoveryUnavailable: false,
   } as Parameters<typeof buildArticlePrompt>[2];
   const text = buildArticlePrompt(
     "k".repeat(100),
