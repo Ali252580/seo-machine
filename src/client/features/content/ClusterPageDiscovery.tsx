@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ClusterFileUpload } from "./ClusterFileUpload";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { discoverClusterPages } from "@/serverFunctions/contentClusters";
@@ -27,6 +28,7 @@ export function ClusterPageDiscovery({
   });
   return (
     <div className="space-y-3">
+      <ClusterFileUpload projectId={projectId} onPages={onPages} />
       <label className="block space-y-2">
         <span>روش شناسایی صفحات</span>
         <select

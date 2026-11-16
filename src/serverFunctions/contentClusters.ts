@@ -16,7 +16,26 @@ import {
 } from "@/shared/contentClusters";
 import { AppError } from "@/server/lib/errors";
 import { discoverContentPages } from "@/server/features/content/discoverClusterPages";
+import { parseClusterUpload } from "@/server/features/content/importClusterPages";
 const input = z.object({ projectId: z.string().min(1) });
+export const importClusterPages = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(
+    input.extend({
+      text: z.string().min(1).max(2_000_000),
+      format: z.enum(["xml", "csv"]),
+    }),
+  )
+  .handler(async ({ context, data }) => {
+    requireOrgPermission(context, { integration: ["manage"] });
+    const result = parseClusterUpload(
+      data.text,
+      data.format,
+      context.project.domain ?? "",
+    );
+    await rememberDiscoveredPages(context.projectId, result.pages);
+    return result;
+  });
 export const getWritingPages = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
   .validator(input)
