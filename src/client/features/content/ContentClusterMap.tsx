@@ -51,6 +51,14 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
     ...incomingPages,
   ]);
   const editor = useRef<HTMLDetailsElement>(null);
+  const discovery = useRef<HTMLDetailsElement>(null);
+  const closeEditor = () => {
+    setEditingUrl(null);
+    setPillarUrl("");
+    setSelected([]);
+    setValidationError("");
+    if (editor.current) editor.current.open = false;
+  };
   const editCluster = (cluster: ContentCluster) => {
     setValidationError("");
     setEditingUrl(cluster.pillar.url);
@@ -76,10 +84,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
     onSuccess: (result) => {
       client.setQueryData(key, { ...query.data, clusters: result.clusters });
       setDraft(null);
-      setEditingUrl(null);
-      setPillarUrl("");
-      setSelected([]);
-      if (editor.current) editor.current.open = false;
+      closeEditor();
     },
   });
   const pillar = pages.find((page) => page.url === pillarUrl);
@@ -113,9 +118,8 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
       <header>
         <h1 className="text-2xl font-bold">نقشهٔ پیلار و کلاستر</h1>
         <p className="mt-3 max-w-3xl text-sm leading-7">
-          مشخص کنید هر مقاله زیرمجموعهٔ کدام موضوع است و هنگام نگارش به چه
-          صفحاتی لینک بدهد. ابتدا صفحات را دریافت کنید، گروه‌های پیشنهادی را
-          بررسی کنید و نقشه را ذخیره کنید.
+          موضوع‌های اصلی، مقاله‌های پشتیبان و مسیر لینک‌سازی داخلی سایت را در یک
+          جا مدیریت کنید.
         </p>
       </header>
       <nav
@@ -125,8 +129,14 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
         <a href="#cluster-workspace" className="btn btn-sm btn-primary">
           مرور نقشه
         </a>
-        <a href="#cluster-discovery" className="btn btn-sm btn-ghost">
-          دریافت صفحات
+        <a
+          href="#cluster-discovery"
+          className="btn btn-sm btn-ghost"
+          onClick={() => {
+            if (discovery.current) discovery.current.open = true;
+          }}
+        >
+          افزودن صفحات یا فایل
         </a>
         <a
           href="#cluster-editor"
@@ -138,20 +148,6 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           ساخت یا اصلاح گروه
         </a>
       </nav>
-      <ol className="grid gap-3 sm:grid-cols-3" aria-label="مراحل ساخت نقشه">
-        <li className="rounded-lg bg-base-200 p-3">
-          ۱. دریافت صفحات · {pages.length} صفحه
-        </li>
-        <li className="rounded-lg bg-base-200 p-3">
-          ۲. بررسی گروه‌ها · {clusters.length} گروه
-        </li>
-        <li className="rounded-lg bg-base-200 p-3">
-          ۳.{" "}
-          {draft === null
-            ? "ذخیره و استفاده در نگارش"
-            : "تغییرات منتظر ذخیره‌اند"}
-        </li>
-      </ol>
       {query.isPending && <p role="status">در حال دریافت نقشه…</p>}
       {error && (
         <div role="alert" className="alert alert-error">
@@ -163,11 +159,77 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           )}
         </div>
       )}
-      <section
+      <div
+        id="cluster-workspace"
+        className="scroll-mt-4 flex flex-wrap items-center justify-between gap-3"
+      >
+        <h2 className="text-lg font-semibold">نقشهٔ موضوعی سایت</h2>
+        <button
+          className="btn btn-primary"
+          disabled={
+            !query.data?.canManage ||
+            (draft === null && !pillarUrl && !selected.length) ||
+            save.isPending ||
+            clusters.length > 20
+          }
+          onClick={() =>
+            pillarUrl || selected.length ? saveGroup() : save.mutate(clusters)
+          }
+        >
+          {save.isPending ? "در حال ذخیره…" : "ذخیرهٔ نقشه"}
+        </button>
+      </div>
+      {save.isSuccess && draft === null && (
+        <p role="status" className="text-success">
+          نقشه ذخیره شد و در نگارش صفحات سایت استفاده می‌شود.
+        </p>
+      )}
+      {draft !== null && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm"
+        >
+          <p>
+            تغییرات هنوز ذخیره نشده‌اند. برای استفاده از این گروه‌ها در نگارش،
+            «ذخیرهٔ نقشه» را بزنید.
+          </p>
+          <button
+            type="button"
+            className="btn btn-sm btn-ghost"
+            disabled={save.isPending}
+            onClick={() => setDraft(null)}
+          >
+            برگرداندن نقشهٔ ذخیره‌شده
+          </button>
+        </div>
+      )}
+      {!clusters.length && (
+        <p className="rounded-xl border border-dashed border-base-300 p-8">
+          ابتدا صفحات را دریافت کنید و یک پیلار با زیرموضوع‌های مرتبط بسازید.
+        </p>
+      )}
+      {clusters.length > 0 && (
+        <ClusterWorkspace
+          clusters={clusters}
+          projectId={projectId}
+          disabled={cannotEdit}
+          saved={draft === null}
+          onEdit={editCluster}
+          onRemove={(url) =>
+            setDraft(clusters.filter((cluster) => cluster.pillar.url !== url))
+          }
+        />
+      )}
+      <details
+        ref={discovery}
+        key={query.data ? "loaded" : "loading"}
+        open={pages.length === 0}
         id="cluster-discovery"
         className="scroll-mt-4 space-y-4 rounded-xl border border-base-300 p-4"
       >
-        <h2 className="text-lg font-semibold">۱. صفحات سایت را دریافت کنید</h2>
+        <summary className="cursor-pointer text-base font-semibold">
+          افزودن صفحات · دریافت از سایت یا بارگذاری فایل
+        </summary>
         <ClusterPageDiscovery
           projectId={projectId}
           onPages={(incoming) =>
@@ -176,13 +238,20 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
             )
           }
         />
-      </section>
-      <ClusterSuggestions
-        pages={pages}
-        clusters={clusters}
-        disabled={cannotEdit}
-        onChoose={editCluster}
-      />
+      </details>
+      <details className="rounded-xl border border-base-300 p-4">
+        <summary className="cursor-pointer font-semibold">
+          پیشنهاد گروه‌های تازه از صفحات سایت
+        </summary>
+        <div className="mt-4">
+          <ClusterSuggestions
+            pages={pages}
+            clusters={clusters}
+            disabled={cannotEdit}
+            onChoose={editCluster}
+          />
+        </div>
+      </details>
       <details
         id="cluster-editor"
         ref={editor}
@@ -239,6 +308,14 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
             >
               {save.isPending ? "در حال ذخیره…" : "ذخیرهٔ گروه در نقشه"}
             </button>
+            <button
+              type="button"
+              className="btn btn-ghost ms-2"
+              disabled={save.isPending}
+              onClick={closeEditor}
+            >
+              انصراف از ویرایش
+            </button>
             <p className="text-xs">
               حداکثر ۲۰ گروه و ۲۰ زیرموضوع برای هر پیلار؛ گروه مستقیماً ذخیره
               می‌شود.
@@ -252,56 +329,6 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           </p>
         )}
       </details>
-      <div
-        id="cluster-workspace"
-        className="scroll-mt-4 flex flex-wrap items-center justify-between gap-3"
-      >
-        <h2 className="text-lg font-semibold">
-          ۳. نقشه را ذخیره کنید · {clusters.length.toLocaleString("fa-IR")} گروه
-        </h2>
-        <button
-          className="btn btn-primary"
-          disabled={
-            !query.data?.canManage ||
-            (draft === null && !pillarUrl && !selected.length) ||
-            save.isPending ||
-            clusters.length > 20
-          }
-          onClick={() =>
-            pillarUrl || selected.length ? saveGroup() : save.mutate(clusters)
-          }
-        >
-          {save.isPending ? "در حال ذخیره…" : "ذخیرهٔ نقشه"}
-        </button>
-      </div>
-      {save.isSuccess && draft === null && (
-        <p role="status" className="text-success">
-          نقشه ذخیره شد و در نگارش صفحات سایت استفاده می‌شود.
-        </p>
-      )}
-      {draft !== null && (
-        <p role="status" className="text-warning">
-          تغییرات هنوز ذخیره نشده‌اند. برای استفاده از این گروه‌ها در نگارش،
-          «ذخیرهٔ نقشه» را بزنید.
-        </p>
-      )}
-      {!clusters.length && (
-        <p className="rounded-xl border border-dashed border-base-300 p-8">
-          ابتدا صفحات را دریافت کنید و یک پیلار با زیرموضوع‌های مرتبط بسازید.
-        </p>
-      )}
-      {clusters.length > 0 && (
-        <ClusterWorkspace
-          clusters={clusters}
-          projectId={projectId}
-          disabled={cannotEdit}
-          saved={draft === null}
-          onEdit={editCluster}
-          onRemove={(url) =>
-            setDraft(clusters.filter((cluster) => cluster.pillar.url !== url))
-          }
-        />
-      )}{" "}
     </main>
   );
 }

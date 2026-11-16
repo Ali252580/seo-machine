@@ -186,6 +186,28 @@ it("keeps saving disabled for viewers", () => {
   ).toBe(true);
 });
 
+it("lets users undo pending map changes without writing to the server", () => {
+  mocks.states[4] = [];
+  findSave(
+    ContentClusterMap({ projectId: "project-a" }),
+    "برگرداندن نقشهٔ ذخیره‌شده",
+  )!.onClick();
+  expect(mocks.setters[4]).toHaveBeenCalledWith(null);
+  expect(mocks.mutate).not.toHaveBeenCalled();
+});
+
+it("cancels manual editing without discarding pending map changes", () => {
+  findSave(
+    ContentClusterMap({ projectId: "project-a" }),
+    "انصراف از ویرایش",
+  )!.onClick();
+  expect(mocks.setters[1]).toHaveBeenCalledWith("");
+  expect(mocks.setters[2]).toHaveBeenCalledWith(null);
+  expect(mocks.setters[3]).toHaveBeenCalledWith([]);
+  expect(mocks.setters[4]).not.toHaveBeenCalled();
+  expect(mocks.mutate).not.toHaveBeenCalled();
+});
+
 it("saves the pending manual group from the main map save button", () => {
   const button = findSave(
     ContentClusterMap({ projectId: "project-a" }),
