@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getContentClusters,
@@ -15,9 +15,8 @@ import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { ClusterPageDiscovery } from "./ClusterPageDiscovery";
 import { ClusterPagePicker } from "./ClusterPagePicker";
 import { ClusterSuggestions } from "./ClusterSuggestions";
-import { ClusterLinkPlan } from "./ClusterLinkPlan";
 
-import { ClusterGraph } from "./ClusterGraph";
+import { ClusterWorkspace } from "./ClusterWorkspace";
 
 export function ContentClusterMap({ projectId }: { projectId: string }) {
   const client = useQueryClient();
@@ -119,6 +118,26 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           بررسی کنید و نقشه را ذخیره کنید.
         </p>
       </header>
+      <nav
+        aria-label="دسترسی سریع نقشه"
+        className="flex flex-wrap gap-2 border-b border-base-300 pb-4"
+      >
+        <a href="#cluster-workspace" className="btn btn-sm btn-primary">
+          مرور نقشه
+        </a>
+        <a href="#cluster-discovery" className="btn btn-sm btn-ghost">
+          دریافت صفحات
+        </a>
+        <a
+          href="#cluster-editor"
+          className="btn btn-sm btn-outline"
+          onClick={() => {
+            if (editor.current) editor.current.open = true;
+          }}
+        >
+          ساخت یا اصلاح گروه
+        </a>
+      </nav>
       <ol className="grid gap-3 sm:grid-cols-3" aria-label="مراحل ساخت نقشه">
         <li className="rounded-lg bg-base-200 p-3">
           ۱. دریافت صفحات · {pages.length} صفحه
@@ -144,7 +163,10 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           )}
         </div>
       )}
-      <section className="space-y-4 rounded-xl border border-base-300 p-4">
+      <section
+        id="cluster-discovery"
+        className="scroll-mt-4 space-y-4 rounded-xl border border-base-300 p-4"
+      >
         <h2 className="text-lg font-semibold">۱. صفحات سایت را دریافت کنید</h2>
         <ClusterPageDiscovery
           projectId={projectId}
@@ -162,6 +184,7 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
         onChoose={editCluster}
       />
       <details
+        id="cluster-editor"
         ref={editor}
         className="space-y-4 rounded-xl border border-base-300 p-4"
       >
@@ -229,7 +252,10 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           </p>
         )}
       </details>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div
+        id="cluster-workspace"
+        className="scroll-mt-4 flex flex-wrap items-center justify-between gap-3"
+      >
         <h2 className="text-lg font-semibold">
           ۳. نقشه را ذخیره کنید · {clusters.length.toLocaleString("fa-IR")} گروه
         </h2>
@@ -264,75 +290,18 @@ export function ContentClusterMap({ projectId }: { projectId: string }) {
           ابتدا صفحات را دریافت کنید و یک پیلار با زیرموضوع‌های مرتبط بسازید.
         </p>
       )}
-      {clusters.map((cluster) => (
-        <section
-          key={cluster.pillar.url}
-          className="overflow-hidden rounded-xl border border-base-300 p-4"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-semibold">پیلار: {cluster.pillar.title}</h3>
-            <button
-              className="btn btn-outline btn-sm"
-              disabled={cannotEdit}
-              onClick={() => editCluster(cluster)}
-            >
-              اصلاح گروه
-            </button>
-            <button
-              className="btn btn-ghost btn-sm"
-              disabled={cannotEdit}
-              onClick={() =>
-                setDraft(
-                  clusters.filter(
-                    (item) => item.pillar.url !== cluster.pillar.url,
-                  ),
-                )
-              }
-            >
-              حذف از نقشه
-            </button>
-          </div>
-          <details>
-            <summary className="mt-3 cursor-pointer text-sm">
-              نمایش نمودار روابط گروه
-            </summary>
-            <ClusterGraph cluster={cluster} />
-          </details>
-          <p className="text-xs text-base-content/60">
-            خط‌چین: لینک پیشنهادی پیلار ↔ کلاستر؛ نه لینک تأییدشدهٔ سایت.
-          </p>
-          <ClusterLinkPlan cluster={cluster} />
-          <details className="mt-3">
-            <summary className="cursor-pointer text-sm">
-              صفحات گروه و نگارش ({cluster.pages.length + 1})
-            </summary>
-            <ul className="mt-4 max-h-80 space-y-2 overflow-y-auto">
-              {[cluster.pillar, ...cluster.pages].map((page) => (
-                <li
-                  key={page.url}
-                  className="flex flex-wrap items-center justify-between gap-2 border-t border-base-200 pt-2"
-                >
-                  <span>{page.title}</span>
-                  {draft === null ? (
-                    <Link
-                      className="link text-sm"
-                      to="/p/$projectId/content"
-                      params={{ projectId }}
-                      search={{ page: page.url, title: page.title }}
-                    >
-                      نگارش این صفحه با لینک‌های گروه
-                    </Link>
-                  ) : (
-                    <span className="text-xs text-warning">
-                      برای نگارش، ابتدا نقشه را ذخیره کنید
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </details>
-        </section>
-      ))}
+      {clusters.length > 0 && (
+        <ClusterWorkspace
+          clusters={clusters}
+          projectId={projectId}
+          disabled={cannotEdit}
+          saved={draft === null}
+          onEdit={editCluster}
+          onRemove={(url) =>
+            setDraft(clusters.filter((cluster) => cluster.pillar.url !== url))
+          }
+        />
+      )}{" "}
     </main>
   );
 }
