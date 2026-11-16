@@ -93,10 +93,9 @@ export function parseClusterUpload(
   }
   if (!pages.size)
     invalid("صفحهٔ معتبر متعلق به دامنهٔ همین پروژه در فایل پیدا نشد.");
-  // shortcut: persistence writes pages individually; raise this limit after adding bulk writes.
-  if (pages.size > 200)
+  if (pages.size > 5000)
     invalid(
-      "در هر بار حداکثر ۲۰۰ صفحه وارد کنید؛ فایل را به بخش‌های کوچک‌تر تقسیم کنید.",
+      "هر فایل حداکثر ۵۰۰۰ صفحه می‌تواند داشته باشد؛ فایل را به بخش‌های کوچک‌تر تقسیم کنید.",
     );
   return { pages: [...pages.values()], skipped };
 }

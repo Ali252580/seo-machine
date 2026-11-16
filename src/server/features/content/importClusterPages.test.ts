@@ -45,11 +45,15 @@ it("rejects oversize files and batches instead of silently truncating", () => {
   expect(() =>
     parseClusterUpload(
       "URL\n" +
-        Array.from({ length: 201 }, (_, i) => `https://example.com/${i}`).join(
+        Array.from({ length: 5001 }, (_, i) => `https://example.com/${i}`).join(
           "\n",
         ),
       "csv",
       "example.com",
     ),
   ).toThrow();
+});
+it("accepts all 500 pages of a larger sitemap", () => {
+  const xml = `<urlset>${Array.from({ length: 500 }, (_, i) => `<url><loc>https://example.com/page-${i}</loc></url>`).join("")}</urlset>`;
+  expect(parseClusterUpload(xml, "xml", "example.com").pages).toHaveLength(500);
 });

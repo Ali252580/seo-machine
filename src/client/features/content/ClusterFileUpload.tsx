@@ -13,23 +13,39 @@ export function ClusterFileUpload({
   onPages: (pages: DiscoveredClusterPage[]) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState(0);
   const client = useQueryClient();
   const upload = useMutation({
     mutationFn: async () => {
+      setProgress(0);
       if (!file || !/\.(xml|csv)$/i.test(file.name))
         throw new Error("فایل XML یا CSV انتخاب کنید.");
       if (file.size > 2_000_000)
         throw new Error("حداکثر اندازهٔ فایل ۲ مگابایت است.");
-      return importClusterPages({
-        data: {
-          projectId,
-          text: await file.text(),
-          format: /\.xml$/i.test(file.name) ? "xml" : "csv",
-        },
-      });
+      const text = await file.text();
+      const pages: DiscoveredClusterPage[] = [];
+      let offset: number | null = 0;
+      let skipped = 0;
+      while (offset !== null) {
+        const result: Awaited<ReturnType<typeof importClusterPages>> =
+          await importClusterPages({
+            data: {
+              projectId,
+              text,
+              offset,
+              format: /\.xml$/i.test(file.name) ? "xml" : "csv",
+            },
+          });
+        if (result.error) throw new Error(result.error);
+        pages.push(...result.pages);
+        onPages(result.pages);
+        setProgress(pages.length);
+        skipped = result.skipped;
+        offset = result.nextOffset;
+      }
+      return { pages, skipped };
     },
-    onSuccess: (result) => {
-      onPages(result.pages);
+    onSuccess: () => {
       void client.invalidateQueries({
         queryKey: ["contentClusters", projectId],
       });
@@ -44,8 +60,8 @@ export function ClusterFileUpload({
       <p className="my-3 text-sm leading-7 text-base-content/70">
         سایت‌مپ صفحات با فرمت XML یا خروجی Internal → HTML → Export با فرمت CSV
         و رمزگذاری UTF-8 را انتخاب کنید. ستون Address نشانی و Title 1 عنوان صفحه
-        است. حداکثر ۲ مگابایت و ۲۰۰ صفحه در هر بار؛ فایل‌های XLSX و ZIP پشتیبانی
-        نمی‌شوند.
+        است. حداکثر ۲ مگابایت و ۵۰۰۰ صفحه در هر فایل؛ فایل‌های XLSX و ZIP
+        پشتیبانی نمی‌شوند.
       </p>
       <div className="flex flex-wrap items-center gap-3">
         <input
@@ -78,6 +94,14 @@ export function ClusterFileUpload({
       {upload.error && (
         <p role="alert" className="mt-3 text-sm text-error">
           {getStandardErrorMessage(upload.error)}
+        </p>
+      )}
+      {progress > 0 && !upload.isSuccess && (
+        <p role="status" className="mt-3 text-sm">
+          {progress} صفحه ذخیره شد.
+          {upload.isPending
+            ? " ورود بقیهٔ فایل ادامه دارد…"
+            : " ورود کامل نشد؛ دوباره تلاش کنید. صفحات ذخیره‌شده تکراری نمی‌شوند."}
         </p>
       )}
       {upload.isSuccess && (

@@ -24,17 +24,38 @@ export const importClusterPages = createServerFn({ method: "POST" })
     input.extend({
       text: z.string().min(1).max(2_000_000),
       format: z.enum(["xml", "csv"]),
+      offset: z.number().int().min(0).max(5000).default(0),
     }),
   )
   .handler(async ({ context, data }) => {
     requireOrgPermission(context, { integration: ["manage"] });
-    const result = parseClusterUpload(
-      data.text,
-      data.format,
-      context.project.domain ?? "",
-    );
-    await rememberDiscoveredPages(context.projectId, result.pages);
-    return result;
+    let result;
+    try {
+      result = parseClusterUpload(
+        data.text,
+        data.format,
+        context.project.domain ?? "",
+      );
+    } catch (error) {
+      // Only this parser's static validation guidance is safe to return.
+      if (error instanceof AppError && error.code === "VALIDATION_ERROR")
+        return {
+          error: error.message,
+          pages: [],
+          skipped: 0,
+          nextOffset: null,
+        };
+      throw error;
+    }
+    const pages = result.pages.slice(data.offset, data.offset + 100);
+    await rememberDiscoveredPages(context.projectId, pages);
+    return {
+      error: null,
+      pages,
+      skipped: result.skipped,
+      nextOffset:
+        data.offset + 100 < result.pages.length ? data.offset + 100 : null,
+    };
   });
 export const getWritingPages = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
