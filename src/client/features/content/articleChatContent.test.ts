@@ -3,7 +3,22 @@ import {
   articleHtml,
   articlePreviewHtml,
   articleRequestSummary,
+  requireGeneratedArticle,
 } from "./articleChatUtils";
+it("rejects empty or conversational responses instead of replacing the draft", () => {
+  for (const response of [
+    "",
+    "موضوع مقاله را بفرستید",
+    "برای این درخواست پاسخی دریافت نشد.",
+  ]) {
+    expect(() => requireGeneratedArticle(response)).toThrow(
+      "پیش‌نویس قبلی حفظ شده",
+    );
+  }
+  expect(
+    requireGeneratedArticle("```html\n<h2>موضوع</h2><p>متن مقاله</p>\n```"),
+  ).toBe("<h2>موضوع</h2><p>متن مقاله</p>");
+});
 
 it("summarizes an article request without exposing its long evidence URL", () => {
   expect(

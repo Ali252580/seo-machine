@@ -17,7 +17,7 @@ import { ArticleMediaPanel } from "@/client/features/content/ArticleMediaPanel";
 import { useArticleDraft } from "@/client/features/content/useArticleDraft";
 import { ContentEditorHeader } from "@/client/features/content/ContentEditorHeader";
 import { buildArticlePrompt } from "@/client/features/content/buildArticlePrompt";
-import { articleHtml } from "@/client/features/content/articleChatUtils";
+import { requireGeneratedArticle } from "@/client/features/content/articleChatUtils";
 import { researchContentTarget } from "@/serverFunctions/contentResearch";
 import { createSamSession } from "@/serverFunctions/sam";
 import { sendSamVercelMessage } from "@/serverFunctions/samVercel";
@@ -126,15 +126,15 @@ export function ProjectContentEditor({
         },
       });
       return {
-        result,
+        content: requireGeneratedArticle(result.assistantMessage.content),
         checkedTarget: evidence.wordpressChecked ? target : null,
       };
     },
-    onSuccess: ({ result, checkedTarget: verifiedTarget }) => {
-      setContent(
-        articleHtml(result.assistantMessage.content) ??
-          result.assistantMessage.content,
-      );
+    onSuccess: ({
+      content: generatedContent,
+      checkedTarget: verifiedTarget,
+    }) => {
+      setContent(generatedContent);
       setCheckedTarget(verifiedTarget);
     },
   });

@@ -28,3 +28,12 @@ export function articleHtml(text: string) {
     return null;
   }
 }
+
+export function requireGeneratedArticle(text: string) {
+  const html = articleHtml(text);
+  if (!html)
+    throw new Error(
+      "مدل مقالهٔ قابل نمایش تولید نکرد؛ پاسخ خالی، توضیحی یا دارای قالب نامعتبر بود. پیش‌نویس قبلی حفظ شده است. دوباره تلاش کنید یا مدل را تغییر دهید.",
+    );
+  return html;
+}
