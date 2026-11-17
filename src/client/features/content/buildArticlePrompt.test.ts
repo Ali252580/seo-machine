@@ -12,6 +12,7 @@ it("uses verified discovered pages without WordPress for both article kinds", ()
     clusterPlan: null,
     discoveredPageCount: 10,
     articleDiscoveryUnavailable: false,
+    linkRankingStatus: "not_connected",
     internalLinks: [
       {
         url: "https://site.test/existing-article",
@@ -31,12 +32,21 @@ it("uses verified discovered pages without WordPress for both article kinds", ()
       );
     }
   }
+  evidence.internalLinks = Array.from({ length: 6 }, (_, index) => ({
+    url: `https://site.test/article-${index}`,
+    title: "مقاله",
+    excerpt: "متن",
+  }));
+  const prompt = buildArticlePrompt("موضوع", "عنوان", evidence, "post");
+  expect(prompt).toContain("https://site.test/article-4");
+  expect(prompt).not.toContain("https://site.test/article-5");
 });
 
 it("includes verified mapped targets in both article kinds", () => {
   const evidence = {
     discoveredPageCount: 0,
     articleDiscoveryUnavailable: false,
+    linkRankingStatus: "not_connected",
     internalLinks: [
       { url: "https://site.test/hub", title: "مرجع نقشه", excerpt: "متن" },
     ],
@@ -64,6 +74,7 @@ it("supplies complete published link candidates for website articles only", () =
   const evidence = {
     discoveredPageCount: 0,
     articleDiscoveryUnavailable: false,
+    linkRankingStatus: "not_connected",
     internalLinks: [
       { url: "https://example.com/pillar", title: "مرجع", excerpt: "متن" },
       {
@@ -127,6 +138,7 @@ it("keeps a researched existing-page prompt within SAM's 4,000-character limit",
   const evidence = {
     discoveredPageCount: 0,
     articleDiscoveryUnavailable: false,
+    linkRankingStatus: "not_connected",
     internalLinks: [],
     clusterPlan: null,
     wordpressChecked: false,
@@ -190,6 +202,7 @@ it("includes saved keyword rank evidence in the article request", () => {
   const evidence = {
     discoveredPageCount: 0,
     articleDiscoveryUnavailable: false,
+    linkRankingStatus: "not_connected",
     internalLinks: [],
     clusterPlan: null,
     wordpressChecked: true,
@@ -220,6 +233,7 @@ it("keeps specialized profiles distinct and bounded with a full brief", () => {
   const evidence = {
     discoveredPageCount: 0,
     articleDiscoveryUnavailable: false,
+    linkRankingStatus: "not_connected",
     internalLinks: [],
     clusterPlan: null,
     wordpressChecked: false,

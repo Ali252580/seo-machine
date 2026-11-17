@@ -22,6 +22,6 @@ it("explains the workflow before research and shows every discovered page after 
   );
   expect(html).toContain("Page 9");
   expect(html).toContain("منتشرنشده");
-  expect(html).toContain("حداکثر سه نامزد");
+  expect(html).toContain("حداکثر پنج نامزد");
   expect(html).toContain("نقشهٔ پیلار و کلاستر");
 });

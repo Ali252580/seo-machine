@@ -7,6 +7,7 @@ it("renders a project article's observed search trend on the server", () => {
   const evidence = {
     discoveredPageCount: 0,
     articleDiscoveryUnavailable: false,
+    linkRankingStatus: "not_connected",
     internalLinks: [],
     clusterPlan: null,
     wordpressChecked: false,
@@ -45,6 +46,7 @@ it("explains why an existing page should be reviewed using observed rank data", 
   const evidence = {
     discoveredPageCount: 0,
     articleDiscoveryUnavailable: false,
+    linkRankingStatus: "not_connected",
     internalLinks: [],
     clusterPlan: null,
     wordpressChecked: true,
@@ -78,6 +80,7 @@ it("explains a search opportunity without treating low CTR as proof of weak cont
   const evidence = {
     discoveredPageCount: 0,
     articleDiscoveryUnavailable: false,
+    linkRankingStatus: "not_connected",
     internalLinks: [],
     clusterPlan: null,
     wordpressChecked: true,

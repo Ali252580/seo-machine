@@ -5,6 +5,43 @@ import {
   selectArticleLinks,
   verifyArticleLinks,
 } from "./articleLinkCandidates";
+it("scores related articles using page-level GSC opportunities without admitting unrelated pages", () => {
+  const result = selectArticleLinks({
+    domain: "example.com",
+    topic: "آبیاری باغ",
+    mapped: [],
+    pages: [
+      { url: "https://example.com/top", title: "آبیاری باغ", kind: "article" },
+      {
+        url: "https://example.com/opportunity",
+        title: "آبیاری باغ",
+        kind: "article",
+      },
+      { url: "https://example.com/unknown", title: "آبیاری باغ" },
+      { url: "https://example.com/car", title: "خودرو" },
+    ],
+    rankRows: [
+      { keys: ["https://example.com/top/"], position: 2, impressions: 100 },
+      {
+        keys: ["https://example.com/opportunity"],
+        position: 12,
+        impressions: 50,
+      },
+      { keys: ["https://example.com/car"], position: 8, impressions: 1000 },
+    ],
+  });
+  expect(result.map((page) => page.url)).toEqual([
+    "https://example.com/opportunity",
+    "https://example.com/top",
+    "https://example.com/unknown",
+  ]);
+  expect(result[0]).toMatchObject({
+    linkScore: 60,
+    position: 12,
+    impressions: 50,
+  });
+  expect(result[2].position).toBeUndefined();
+});
 it("prioritizes mapped targets then relevant discovered pages and rejects self and external links", () => {
   const result = selectArticleLinks({
     domain: "example.com",
@@ -34,6 +71,33 @@ it("excludes pages which cannot currently be read", async () => {
     ]),
   ).toEqual([
     { url: "https://example.com/ok", title: "Live", excerpt: "Evidence" },
+  ]);
+});
+it("preserves ranking evidence after checking the destination", async () => {
+  read.mockResolvedValue({
+    pages: [
+      { url: "https://example.com/article", title: "Article", text: "Body" },
+    ],
+  });
+  expect(
+    await verifyArticleLinks([
+      {
+        url: "https://example.com/article",
+        title: "Article",
+        linkScore: 60,
+        position: 12,
+        impressions: 50,
+      },
+    ]),
+  ).toEqual([
+    {
+      url: "https://example.com/article",
+      title: "Article",
+      linkScore: 60,
+      position: 12,
+      impressions: 50,
+      excerpt: "Body",
+    },
   ]);
 });
 

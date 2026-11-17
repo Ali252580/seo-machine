@@ -117,7 +117,7 @@ export function buildArticlePrompt(
         if (linkCandidates.length + entry.length > 600) continue;
         seen.add(url.href);
         linkCandidates += entry + "\n";
-        if (seen.size === 3) break;
+        if (seen.size === 5) break;
       } catch {
         /* Invalid CMS URLs cannot be link targets. */
       }

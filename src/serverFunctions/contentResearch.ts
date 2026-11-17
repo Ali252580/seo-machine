@@ -16,6 +16,7 @@ import {
   mergeDiscoveredPages,
 } from "@/shared/contentClusters";
 import { discoverWritingPages } from "@/server/features/content/discoverClusterPages";
+import { loadLinkRanking } from "@/server/features/content/linkRanking";
 
 export const researchContentTarget = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
@@ -53,12 +54,13 @@ export const researchContentTarget = createServerFn({ method: "POST" })
           ),
         }
       : null;
-    const [stored, fresh] = await Promise.all([
+    const [stored, fresh, ranking] = await Promise.all([
       readDiscoveredPages(context.projectId),
       discoverWritingPages({
         id: context.projectId,
         domain: context.project.domain,
       }),
+      loadLinkRanking(context.projectId),
     ]);
     const discovered = mergeDiscoveredPages([...stored, ...fresh.pages]);
     const candidates = selectArticleLinks({
@@ -66,11 +68,16 @@ export const researchContentTarget = createServerFn({ method: "POST" })
       topic: `${data.keyword} ${data.title}`,
       target: data.targetPage,
       mapped: clusterPlan?.targets ?? [],
+      rankRows: ranking.rows,
       pages: [
         ...discovered,
         ...evidence.pages
           .filter((page) => page.status === "publish")
-          .map((page) => ({ url: page.link, title: page.title.rendered })),
+          .map((page) => ({
+            url: page.link,
+            title: page.title.rendered,
+            kind: page.kind === "post" ? "article" : undefined,
+          })),
       ],
     });
     const internalLinks = await verifyArticleLinks(candidates);
@@ -80,5 +87,6 @@ export const researchContentTarget = createServerFn({ method: "POST" })
       internalLinks,
       discoveredPageCount: discovered.length,
       articleDiscoveryUnavailable: fresh.unavailable,
+      linkRankingStatus: ranking.status,
     };
   });

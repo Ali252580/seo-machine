@@ -19,6 +19,17 @@ export function ArticleClusterSummary({
       {evidence?.internalLinks && (
         <div className="space-y-2 rounded-lg bg-base-100 p-3">
           <h3 className="font-medium">لینک‌های داخلی از صفحات شناسایی‌شده</h3>
+          <p className="text-xs leading-6 text-base-content/70">
+            امتیاز اولویت از ۱۰۰: ارتباط عنوان تا ۴۰، عضویت در نقشه ۲۰،
+            مقاله‌بودن ۱۰ و فرصت رتبه تا ۳۰ امتیاز. رتبهٔ میانگین ۴ تا ۲۰ اولویت
+            تقویت بیشتری دارد؛ این امتیاز داخلی است و تضمین رشد رتبه نیست. مقصد
+            اصلی نقشه در اولویت می‌ماند.
+          </p>
+          <p className="text-xs leading-6">
+            {evidence.linkRankingStatus === "connected"
+              ? "رتبه‌ها: دادهٔ نهایی ۲۸ روز گذشتهٔ سرچ کنسول؛ حداکثر ۵۰۰۰ صفحه. نبود داده به معنی رتبهٔ صفر نیست."
+              : "دادهٔ رتبهٔ سرچ کنسول در دسترس نیست؛ اولویت فقط از ارتباط موضوعی و نقشه محاسبه شده است."}
+          </p>
           <p className="text-sm">
             {evidence.discoveredPageCount} صفحه از فهرست قبلی و بررسی تازهٔ سایت
             بررسی شد. {evidence.internalLinks.length} مقصد مرتبط اکنون خوانده
@@ -34,6 +45,14 @@ export function ArticleClusterSummary({
             {evidence.internalLinks.map((page) => (
               <li key={page.url}>
                 {page.title}
+                {page.linkScore !== undefined && (
+                  <p className="text-xs text-primary">
+                    امتیاز: {page.linkScore}/۱۰۰ ·{" "}
+                    {page.position !== undefined
+                      ? `رتبهٔ میانگین: ${page.position.toFixed(1)} · نمایش: ${page.impressions}`
+                      : "بدون دادهٔ رتبه"}
+                  </p>
+                )}
                 <span dir="ltr" className="block break-all text-xs">
                   {page.url}
                 </span>
@@ -83,7 +102,7 @@ export function ArticleClusterSummary({
             مورد
           </h3>
           <p className="text-sm">
-            حداکثر سه نامزد منتشرشده، در سقف طول درخواست، به SAM ارسال می‌شوند.
+            حداکثر پنج نامزد منتشرشده، در سقف طول درخواست، به SAM ارسال می‌شوند.
             وجود در این فهرست به معنی مرتبط‌بودن قطعی یا درج لینک در خروجی نیست.
           </p>
           {evidence.pages.length === 0 && (

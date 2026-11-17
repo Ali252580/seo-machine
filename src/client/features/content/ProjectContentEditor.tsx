@@ -396,7 +396,7 @@ export function ProjectContentEditor({
                 {getStandardErrorMessage(generate.error)}
               </p>
             )}
-            {kind === "page" && <ArticleClusterSummary evidence={research} />}
+            <ArticleClusterSummary evidence={research} />
             {research && <ArticleResearchSummary evidence={research} />}
             {matchingPages.length > 0 && (
               <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
