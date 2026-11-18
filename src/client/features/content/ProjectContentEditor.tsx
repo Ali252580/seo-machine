@@ -4,7 +4,7 @@ import {
   type WritingProfile,
 } from "./writingProfiles";
 import { Link } from "@tanstack/react-router";
-import { getStandardErrorMessage } from "@/client/lib/error-messages";
+import { ArticleGenerationStatus } from "./ArticleGenerationStatus";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
@@ -390,14 +390,19 @@ export function ProjectContentEditor({
                       ? "بررسی موضوع و نگارش وبلاگ"
                       : "تولید پیش‌نویس با SAM"}
             </button>
-            {generate.isError && (
-              <p role="alert" className="text-error text-sm">
-                {generationStage} متوقف شد:{" "}
-                {getStandardErrorMessage(generate.error)}
-              </p>
-            )}
-            <ArticleClusterSummary evidence={research} />
-            {research && <ArticleResearchSummary evidence={research} />}
+            <ArticleGenerationStatus
+              pending={generate.isPending}
+              success={generate.isSuccess}
+              error={generate.error}
+              stage={generationStage}
+            />
+            <details className="rounded-lg border border-base-300 p-3">
+              <summary className="cursor-pointer text-sm font-medium">
+                صفحات مرتبط و دلیل پیشنهادها
+              </summary>
+              <ArticleClusterSummary evidence={research} />
+              {research && <ArticleResearchSummary evidence={research} />}
+            </details>
             {matchingPages.length > 0 && (
               <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
                 <p className="font-medium">
