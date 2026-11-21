@@ -3,11 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { ArrowLeft, FilePenLine, HardDrive } from "lucide-react";
-import { getWritingPages } from "@/serverFunctions/contentClusters";
+import { getSavedKeywords } from "@/serverFunctions/keywords";
 import { ContentEditorHeader } from "./ContentEditorHeader";
 import { WritingPagePicker } from "./WritingPagePicker";
+import { KeywordGap } from "./KeywordGap";
+import { AutoTopic } from "./AutoTopic";
 import { ProjectContentEditor } from "./ProjectContentEditor";
-import { articleIdeas, savedDraftEntries } from "./contentWorkspaceData";
+import { savedDraftEntries } from "./contentWorkspaceData";
 
 export const contentWorkspaceSearch = z.object({
   page: z
@@ -16,6 +18,7 @@ export const contentWorkspaceSearch = z.object({
     .refine((value) => /^https?:\/\//i.test(value))
     .optional(),
   title: z.string().max(180).optional(),
+  keyword: z.string().max(100).optional(),
   draft: z
     .string()
     .regex(/^(legacy|[a-f0-9-]{36})$/)
@@ -38,9 +41,18 @@ export function ContentWorkspace({
     [],
   );
   const [storageError, setStorageError] = useState(false);
-  const pages = useQuery({
-    queryKey: ["writingPages", projectId],
-    queryFn: () => getWritingPages({ data: { projectId } }),
+  const keywords = useQuery({
+    queryKey: ["articleKeywords", projectId],
+    queryFn: () =>
+      getSavedKeywords({
+        data: {
+          projectId,
+          page: 1,
+          pageSize: 50,
+          sort: "createdAt",
+          order: "desc",
+        },
+      }),
   });
   useEffect(() => {
     try {
@@ -50,11 +62,15 @@ export function ContentWorkspace({
       setStorageError(true);
     }
   }, [projectId, blog, search.draft, search.page]);
-  const start = (title: string) => {
+  const start = (title: string, keyword?: string) => {
     void navigate({
       to,
       params: { projectId },
-      search: { draft: crypto.randomUUID(), title: title.slice(0, 180) },
+      search: {
+        draft: crypto.randomUUID(),
+        title: title.slice(0, 180),
+        keyword,
+      },
     });
   };
   if (search.page || search.draft)
@@ -64,6 +80,7 @@ export function ContentWorkspace({
         projectId={projectId}
         targetPage={search.page}
         suggestedTitle={search.title}
+        suggestedKeyword={search.keyword}
         blog={blog}
         draftId={search.draft === "legacy" ? undefined : search.draft}
       />
@@ -113,42 +130,72 @@ export function ContentWorkspace({
               شروع پیش‌نویس تازه
             </button>
           </form>
-          <h3 className="font-semibold">ایده‌های اولیه از صفحات شناسایی‌شده</h3>
-          {pages.isError && (
-            <p role="alert">
-              دریافت صفحات برای پیشنهاد موضوع انجام نشد.{" "}
-              <button
-                className="btn btn-sm"
-                onClick={() => void pages.refetch()}
-              >
-                تلاش مجدد
-              </button>
-            </p>
-          )}
-          <p className="text-xs text-base-content/70">
-            این‌ها زاویه‌های پیشنهادی از عنوان‌های سایت هستند؛ تقاضای جست‌وجو یا
-            نبود مقالهٔ مشابه تأیید نشده است. پیش از نگارش، هم‌پوشانی بررسی
-            می‌شود.
-          </p>
-          <ul className="space-y-2">
-            {articleIdeas(pages.data ?? [], blog).map((idea) => (
-              <li
-                key={idea}
-                className="flex flex-wrap justify-between gap-2 rounded-lg bg-base-200 p-3"
-              >
-                <span>{idea}</span>
-                <button className="btn btn-sm" onClick={() => start(idea)}>
-                  بررسی و نگارش
-                </button>
-              </li>
-            ))}
-          </ul>
-          {!pages.data?.length && (
+          <AutoTopic projectId={projectId} blog={blog} onChoose={start} />
+          <KeywordGap projectId={projectId} onChoose={start} />
+          <section className="space-y-3 rounded-lg border border-base-300 p-4">
+            <h3 className="font-semibold">نگارش از کلمات کلیدی ذخیره‌شده</h3>
             <p className="text-sm">
-              برای پیشنهاد متناسب با سایت، ابتدا صفحات را از نقشهٔ پیلار و
-              کلاستر یا فهرست زیر دریافت کنید.
+              این کلمات نامزد بررسی‌اند؛ گپ نسبت به رقبا و نبود محتوای مشابه
+              هنوز تأیید نشده است. هنگام نگارش، شواهد و محتوای مشابه بررسی
+              می‌شوند.
             </p>
-          )}
+            {keywords.isLoading && <p>در حال دریافت کلمات کلیدی…</p>}
+            {keywords.isError && (
+              <p role="alert">
+                دریافت کلمات ممکن نشد.{" "}
+                <button
+                  className="btn btn-sm"
+                  onClick={() => void keywords.refetch()}
+                >
+                  تلاش مجدد
+                </button>
+              </p>
+            )}
+            {keywords.data && !keywords.data.rows.length && (
+              <p>
+                هنوز کلمه‌ای ذخیره نشده است. در بخش تحقیق کلمات کلیدی، موضوع
+                کسب‌وکار را جست‌وجو و کلمات موردنظر را ذخیره کنید؛ داشتن صفحهٔ
+                قبلی لازم نیست.{" "}
+                <Link
+                  className="link link-primary"
+                  to="/p/$projectId/keywords"
+                  params={{ projectId }}
+                  search={{}}
+                >
+                  تحقیق کلمات کلیدی
+                </Link>
+              </p>
+            )}
+            <ul className="max-h-80 space-y-2 overflow-y-auto">
+              {keywords.data?.rows.map((row) => (
+                <li
+                  key={row.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-base-200 p-3"
+                >
+                  <span>
+                    {row.keyword}
+                    {row.searchVolume != null && (
+                      <span className="ms-2 text-xs">
+                        حجم جست‌وجو: {row.searchVolume.toLocaleString("fa-IR")}
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => start(row.keyword)}
+                  >
+                    بررسی و نگارش
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {(keywords.data?.totalCount ?? 0) > 50 && (
+              <p className="text-xs">
+                ۵۰ کلمهٔ اخیر نمایش داده می‌شود؛ برای دیدن سایر کلمات به فهرست
+                کلمات ذخیره‌شده بروید.
+              </p>
+            )}
+          </section>
         </section>
         {!blog && <WritingPagePicker projectId={projectId} />}
         <section

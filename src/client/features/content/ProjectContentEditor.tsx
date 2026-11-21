@@ -30,12 +30,14 @@ export function ProjectContentEditor({
   projectId,
   targetPage,
   suggestedTitle,
+  suggestedKeyword,
   blog = false,
   draftId,
 }: {
   projectId: string;
   targetPage?: string;
   suggestedTitle?: string;
+  suggestedKeyword?: string;
   blog?: boolean;
   draftId?: string;
 }) {
@@ -57,7 +59,14 @@ export function ProjectContentEditor({
     setKind,
     image,
     setImage,
-  } = useArticleDraft(projectId, targetPage, suggestedTitle, blog, draftId);
+  } = useArticleDraft(
+    projectId,
+    targetPage,
+    suggestedTitle,
+    blog,
+    draftId,
+    suggestedKeyword,
+  );
   const kind = blog ? "post" : savedKind;
   useEffect(() => {
     if (blog) return;

@@ -7,6 +7,28 @@ import {
 
 afterEach(() => vi.unstubAllGlobals());
 
+it("uses the researched keyword for a new draft without overwriting a saved draft", () => {
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) =>
+      key === "saved"
+        ? JSON.stringify({
+            keyword: "saved",
+            title: "old",
+            slug: "",
+            content: "text",
+          })
+        : null,
+  });
+  expect(
+    loadArticleDraft("new", undefined, "عنوان جدید", true, "کلمه هدف").draft
+      .keyword,
+  ).toBe("کلمه هدف");
+  expect(
+    loadArticleDraft("saved", undefined, "عنوان جدید", true, "کلمه هدف").draft
+      .keyword,
+  ).toBe("saved");
+});
+
 it("loads an empty draft for another project without carrying content or images", () => {
   vi.stubGlobal("localStorage", {
     getItem: (key: string) =>

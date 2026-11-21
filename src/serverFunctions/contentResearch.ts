@@ -17,6 +17,31 @@ import {
 } from "@/shared/contentClusters";
 import { discoverWritingPages } from "@/server/features/content/discoverClusterPages";
 import { loadLinkRanking } from "@/server/features/content/linkRanking";
+import {
+  getWordPressConnection,
+  listWordPressPages,
+} from "@/server/features/wordpress/WordPressService";
+
+export const checkTopicCoverage = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(
+    z.object({
+      projectId: z.string().min(1),
+      keyword: z.string().trim().min(2).max(100),
+    }),
+  )
+  .handler(async ({ context, data }) => {
+    const connected = await getWordPressConnection(context.projectId);
+    if (!connected) return { checked: false, pages: [] };
+    const pages = await listWordPressPages(context.projectId, data.keyword);
+    return {
+      checked: true,
+      pages: pages.map((page) => ({
+        title: page.title.rendered,
+        url: page.link,
+      })),
+    };
+  });
 
 export const researchContentTarget = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)

@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { savedDraftEntries, articleIdeas } from "./contentWorkspaceData";
+import { savedDraftEntries } from "./contentWorkspaceData";
 import { articleDraftKey } from "./useArticleDraft";
 it("lists old and new drafts without mixing projects, modes or empty entries", () => {
   const values = new Map([
@@ -33,11 +33,6 @@ it("lists old and new drafts without mixing projects, modes or empty entries", (
   expect(articleDraftKey("a", undefined, false, "new")).not.toBe(
     articleDraftKey("a"),
   );
-});
-it("suggests different angles for reference pages and educational articles", () => {
-  const pages = [{ title: "بام سبز" }];
-  expect(articleIdeas(pages, false)).toEqual(["راهنمای انتخاب بام سبز"]);
-  expect(articleIdeas(pages, true)).toEqual(["پرسش‌های رایج دربارهٔ بام سبز"]);
 });
 it("uses an existing heading for untitled drafts without changing saved content", () => {
   const saved = JSON.stringify({

@@ -36,15 +36,3 @@ export function savedDraftEntries(
   }
   return drafts;
 }
-
-export function articleIdeas(pages: { title: string }[], blog: boolean) {
-  const titles = [
-    ...new Set(pages.map((page) => page.title.trim()).filter(Boolean)),
-  ];
-  const ideas = titles
-    .slice(0, 6)
-    .map((title) =>
-      blog ? `پرسش‌های رایج دربارهٔ ${title}` : `راهنمای انتخاب ${title}`,
-    );
-  return ideas.filter((idea) => !titles.includes(idea));
-}
