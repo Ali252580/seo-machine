@@ -71,7 +71,7 @@ export function AutoTopic({
       const candidates = autoTopicCandidates(research.rows, blog);
       if (!candidates.length)
         throw new Error(
-          "برای موضوع پروژه کلمه‌ای با حجم جست‌وجوی ثبت‌شده پیدا نشد. کلمات مرتبط را ذخیره و دوباره تلاش کنید.",
+          "برای عبارت پایه، داده‌ای با حجم جست‌وجوی ثبت‌شده دریافت نشد؛ ممکن است حجم این بازار در دسترس نباشد. موضوع و بازار پروژه را بررسی کنید.",
         );
       const ranked = parseAnswer(
         await ask(
@@ -100,6 +100,7 @@ export function AutoTopic({
         ]);
         if (
           !serp.items.length ||
+          !coverage.checked ||
           coverage.pages.length ||
           serp.items.some((item) => {
             try {
@@ -122,6 +123,10 @@ export function AutoTopic({
         );
         if (title.length < 5)
           throw new Error("عنوان پیشنهادی کامل نیست؛ دوباره تلاش کنید.");
+        const titleCoverage = await checkTopicCoverage({
+          data: { projectId, keyword: title },
+        });
+        if (!titleCoverage.checked || titleCoverage.pages.length) continue;
         return {
           title,
           candidate,
@@ -134,7 +139,7 @@ export function AutoTopic({
         };
       }
       throw new Error(
-        "در سه گزینهٔ اول، نتیجهٔ قابل اتکایی بدون هم‌پوشانی پیدا نشد؛ عبارت دیگری را در تحقیق کلمات ذخیره کنید.",
+        "در گزینه‌های بررسی‌شده، موضوعی بدون نشانهٔ هم‌پوشانی پیدا نشد یا بررسی سایت در دسترس نبود.",
       );
     },
   });
@@ -142,8 +147,9 @@ export function AutoTopic({
     <section className="space-y-3 rounded-lg border border-primary/30 p-4">
       <h3 className="font-semibold">پیشنهاد خودکار موضوع تازه</h3>
       <p className="text-sm">
-        تقاضای کلمات مرتبط، نتایج گوگل برای حداکثر سه عبارت و هم‌پوشانی وردپرس
-        بررسی می‌شود. تحقیق کلمات و جست‌وجو ممکن است اعتبار مصرف کنند.
+        تقاضای کلمات مرتبط، نتایج گوگل برای حداکثر سه عبارت و صفحه‌های
+        شناسایی‌شده، وردپرس و سرچ کنسول متصل بررسی می‌شود. تحقیق کلمات و جست‌وجو
+        ممکن است اعتبار مصرف کنند.
       </p>
       <button
         className="btn btn-primary"
@@ -165,11 +171,21 @@ export function AutoTopic({
             تحقیق: {generate.data.source} · عبارت پایه: {generate.data.seed}
           </p>
           <p className="text-sm">
-            در نتایج بررسی‌شده (تا عمق ۲۰) نشانی سایت دیده نشد؛{" "}
-            {generate.data.coverage.checked
-              ? "جست‌وجوی عبارت در وردپرس موردی پیدا نکرد"
-              : "وردپرس متصل نیست و محتوای سایت بررسی نشده"}
-            . این‌ها نبود محتوای مشابه را قطعی نمی‌کنند.
+            در نتایج بررسی‌شده (تا عمق ۲۰) نشانی سایت دیده نشد؛ در منابع در
+            دسترس، صفحهٔ هم‌پوشان پیدا نشد. این بررسی محدود است و نبود محتوای
+            مشابه را قطعی نمی‌کند. منابع:{" "}
+            {generate.data.coverage.sources.discovery
+              ? "صفحات شناسایی‌شده"
+              : "صفحات سایت در دسترس نبود"}
+            ،{" "}
+            {generate.data.coverage.sources.wordpress
+              ? "وردپرس"
+              : "وردپرس متصل نیست"}
+            ،{" "}
+            {generate.data.coverage.sources.searchConsole
+              ? "سرچ کنسول"
+              : "سرچ کنسول متصل نیست"}
+            .
           </p>
           <ul className="text-sm">
             {generate.data.results.map((item) => (

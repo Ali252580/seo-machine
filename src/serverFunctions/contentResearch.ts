@@ -17,6 +17,8 @@ import {
 } from "@/shared/contentClusters";
 import { discoverWritingPages } from "@/server/features/content/discoverClusterPages";
 import { loadLinkRanking } from "@/server/features/content/linkRanking";
+import { overlappingTopicPages } from "@/server/features/content/topicCoverage";
+import { GscService } from "@/server/features/gsc/services/GscService";
 import {
   getWordPressConnection,
   listWordPressPages,
@@ -31,15 +33,60 @@ export const checkTopicCoverage = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ context, data }) => {
-    const connected = await getWordPressConnection(context.projectId);
-    if (!connected) return { checked: false, pages: [] };
-    const pages = await listWordPressPages(context.projectId, data.keyword);
-    return {
-      checked: true,
-      pages: pages.map((page) => ({
+    const [connected, gsc, stored, fresh] = await Promise.all([
+      getWordPressConnection(context.projectId),
+      GscService.getConnection(context.projectId),
+      readDiscoveredPages(context.projectId),
+      discoverWritingPages({
+        id: context.projectId,
+        domain: context.project.domain,
+      }),
+    ]);
+    const [wordpress, searchConsole] = await Promise.all([
+      connected ? listWordPressPages(context.projectId, data.keyword) : [],
+      gsc
+        ? GscService.getPerformance({
+            projectId: context.projectId,
+            dateRange: "last_3_months",
+            dimensions: ["query", "page"],
+            filters: [
+              {
+                dimension: "query",
+                operator: "contains",
+                expression: data.keyword,
+              },
+            ],
+            rowLimit: 100,
+            type: "web",
+            dataState: "final",
+          })
+        : null,
+    ]);
+    const discovered = mergeDiscoveredPages([...stored, ...fresh.pages]).filter(
+      (page) => sameSitePage(page.url, context.project.domain ?? ""),
+    );
+    const matches = overlappingTopicPages(data.keyword, discovered);
+    const rankedPages = (searchConsole?.rows ?? []).flatMap((row) =>
+      row.keys?.[1] && sameSitePage(row.keys[1], context.project.domain ?? "")
+        ? [{ title: row.keys[0] ?? data.keyword, url: row.keys[1] }]
+        : [],
+    );
+    const pages = [
+      ...matches,
+      ...rankedPages,
+      ...wordpress.map((page) => ({
         title: page.title.rendered,
         url: page.link,
       })),
+    ];
+    return {
+      checked: Boolean(connected) || !fresh.unavailable,
+      pages: [...new Map(pages.map((page) => [page.url, page])).values()],
+      sources: {
+        wordpress: Boolean(connected),
+        searchConsole: Boolean(gsc),
+        discovery: !fresh.unavailable,
+      },
     };
   });
 
