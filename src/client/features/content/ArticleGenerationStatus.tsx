@@ -3,11 +3,11 @@ import {
   getStandardErrorMessage,
 } from "@/client/lib/error-messages";
 
-const stages = ["بررسی شواهد", "ساخت نشست SAM", "نگارش با SAM"];
-const labels = [
-  "بررسی موضوع و صفحات مرتبط",
-  "آماده‌سازی نویسنده",
-  "نوشتن مقاله و لینک‌های داخلی",
+const steps = [
+  ["بررسی شواهد", "بررسی موضوع و صفحات مرتبط"],
+  ["بررسی نتایج گوگل", "بررسی نتایج جست‌وجو برای مقالهٔ جدید"],
+  ["ساخت نشست SAM", "آماده‌سازی نویسنده"],
+  ["نگارش با SAM", "نوشتن مقاله و لینک‌های داخلی"],
 ];
 const guidance: Record<string, string> = {
   INTERNAL_ERROR:
@@ -28,12 +28,18 @@ export function ArticleGenerationStatus({
   success,
   error,
   stage,
+  serpStep = false,
 }: {
   pending: boolean;
   success: boolean;
   error: Error | null;
   stage: string;
+  serpStep?: boolean;
 }) {
+  const visibleSteps = steps.filter(
+    ([key]) => serpStep || key !== "بررسی نتایج گوگل",
+  );
+  const active = visibleSteps.findIndex(([key]) => key === stage);
   if (pending)
     return (
       <div
@@ -49,19 +55,17 @@ export function ArticleGenerationStatus({
           مقاله در حال آماده‌سازی است
         </p>
         <ol className="space-y-2 text-sm">
-          {labels.map((label, index) => (
+          {visibleSteps.map(([key, label], index) => (
             <li
               key={label}
-              aria-current={
-                index === stages.indexOf(stage) ? "step" : undefined
-              }
+              aria-current={index === active ? "step" : undefined}
               className={
-                index === stages.indexOf(stage)
+                index === active
                   ? "font-semibold text-primary"
                   : "text-base-content/65"
               }
             >
-              {index < stages.indexOf(stage) ? "✓" : `${index + 1}.`} {label}
+              {index < active ? "✓" : `${index + 1}.`} {label}
             </li>
           ))}
         </ol>

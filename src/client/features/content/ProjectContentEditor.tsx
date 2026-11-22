@@ -18,7 +18,14 @@ import { useArticleDraft } from "@/client/features/content/useArticleDraft";
 import { ContentEditorHeader } from "@/client/features/content/ContentEditorHeader";
 import { buildArticlePrompt } from "@/client/features/content/buildArticlePrompt";
 import { requireGeneratedArticle } from "@/client/features/content/articleChatUtils";
-import { researchContentTarget } from "@/serverFunctions/contentResearch";
+import {
+  checkTopicCoverage,
+  researchContentTarget,
+} from "@/serverFunctions/contentResearch";
+import { getSerpAnalysis } from "@/serverFunctions/keywords";
+import { useProjectMarket } from "@/client/features/projects/useProjectMarket";
+import { sameSitePage } from "@/shared/contentClusters";
+import { findOwnSearchResults } from "./articleSearchEvidence";
 import { createSamSession } from "@/serverFunctions/sam";
 import { sendSamVercelMessage } from "@/serverFunctions/samVercel";
 import {
@@ -41,6 +48,7 @@ export function ProjectContentEditor({
   blog?: boolean;
   draftId?: string;
 }) {
+  const project = useProjectMarket(projectId);
   const {
     storageError,
     brief,
@@ -100,10 +108,18 @@ export function ProjectContentEditor({
   });
 
   const [generationStage, setGenerationStage] = useState("بررسی شواهد");
+  const [coverageMatches, setCoverageMatches] = useState<
+    { title: string; url: string }[]
+  >([]);
+  const [serpUnavailable, setSerpUnavailable] = useState(false);
+  const [coverageUnavailable, setCoverageUnavailable] = useState(false);
   const generate = useMutation({
     mutationFn: async () => {
       setCheckedTarget(null);
       setResearch(undefined);
+      setCoverageMatches([]);
+      setSerpUnavailable(false);
+      setCoverageUnavailable(false);
       setGenerationStage("بررسی شواهد");
       // Research is a server-side prerequisite, not a claim made by the model.
       const evidence = await researchContentTarget({
@@ -116,6 +132,51 @@ export function ProjectContentEditor({
       });
       setResearch(evidence);
       setMatchingPages(evidence.pages);
+      let serp: Awaited<ReturnType<typeof getSerpAnalysis>>["items"] = [];
+      let coverageVerified = true;
+      if (blog && !targetPage) {
+        const [keywordCoverage, titleCoverage] = await Promise.all([
+          checkTopicCoverage({ data: { projectId, keyword: keyword.trim() } }),
+          checkTopicCoverage({
+            data: { projectId, keyword: title.trim().slice(0, 100) },
+          }),
+        ]);
+        coverageVerified =
+          keywordCoverage.checked &&
+          titleCoverage.checked &&
+          Boolean(project?.domain);
+        setCoverageUnavailable(!coverageVerified);
+        const matches = [
+          ...new Map(
+            [...keywordCoverage.pages, ...titleCoverage.pages].map((page) => [
+              page.url,
+              page,
+            ]),
+          ).values(),
+        ];
+        setCoverageMatches(matches);
+        if (matches.length)
+          throw new Error(
+            "صفحهٔ مرتبطی پیدا شد؛ پیش از ایجاد مقالهٔ جدید، صفحه‌های زیر را بررسی کنید.",
+          );
+        setGenerationStage("بررسی نتایج گوگل");
+        try {
+          const results = await getSerpAnalysis({
+            data: { projectId, keyword: keyword.trim(), depth: 20 },
+          });
+          serp = results.items;
+          setSerpUnavailable(!serp.length);
+        } catch {
+          setSerpUnavailable(true);
+        }
+        const ownResults = findOwnSearchResults(serp, project?.domain ?? "");
+        if (ownResults.length) {
+          setCoverageMatches(ownResults);
+          throw new Error(
+            "این سایت برای کلمهٔ هدف در نتایج گوگل دیده شد؛ ابتدا صفحهٔ موجود را بررسی کنید.",
+          );
+        }
+      }
       setGenerationStage("ساخت نشست SAM");
       const session = await createSamSession({ data: { projectId } });
       setGenerationStage("نگارش با SAM");
@@ -131,12 +192,14 @@ export function ProjectContentEditor({
             kind,
             profile,
             brief,
+            serp,
           ),
         },
       });
       return {
         content: requireGeneratedArticle(result.assistantMessage.content),
-        checkedTarget: evidence.wordpressChecked ? target : null,
+        checkedTarget:
+          evidence.wordpressChecked && coverageVerified ? target : null,
       };
     },
     onSuccess: ({
@@ -290,6 +353,9 @@ export function ProjectContentEditor({
                   setMatchingPages([]);
                   setResearch(undefined);
                   setCheckedTarget(null);
+                  setCoverageMatches([]);
+                  setSerpUnavailable(false);
+                  setCoverageUnavailable(false);
                 }}
                 placeholder="کلمهٔ کلیدی مرتبط با این پروژه"
               />
@@ -306,6 +372,9 @@ export function ProjectContentEditor({
                   setMatchingPages([]);
                   setResearch(undefined);
                   setCheckedTarget(null);
+                  setCoverageMatches([]);
+                  setSerpUnavailable(false);
+                  setCoverageUnavailable(false);
                   if (!slug)
                     setSlug(event.target.value.trim().replace(/\s+/g, "-"));
                 }}
@@ -404,7 +473,49 @@ export function ProjectContentEditor({
               success={generate.isSuccess}
               error={generate.error}
               stage={generationStage}
+              serpStep={blog && !targetPage}
             />
+            {blog && !targetPage && (
+              <p className="text-xs text-base-content/70">
+                برای نگارش، نتایج گوگل نیز بررسی می‌شود و ممکن است اعتبار مصرف
+                کند.
+              </p>
+            )}
+            {serpUnavailable && (
+              <p role="status" className="text-sm">
+                نتایج گوگل در دسترس نبود؛ متن بدون این شواهد تهیه می‌شود.
+              </p>
+            )}
+            {coverageUnavailable && (
+              <p role="status" className="text-sm">
+                بررسی صفحات سایت کامل در دسترس نبود؛ پیش از انتشار، هم‌پوشانی را
+                بررسی کنید.
+              </p>
+            )}
+            {coverageMatches.length > 0 && (
+              <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
+                <p>صفحات مرتبط برای بررسی هم‌پوشانی:</p>
+                <ul>
+                  {coverageMatches.map((page) => (
+                    <li key={page.url}>
+                      {project?.domain &&
+                      sameSitePage(page.url, project.domain) ? (
+                        <a
+                          className="link"
+                          href={page.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {page.title || page.url}
+                        </a>
+                      ) : (
+                        page.title || "صفحهٔ مرتبط با نشانی نامعتبر"
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <details className="rounded-lg border border-base-300 p-3">
               <summary className="cursor-pointer text-sm font-medium">
                 صفحات مرتبط و دلیل پیشنهادها

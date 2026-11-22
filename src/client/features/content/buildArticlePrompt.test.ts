@@ -1,6 +1,31 @@
 import { expect, it } from "vitest";
 import { buildArticlePrompt } from "./buildArticlePrompt";
 
+it("includes search result evidence for a new article without presenting it as verified facts", () => {
+  const evidence = {
+    wordpressChecked: false,
+    pages: [],
+    existingPage: null,
+    searchConsole: { status: "not_connected" },
+    analytics: { status: "not_connected" },
+    rankTracking: { status: "not_tracked" },
+    clusterPlan: null,
+    internalLinks: [],
+  } as unknown as Parameters<typeof buildArticlePrompt>[2];
+  const prompt = buildArticlePrompt(
+    "بام سبز",
+    "نگهداری بام سبز",
+    evidence,
+    "post",
+    "guide",
+    "",
+    [{ title: "راهنمای نگهداری", description: "آبیاری و زهکشی" }],
+  );
+  expect(prompt).toContain("راهنمای نگهداری");
+  expect(prompt).toContain("ادعاها نیازمند بررسی مستقل هستند");
+  expect(prompt.length).toBeLessThanOrEqual(4000);
+});
+
 it("uses verified discovered pages without WordPress for both article kinds", () => {
   const evidence = {
     wordpressChecked: false,

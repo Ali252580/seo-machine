@@ -3,6 +3,23 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it } from "vitest";
 import { ArticleGenerationStatus } from "./ArticleGenerationStatus";
 
+it("shows the Google research step only for new articles", () => {
+  const props = {
+    pending: true,
+    success: false,
+    error: null,
+    stage: "بررسی نتایج گوگل",
+  };
+  expect(
+    renderToStaticMarkup(
+      createElement(ArticleGenerationStatus, { ...props, serpStep: true }),
+    ),
+  ).toContain("بررسی نتایج جست‌وجو برای مقالهٔ جدید");
+  expect(
+    renderToStaticMarkup(createElement(ArticleGenerationStatus, props)),
+  ).not.toContain("بررسی نتایج جست‌وجو برای مقالهٔ جدید");
+});
+
 it("announces the active writing step", () => {
   const html = renderToStaticMarkup(
     createElement(ArticleGenerationStatus, {
