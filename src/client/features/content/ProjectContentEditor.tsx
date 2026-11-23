@@ -134,7 +134,7 @@ export function ProjectContentEditor({
       setMatchingPages(evidence.pages);
       let serp: Awaited<ReturnType<typeof getSerpAnalysis>>["items"] = [];
       let coverageVerified = true;
-      if (blog && !targetPage) {
+      if (!targetPage) {
         const [keywordCoverage, titleCoverage] = await Promise.all([
           checkTopicCoverage({ data: { projectId, keyword: keyword.trim() } }),
           checkTopicCoverage({
@@ -159,22 +159,24 @@ export function ProjectContentEditor({
           throw new Error(
             "صفحهٔ مرتبطی پیدا شد؛ پیش از ایجاد مقالهٔ جدید، صفحه‌های زیر را بررسی کنید.",
           );
-        setGenerationStage("بررسی نتایج گوگل");
-        try {
-          const results = await getSerpAnalysis({
-            data: { projectId, keyword: keyword.trim(), depth: 20 },
-          });
-          serp = results.items;
-          setSerpUnavailable(!serp.length);
-        } catch {
-          setSerpUnavailable(true);
-        }
-        const ownResults = findOwnSearchResults(serp, project?.domain ?? "");
-        if (ownResults.length) {
-          setCoverageMatches(ownResults);
-          throw new Error(
-            "این سایت برای کلمهٔ هدف در نتایج گوگل دیده شد؛ ابتدا صفحهٔ موجود را بررسی کنید.",
-          );
+        if (kind === "post") {
+          setGenerationStage("بررسی نتایج گوگل");
+          try {
+            const results = await getSerpAnalysis({
+              data: { projectId, keyword: keyword.trim(), depth: 20 },
+            });
+            serp = results.items;
+            setSerpUnavailable(!serp.length);
+          } catch {
+            setSerpUnavailable(true);
+          }
+          const ownResults = findOwnSearchResults(serp, project?.domain ?? "");
+          if (ownResults.length) {
+            setCoverageMatches(ownResults);
+            throw new Error(
+              "این سایت برای کلمهٔ هدف در نتایج گوگل دیده شد؛ ابتدا صفحهٔ موجود را بررسی کنید.",
+            );
+          }
         }
       }
       setGenerationStage("ساخت نشست SAM");
@@ -212,7 +214,16 @@ export function ProjectContentEditor({
   });
   const save = useMutation({
     mutationFn: () =>
-      saveWordPressDraft({ data: { projectId, title, slug, content, kind } }),
+      saveWordPressDraft({
+        data: {
+          projectId,
+          title,
+          slug,
+          content,
+          kind,
+          keyword: keyword.trim(),
+        },
+      }),
   });
   const canWrite = wordpress.data?.canManage === true;
   // A generated local draft is not clearance to create another CMS item.
@@ -473,9 +484,9 @@ export function ProjectContentEditor({
               success={generate.isSuccess}
               error={generate.error}
               stage={generationStage}
-              serpStep={blog && !targetPage}
+              serpStep={kind === "post" && !targetPage}
             />
-            {blog && !targetPage && (
+            {kind === "post" && !targetPage && (
               <p className="text-xs text-base-content/70">
                 برای نگارش، نتایج گوگل نیز بررسی می‌شود و ممکن است اعتبار مصرف
                 کند.
@@ -493,27 +504,59 @@ export function ProjectContentEditor({
               </p>
             )}
             {coverageMatches.length > 0 && (
-              <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
-                <p>صفحات مرتبط برای بررسی هم‌پوشانی:</p>
-                <ul>
+              <div
+                role="status"
+                className="space-y-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm leading-7"
+              >
+                <div>
+                  <p className="font-semibold">
+                    احتمال هم‌پوشانی با محتوای سایت
+                  </p>
+                  <p>
+                    برای جلوگیری از هدف‌گیری تکراری، ابتدا صفحه‌های زیر را بررسی
+                    کنید. تطابق کلمات به‌تنهایی به معنی یکسان‌بودن قصد جست‌وجو
+                    نیست.
+                  </p>
+                </div>
+                <ul className="space-y-2">
                   {coverageMatches.map((page) => (
-                    <li key={page.url}>
+                    <li
+                      key={page.url}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-base-100 p-3"
+                    >
                       {project?.domain &&
                       sameSitePage(page.url, project.domain) ? (
-                        <a
-                          className="link"
-                          href={page.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {page.title || page.url}
-                        </a>
+                        <>
+                          <a
+                            className="link break-words"
+                            href={page.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {page.title || page.url}
+                          </a>
+                          <Link
+                            className="btn btn-sm btn-outline"
+                            to="/p/$projectId/content"
+                            params={{ projectId }}
+                            search={{
+                              page: page.url,
+                              title: (page.title || "").slice(0, 180),
+                            }}
+                          >
+                            بررسی و بهبود صفحه
+                          </Link>
+                        </>
                       ) : (
                         page.title || "صفحهٔ مرتبط با نشانی نامعتبر"
                       )}
                     </li>
                   ))}
                 </ul>
+                <p className="text-xs">
+                  اگر نیاز مخاطب متفاوت است، کلمه و عنوان دقیق‌تری انتخاب کنید و
+                  دوباره بررسی را انجام دهید.
+                </p>
               </div>
             )}
             <details className="rounded-lg border border-base-300 p-3">
@@ -523,7 +566,7 @@ export function ProjectContentEditor({
               <ArticleClusterSummary evidence={research} />
               {research && <ArticleResearchSummary evidence={research} />}
             </details>
-            {matchingPages.length > 0 && (
+            {matchingPages.length > 0 && coverageMatches.length === 0 && (
               <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
                 <p className="font-medium">
                   محتوای مرتبط در وردپرس پیدا شد. ساخت پیش‌نویس تازه برای این
@@ -627,7 +670,7 @@ export function ProjectContentEditor({
             {save.isSuccess && (
               <p role="status" className="text-sm">
                 {save.data.existing
-                  ? "محتوایی با همین نشانی یا عنوان وجود دارد؛ مورد تازه ساخته نشد."
+                  ? "محتوایی مرتبط با کلمهٔ هدف، نشانی یا عنوان وجود دارد؛ مورد تازه ساخته نشد."
                   : "پیش‌نویس در وردپرس ساخته شد."}{" "}
                 <a
                   className="link"

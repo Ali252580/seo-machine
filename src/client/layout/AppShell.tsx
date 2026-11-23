@@ -123,6 +123,12 @@ export function AuthenticatedAppLayout({
 
   return (
     <div className="flex h-[100dvh] bg-base-200">
+      <a
+        href="#app-content"
+        className="sr-only z-50 rounded-lg bg-base-100 px-4 py-3 text-base-content shadow-lg focus:not-sr-only focus:fixed focus:top-2 focus:right-2 focus:outline-2 focus:outline-primary"
+      >
+        رفتن به محتوای صفحه
+      </a>
       <div className="hidden shrink-0 md:block">
         <Sidebar projectId={sidebarProjectId} />
       </div>
@@ -146,7 +152,13 @@ export function AuthenticatedAppLayout({
 
             {banner}
 
-            <div className="min-h-0 flex-1 overflow-auto">{children}</div>
+            <div
+              id="app-content"
+              tabIndex={-1}
+              className="min-h-0 flex-1 overflow-auto focus:outline-none"
+            >
+              {children}
+            </div>
           </div>
         </div>
       </div>

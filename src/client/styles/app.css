@@ -163,6 +163,15 @@ select {
   background-color: color-mix(in oklab, var(--color-primary) 10%, transparent);
 }
 
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+.input:focus-visible,
+.textarea:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 /* Safe area utilities for mobile devices */
 @layer utilities {
   .pb-safe {

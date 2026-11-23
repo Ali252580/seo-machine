@@ -6,11 +6,11 @@ import { AppError } from "@/server/lib/errors";
 import { requireProjectContext } from "@/serverFunctions/middleware";
 import {
   connectWordPress,
-  createWordPressDraft,
   disconnectWordPress,
   getWordPressConnection,
   listWordPressPages,
 } from "@/server/features/wordpress/WordPressService";
+import { createKeywordDraft } from "@/server/features/wordpress/createKeywordDraft";
 
 const scoped = z.object({ projectId: z.string().min(1) });
 
@@ -68,6 +68,7 @@ export const saveWordPressDraft = createServerFn({ method: "POST" })
   .validator(
     scoped.extend({
       title: z.string().min(5).max(180),
+      keyword: z.string().trim().min(2).max(100),
       slug: z
         .string()
         .min(2)
@@ -79,8 +80,9 @@ export const saveWordPressDraft = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     requireOrgPermission(context, { integration: ["manage"] });
-    return createWordPressDraft(
+    return createKeywordDraft(
       context.projectId,
+      data.keyword,
       data.title,
       data.content,
       data.slug,
