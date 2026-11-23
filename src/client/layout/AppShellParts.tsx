@@ -89,6 +89,7 @@ function MobileSidebarDrawer({
 
   return (
     <dialog
+      id="project-navigation"
       ref={dialogRef}
       aria-label="منوی پروژه"
       className="fixed inset-0 m-0 h-[100dvh] max-h-none w-screen max-w-none border-0 bg-transparent p-0 backdrop:bg-black/45"

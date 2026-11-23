@@ -41,7 +41,6 @@ export function AuthenticatedAppLayout({
   const projectsQuery = useQuery({
     queryKey: ["projects"],
     queryFn: () => getProjects(),
-    enabled: !projectId,
   });
   const [rememberedProjectId] = React.useState<string | null>(() =>
     getLastProjectId(),
@@ -201,6 +200,7 @@ function MobileTopBar({
         className="btn btn-square btn-ghost min-h-11 min-w-11"
         aria-label="بازکردن منوی پروژه"
         aria-expanded={drawerOpen}
+        aria-controls="project-navigation"
         onClick={onOpenDrawer}
       >
         <Menu className="h-5 w-5" />
