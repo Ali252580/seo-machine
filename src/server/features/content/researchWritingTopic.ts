@@ -240,12 +240,10 @@ export async function researchWritingTopic(
       {
         keyword: row.keyword,
         nearby: coverage.nearby,
-        results: organic
-          .slice(0, 5)
-          .map(({ title, description }) => ({
-            title: title.slice(0, 180),
-            description: description.slice(0, 200),
-          })),
+        results: organic.slice(0, 5).map(({ title, description }) => ({
+          title: title.slice(0, 180),
+          description: description.slice(0, 200),
+        })),
       },
     );
     if (existingIndex !== null) {
