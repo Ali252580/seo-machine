@@ -9,9 +9,8 @@ import { KeywordResearchService } from "@/server/features/keywords/services/Keyw
 import { ProjectContextService } from "@/server/features/project-context/services/ProjectContextService";
 import { buildSamSkillSource } from "@/server/features/sam/samSkills";
 import { AppError } from "@/server/lib/errors";
-import { buildChatAgentModel } from "@/server/lib/openrouter";
-import { openRouterCostUsd } from "@/server/lib/openrouter-cost";
-import { getOptionalEnvValue } from "@/server/lib/runtime-env";
+import { getTextModel } from "@/server/lib/text-model";
+import { textModelCostUsd } from "@/server/lib/openrouter-cost";
 import { readPages } from "@/server/lib/scrape";
 import type { WritingTopic } from "@/shared/writingTopic";
 import { loadSiteTopicCoverage } from "./siteTopicCoverage";
@@ -99,12 +98,9 @@ export async function researchWritingTopic(
       .slice(0, 15)
       .map(({ domain, name }) => ({ domain, name })),
   };
-  const [apiKey, modelId] = await Promise.all([
-    getOptionalEnvValue("OPENROUTER_API_KEY"),
-    getOptionalEnvValue("OPENROUTER_MODEL"),
-  ]);
-  if (!apiKey) throw new AppError("INTERNAL_ERROR");
-  const model = buildChatAgentModel(apiKey, modelId, "low");
+  const textModel = await getTextModel();
+  if (!textModel) throw new AppError("INTERNAL_ERROR");
+  const model = textModel.model("low");
   const beforeCall = async () => {
     await options.beforeCall?.();
     const balance = await checkUsageCreditsDepleted(customer);
@@ -131,7 +127,10 @@ export async function researchWritingTopic(
       maxRetries: 0,
       abortSignal: AbortSignal.timeout(35000),
     });
-    const cost = openRouterCostUsd(response.providerMetadata);
+    const cost = textModelCostUsd(
+      textModel.provider,
+      response.providerMetadata,
+    );
     if (cost === null) throw new Error("Missing topic research model cost");
     await trackUsageCreditSpend({
       customer,
@@ -139,7 +138,7 @@ export async function researchWritingTopic(
       creditFeature: "agent",
       costUsd: cost,
       monthlyRemaining: balance.monthlyRemaining,
-      properties: { provider: "openrouter", operation: "writing_topic" },
+      properties: { provider: textModel.provider, operation: "writing_topic" },
     });
     return schema.parse(
       JSON.parse(

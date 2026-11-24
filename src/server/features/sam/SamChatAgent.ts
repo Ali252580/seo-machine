@@ -34,11 +34,8 @@ import {
   SamTelemetry,
   type SamTurnStats,
 } from "@/server/features/sam/samTurnTelemetry";
-import { buildChatAgentModel } from "@/server/lib/openrouter";
-import {
-  getEnvValueSync,
-  isHostedServerAuthMode,
-} from "@/server/lib/runtime-env";
+import { getTextModelSync } from "@/server/lib/text-model";
+import { isHostedServerAuthMode } from "@/server/lib/runtime-env";
 import {
   checkUsageCreditsDepleted,
   trackUsageCreditSpend,
@@ -196,15 +193,9 @@ export class SamChatAgent extends Think {
   }
 
   private buildModel(reasoningEffort: "max" | "low") {
-    const apiKey = getEnvValueSync(this.env, "OPENROUTER_API_KEY");
-    if (!apiKey) {
-      throw new Error("OPENROUTER_API_KEY is required for the SAM agent");
-    }
-    return buildChatAgentModel(
-      apiKey,
-      getEnvValueSync(this.env, "OPENROUTER_MODEL"),
-      reasoningEffort,
-    );
+    const config = getTextModelSync(this.env);
+    if (!config) throw new Error("SAM text model is not configured");
+    return config.model(reasoningEffort);
   }
 
   override getSkills() {
@@ -268,7 +259,9 @@ export class SamChatAgent extends Think {
       if (!ctx) {
         return "You are SAM, the SEO agent inside OpenSEO. This chat session no longer exists; tell the user to start a new chat.";
       }
-      const context = await ProjectContextService.getProjectContext(ctx.project.id);
+      const context = await ProjectContextService.getProjectContext(
+        ctx.project.id,
+      );
       return buildSamSystemPrompt(
         {
           projectId: ctx.project.id,
@@ -438,7 +431,10 @@ export class SamChatAgent extends Think {
       creditFeature: "agent",
       costUsd,
       monthlyRemaining: this.turnMonthlyRemaining ?? armedMonthlyRemaining,
-      properties: { provider: "openrouter", turn_id: turn?.turnId },
+      properties: {
+        provider: getTextModelSync(this.env)?.provider,
+        turn_id: turn?.turnId,
+      },
     });
     if (turn) turn.credits += monthlyCredits + topupCredits;
     if (this.turnMonthlyRemaining !== null)

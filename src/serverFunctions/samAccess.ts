@@ -1,10 +1,11 @@
+import { getTextModel } from "@/server/lib/text-model";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getOptionalEnvValue } from "@/server/lib/runtime-env";
 import { requireProjectContext } from "@/serverFunctions/middleware";
 
 const OPENROUTER_KEY_MISSING_MESSAGE =
-  "کلید OPENROUTER_API_KEY برای این استقرار تنظیم نشده است. آن را در متغیرهای محیطی پروژه قرار دهید و یک استقرار تازه بسازید.";
+  "کلید APINEX_API_KEY یا OPENROUTER_API_KEY برای این استقرار تنظیم نشده است. آن را در متغیرهای محیطی پروژه قرار دهید و یک استقرار تازه بسازید.";
 
 const DATABASE_MISSING_MESSAGE =
   "پایگاه‌دادهٔ PostgreSQL برای ذخیرهٔ گفت‌وگوهای SAM در Vercel تنظیم نشده است.";
@@ -25,7 +26,7 @@ export const getSamAccessSetupStatus = createServerFn({ method: "GET" })
   .middleware(requireProjectContext)
   .validator(projectScopedSchema)
   .handler(async (): Promise<SamAccessStatus> => {
-    const hasApiKey = Boolean(await getOptionalEnvValue("OPENROUTER_API_KEY"));
+    const hasApiKey = Boolean(await getTextModel());
     const isVercel =
       (await getOptionalEnvValue("VERCEL")) === "1" ||
       import.meta.env.MODE === "vercel";

@@ -9,8 +9,9 @@ const mock = vi.hoisted(() => ({
   home: vi.fn(),
 }));
 vi.mock("ai", () => ({ generateText: mock.model }));
-vi.mock("@/server/lib/openrouter", () => ({ buildChatAgentModel: () => ({}) }));
-vi.mock("@/server/lib/openrouter-cost", () => ({ openRouterCostUsd: () => 0 }));
+vi.mock("@/server/lib/text-model", () => ({
+  getTextModel: () => ({ provider: "apinex", model: () => ({}) }),
+}));
 vi.mock("@/server/lib/runtime-env", () => ({
   getOptionalEnvValue: () => "configured",
 }));
@@ -80,7 +81,10 @@ beforeEach(() => {
             proposal: { title, angle: "زمان و مقدار آبیاری در تابستان" },
             existingIndex: null,
           };
-    return { text: JSON.stringify(answer) };
+    return {
+      text: JSON.stringify(answer),
+      providerMetadata: { apinex: { costUsd: 0 } },
+    };
   });
   mock.research.mockResolvedValue({
     rows: [

@@ -81,6 +81,7 @@
     }
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^2.0.93",
     "@ai-sdk/react": "^3.0.211",
     "@better-auth/api-key": "1.6.22",
     "@cloudflare/think": "0.17.0",
