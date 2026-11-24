@@ -62,7 +62,10 @@ export function ProjectAutomationSettings({
         بررسی خودکار هفتگی این سایت
       </label>
       {settings.isPending && <p role="status">در حال دریافت تنظیمات…</p>}
-      <div className="space-y-3 border-t border-base-300 pt-4">
+      <div
+        id="seo-skills"
+        className="scroll-mt-4 space-y-3 border-t border-base-300 pt-4"
+      >
         <label className="flex items-center gap-3">
           <input
             type="checkbox"
@@ -77,6 +80,20 @@ export function ProjectAutomationSettings({
           />
           اجرای خودکار ۹ مهارت سئو
         </label>
+        <p className="text-sm leading-7">
+          در نوبت تحقیق کلمات، مهارت‌های تحقیق و خوشه‌بندی از روی اطلاعات همین
+          سایت یک موضوع مقاله پیشنهاد می‌کنند. نتیجه و صفحه‌های مشابه را در{" "}
+          <Link
+            className="link link-primary"
+            to="/p/$projectId/blog"
+            params={{ projectId }}
+            search={{}}
+            hash="topic-research"
+          >
+            مقالات آموزشی و وبلاگ
+          </Link>{" "}
+          ببینید.
+        </p>
         <p className="text-sm leading-7 text-base-content/70">
           در هر نوبت روزانه حداکثر یک مهارت برای این سایت بررسی می‌شود؛ تکمیل
           دور اول حداقل ۹ نوبت طول می‌کشد. هر اجرا حداکثر ۴ فراخوانی ابزار و ۵

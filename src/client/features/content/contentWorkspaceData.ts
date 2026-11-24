@@ -1,10 +1,22 @@
+import { normalizeTopicText } from "@/shared/contentClusters";
+
+export function topicDraftKey(keyword: string) {
+  const normalized = normalizeTopicText(keyword).slice(0, 100).trimEnd();
+  return normalized ? `topic-${normalized}` : undefined;
+}
+
 export function savedDraftEntries(
   storage: Storage,
   projectId: string,
   blog: boolean,
 ) {
   const prefix = `openseo-${blog ? "blog" : "article"}-${projectId}`;
-  const drafts: { title: string; page?: string; draft?: string }[] = [];
+  const drafts: {
+    title: string;
+    page?: string;
+    draft?: string;
+    keyword?: string;
+  }[] = [];
   for (let i = 0; i < storage.length; i++) {
     const key = storage.key(i);
     if (!key || (key !== prefix && !key.startsWith(`${prefix}:`))) continue;
@@ -19,6 +31,10 @@ export function savedDraftEntries(
         .replace(/\s+/g, " ")
         .trim();
       drafts.push({
+        ...(typeof value.keyword === "string" &&
+          value.keyword.trim() && {
+            keyword: value.keyword.trim().slice(0, 100),
+          }),
         title:
           (typeof value.title === "string" && value.title.trim()) ||
           heading ||

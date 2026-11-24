@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { sort } from "remeda";
+import { writingTopicSchema } from "./writingTopic";
 
 export const automaticSkills = [
   { name: "seo-project-setup", title: "تکمیل شناخت پروژه" },
+  { name: "keyword-research", title: "فرصت‌های کلمات کلیدی و موضوع مقاله" },
   { name: "seo-coach", title: "وضعیت سایت و گام بعدی" },
   { name: "seo-audit", title: "بررسی مشکلات سایت" },
-  { name: "keyword-research", title: "فرصت‌های کلمات کلیدی" },
   { name: "keyword-clustering", title: "گروه‌بندی کلمات و صفحات هدف" },
   { name: "competitive-landscape", title: "بررسی رقبای بازار" },
   { name: "competitor-analysis", title: "تحلیل رقیب ثبت‌شده" },
@@ -22,6 +23,14 @@ export const skillRunSchema = skillReportSchema.extend({
   status: z.enum(["reviewed", "partial", "needs_input", "error"]),
   updatedAt: z.string().datetime(),
   tools: z.array(z.string()).max(4),
+  writingTopic: writingTopicSchema.optional(),
+  topicMarket: z
+    .object({
+      domain: z.string().nullable(),
+      locationCode: z.number(),
+      languageCode: z.string(),
+    })
+    .optional(),
 });
 export const skillRunsSchema = z.array(skillRunSchema).max(9);
 export type SkillRun = z.infer<typeof skillRunSchema>;

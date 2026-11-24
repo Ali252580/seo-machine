@@ -1,6 +1,10 @@
 import { expect, it } from "vitest";
-import { savedDraftEntries } from "./contentWorkspaceData";
+import { savedDraftEntries, topicDraftKey } from "./contentWorkspaceData";
 import { articleDraftKey } from "./useArticleDraft";
+it("reopens the same topic draft across equivalent Persian spellings", () => {
+  expect(topicDraftKey("آب‌یاری گياه")).toBe(topicDraftKey("آب یاری گیاه"));
+  expect(topicDraftKey("تکثیر گیاه")).not.toBe(topicDraftKey("آبیاری گیاه"));
+});
 it("lists old and new drafts without mixing projects, modes or empty entries", () => {
   const values = new Map([
     ["openseo-article-a", JSON.stringify({ title: "Old", content: "keep" })],

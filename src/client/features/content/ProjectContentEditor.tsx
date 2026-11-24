@@ -25,7 +25,7 @@ import {
 import { getSerpAnalysis } from "@/serverFunctions/keywords";
 import { useProjectMarket } from "@/client/features/projects/useProjectMarket";
 import { sameSitePage } from "@/shared/contentClusters";
-import { findOwnSearchResults } from "./articleSearchEvidence";
+import { findOwnSearchResults } from "@/shared/articleSearchEvidence";
 import { createSamSession } from "@/serverFunctions/sam";
 import { sendSamVercelMessage } from "@/serverFunctions/samVercel";
 import {
@@ -38,6 +38,7 @@ export function ProjectContentEditor({
   targetPage,
   suggestedTitle,
   suggestedKeyword,
+  suggestedBrief,
   blog = false,
   draftId,
 }: {
@@ -45,6 +46,7 @@ export function ProjectContentEditor({
   targetPage?: string;
   suggestedTitle?: string;
   suggestedKeyword?: string;
+  suggestedBrief?: string;
   blog?: boolean;
   draftId?: string;
 }) {
@@ -74,6 +76,7 @@ export function ProjectContentEditor({
     blog,
     draftId,
     suggestedKeyword,
+    suggestedBrief,
   );
   const kind = blog ? "post" : savedKind;
   useEffect(() => {
@@ -111,15 +114,11 @@ export function ProjectContentEditor({
   const [coverageMatches, setCoverageMatches] = useState<
     { title: string; url: string }[]
   >([]);
-  const [serpUnavailable, setSerpUnavailable] = useState(false);
-  const [coverageUnavailable, setCoverageUnavailable] = useState(false);
   const generate = useMutation({
     mutationFn: async () => {
       setCheckedTarget(null);
       setResearch(undefined);
       setCoverageMatches([]);
-      setSerpUnavailable(false);
-      setCoverageUnavailable(false);
       setGenerationStage("بررسی شواهد");
       // Research is a server-side prerequisite, not a claim made by the model.
       const evidence = await researchContentTarget({
@@ -133,43 +132,30 @@ export function ProjectContentEditor({
       setResearch(evidence);
       setMatchingPages(evidence.pages);
       let serp: Awaited<ReturnType<typeof getSerpAnalysis>>["items"] = [];
-      let coverageVerified = true;
       if (!targetPage) {
-        const [keywordCoverage, titleCoverage] = await Promise.all([
-          checkTopicCoverage({ data: { projectId, keyword: keyword.trim() } }),
-          checkTopicCoverage({
-            data: { projectId, keyword: title.trim().slice(0, 100) },
-          }),
-        ]);
-        coverageVerified =
-          keywordCoverage.checked &&
-          titleCoverage.checked &&
-          Boolean(project?.domain);
-        setCoverageUnavailable(!coverageVerified);
-        const matches = [
-          ...new Map(
-            [...keywordCoverage.pages, ...titleCoverage.pages].map((page) => [
-              page.url,
-              page,
-            ]),
-          ).values(),
-        ];
+        const coverage = await checkTopicCoverage({
+          data: { projectId, keyword: keyword.trim(), title: title.trim() },
+        });
+        const matches = coverage.pages;
         setCoverageMatches(matches);
         if (matches.length)
           throw new Error(
             "صفحهٔ مرتبطی پیدا شد؛ پیش از ایجاد مقالهٔ جدید، صفحه‌های زیر را بررسی کنید.",
           );
+        if (!coverage.checked)
+          throw new Error(
+            "بررسی صفحات سایت کامل نشد. پس از برقراری دسترسی، بررسی و نگارش را دوباره اجرا کنید.",
+          );
         if (kind === "post") {
           setGenerationStage("بررسی نتایج گوگل");
-          try {
-            const results = await getSerpAnalysis({
-              data: { projectId, keyword: keyword.trim(), depth: 20 },
-            });
-            serp = results.items;
-            setSerpUnavailable(!serp.length);
-          } catch {
-            setSerpUnavailable(true);
-          }
+          const results = await getSerpAnalysis({
+            data: { projectId, keyword: keyword.trim(), depth: 20 },
+          });
+          serp = results.items.filter((item) => /^https?:\/\//i.test(item.url));
+          if (!serp.length)
+            throw new Error(
+              "نتیجهٔ قابل بررسی از گوگل دریافت نشد. برای نگارش مقاله دوباره تلاش کنید.",
+            );
           const ownResults = findOwnSearchResults(serp, project?.domain ?? "");
           if (ownResults.length) {
             setCoverageMatches(ownResults);
@@ -200,8 +186,7 @@ export function ProjectContentEditor({
       });
       return {
         content: requireGeneratedArticle(result.assistantMessage.content),
-        checkedTarget:
-          evidence.wordpressChecked && coverageVerified ? target : null,
+        checkedTarget: evidence.wordpressChecked ? target : null,
       };
     },
     onSuccess: ({
@@ -365,8 +350,6 @@ export function ProjectContentEditor({
                   setResearch(undefined);
                   setCheckedTarget(null);
                   setCoverageMatches([]);
-                  setSerpUnavailable(false);
-                  setCoverageUnavailable(false);
                 }}
                 placeholder="کلمهٔ کلیدی مرتبط با این پروژه"
               />
@@ -384,8 +367,6 @@ export function ProjectContentEditor({
                   setResearch(undefined);
                   setCheckedTarget(null);
                   setCoverageMatches([]);
-                  setSerpUnavailable(false);
-                  setCoverageUnavailable(false);
                   if (!slug)
                     setSlug(event.target.value.trim().replace(/\s+/g, "-"));
                 }}
@@ -490,17 +471,6 @@ export function ProjectContentEditor({
               <p className="text-xs text-base-content/70">
                 برای نگارش، نتایج گوگل نیز بررسی می‌شود و ممکن است اعتبار مصرف
                 کند.
-              </p>
-            )}
-            {serpUnavailable && (
-              <p role="status" className="text-sm">
-                نتایج گوگل در دسترس نبود؛ متن بدون این شواهد تهیه می‌شود.
-              </p>
-            )}
-            {coverageUnavailable && (
-              <p role="status" className="text-sm">
-                بررسی صفحات سایت کامل در دسترس نبود؛ پیش از انتشار، هم‌پوشانی را
-                بررسی کنید.
               </p>
             )}
             {coverageMatches.length > 0 && (

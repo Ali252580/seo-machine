@@ -51,6 +51,7 @@ type CachedResult = ResearchResult;
 
 const cachedKeywordRowSchema = z.object({
   keyword: z.string(),
+  fromGoogleSuggest: z.boolean().optional(),
   searchVolume: z.number().nullable(),
   trend: z.array(
     z.object({
@@ -230,6 +231,11 @@ async function fetchGoogleAdsRows(
   const adsRows = ads.status === "fulfilled" ? ads.value : [];
   const suggestRows =
     suggestions.status === "fulfilled" ? suggestions.value : [];
+  const suggested = new Set(
+    suggestRows
+      .filter((row) => row.fromGoogleSuggest)
+      .map((row) => row.keyword),
+  );
   const seen = new Set<string>();
   const rows = [...adsRows, ...suggestRows]
     .filter((row) => {
@@ -237,7 +243,10 @@ async function fetchGoogleAdsRows(
       seen.add(row.keyword);
       return true;
     })
-    .slice(0, input.resultLimit);
+    .slice(0, input.resultLimit)
+    .map((row) =>
+      suggested.has(row.keyword) ? { ...row, fromGoogleSuggest: true } : row,
+    );
   const source = adsRows.length > 0 ? "google_ads" : "google_suggest";
 
   return {

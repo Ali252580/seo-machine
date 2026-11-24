@@ -78,7 +78,9 @@ export async function discoverContentPages(
       return [url];
     });
   } else {
-    urls = (await discoverSiteUrls(domain, 200)).urls;
+    const discovery = await discoverSiteUrls(domain, 200);
+    if (discovery.blocked) throw new Error("Site inventory unavailable");
+    urls = discovery.urls;
   }
   const candidates = [...new Set(urls)].filter((url) =>
     sameSitePage(url, domain),
@@ -110,10 +112,17 @@ export async function discoverContentPages(
     ...page,
     title: (titles.get(page.url) ?? page.title).slice(0, 180),
   }));
-  const combined = mergeDiscoveredPages([
-    ...titled,
-    ...(await discoverSiteCategories(domain, titled)),
-  ]);
+  const structure = await discoverSiteCategories(domain, titled);
+  // URL discovery includes the root even when all public reads failed.
+  if (
+    source === "sitemap" &&
+    candidates.length <= 1 &&
+    !structure.length &&
+    readings.every((read) => !read.pages.length)
+  ) {
+    throw new Error("No readable site inventory");
+  }
+  const combined = mergeDiscoveredPages([...titled, ...structure]);
   const matchingCategories = new Set(
     combined
       .filter((page) => page.kind === "category" && matches(page.title))

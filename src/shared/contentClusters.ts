@@ -82,6 +82,36 @@ const titleStopWords = new Set(
     " ",
   ),
 );
+export function normalizeTopicText(value: string) {
+  return value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/<[^>]*>/g, " ")
+    .replace(/ي/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/[\p{M}\u0640]/gu, "")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+export function sameTopicTitle(keyword: string, label: string) {
+  const target = normalizeTopicText(keyword);
+  const value = normalizeTopicText(label);
+  if (!target || !value) return false;
+  if (` ${value} `.includes(` ${target} `)) return true;
+  const targetTerms = new Set(
+    target.split(" ").filter((word) => !titleStopWords.has(word)),
+  );
+  const pageTerms = new Set(
+    value.split(" ").filter((word) => !titleStopWords.has(word)),
+  );
+  // Sharing the head term (e.g. «روف گاردن») still allows distinct questions
+  // about cost and irrigation. Reordered modifiers can describe the same intent.
+  return (
+    targetTerms.size >= 2 &&
+    [...targetTerms].every((word) => pageTerms.has(word))
+  );
+}
 const words = (title: string) =>
   new Set(
     title

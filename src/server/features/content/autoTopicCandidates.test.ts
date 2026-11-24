@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
-import { autoTopicCandidates, autoTopicIndices } from "./autoTopicCandidates";
+import { autoTopicCandidates } from "./autoTopicCandidates";
 import type { KeywordResearchRow } from "@/types/keywords";
 
-it("selects demand with suitable intent and validates model choices", () => {
+it("selects measured demand or observed non-seed suggestions with suitable intent", () => {
   const row = (
     keyword: string,
     searchVolume: number | null,
@@ -23,9 +23,18 @@ it("selects demand with suitable intent and validates model choices", () => {
     row("نامعلوم", null, "unknown"),
     row("راهنما", 30, "informational"),
   ];
-  expect(autoTopicCandidates(rows, true).map((item) => item.keyword)).toEqual([
-    "راهنما",
-    "آموزش",
-  ]);
-  expect(autoTopicIndices("1, 0, 1, -1, 99, x", 2)).toEqual([1, 0]);
+  expect(
+    autoTopicCandidates(rows, true, "نامعلوم", "google_ads").map(
+      (item) => item.keyword,
+    ),
+  ).toEqual(["راهنما", "آموزش"]);
+  rows.push({
+    ...row("نگهداری گیاه", null, "unknown"),
+    fromGoogleSuggest: true,
+  });
+  expect(
+    autoTopicCandidates(rows, true, "نامعلوم", "google_suggest").map(
+      (item) => item.keyword,
+    ),
+  ).toEqual(["راهنما", "آموزش", "نگهداری گیاه"]);
 });

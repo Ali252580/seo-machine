@@ -36,6 +36,29 @@ export const getProjectSkillRuns = createServerFn({ method: "POST" })
   .validator(input)
   .handler(({ context }) => getAutomaticSkillRuns(context.projectId));
 
+export const getArticleTopicAutomation = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(input)
+  .handler(async ({ context }) => {
+    const [runs, enabled] = await Promise.all([
+      getAutomaticSkillRuns(context.projectId),
+      getAutomationEnabled(context.projectId, SKILL_AUTOMATION_KEY),
+    ]);
+    const run = runs.find((run) => run.name === "keyword-research");
+    const scope = run?.topicMarket;
+    const current =
+      scope &&
+      scope.domain === context.project.domain &&
+      scope.locationCode === context.project.locationCode &&
+      scope.languageCode === context.project.languageCode;
+    return {
+      enabled,
+      topic: current ? run?.writingTopic : undefined,
+      updatedAt: current ? run?.updatedAt : undefined,
+      failed: run?.status === "error",
+    };
+  });
+
 export const saveProjectSkillAutomation = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
   .validator(input.extend({ enabled: z.boolean() }))

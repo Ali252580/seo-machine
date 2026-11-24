@@ -49,6 +49,7 @@ export function loadArticleDraft(
   suggestedTitle?: string,
   blog = false,
   suggestedKeyword?: string,
+  suggestedBrief?: string,
 ) {
   let data: z.infer<typeof localDraft> | undefined;
   let storageError = false;
@@ -81,7 +82,7 @@ export function loadArticleDraft(
   return {
     storageError,
     draft: {
-      brief: data?.brief ?? "",
+      brief: data?.brief ?? suggestedBrief ?? "",
       profile: data?.profile ?? (blog ? "guide" : "reference"),
       keyword: data?.keyword ?? (suggestedKeyword || proposed).slice(0, 100),
       title: data?.title ?? (suggestedTitle || pageName).slice(0, 180),
@@ -113,6 +114,7 @@ export function useArticleDraft(
   blog = false,
   draftId?: string,
   suggestedKeyword?: string,
+  suggestedBrief?: string,
 ) {
   const [brief, setBrief] = useState("");
   const [profile, setProfile] = useState<WritingProfile>(
@@ -135,6 +137,7 @@ export function useArticleDraft(
       suggestedTitle,
       blog,
       suggestedKeyword,
+      suggestedBrief,
     );
     const draft = loaded.draft;
     setBrief(draft.brief);
@@ -147,7 +150,14 @@ export function useArticleDraft(
     setImage(draft.image);
     setStorageError(loaded.storageError);
     setLoadedKey(storageKey);
-  }, [storageKey, targetPage, suggestedTitle, blog, suggestedKeyword]);
+  }, [
+    storageKey,
+    targetPage,
+    suggestedTitle,
+    blog,
+    suggestedKeyword,
+    suggestedBrief,
+  ]);
 
   useEffect(() => {
     // Never write the previous page's state into the next page's storage key.

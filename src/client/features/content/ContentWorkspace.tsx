@@ -9,7 +9,7 @@ import { WritingPagePicker } from "./WritingPagePicker";
 import { KeywordGap } from "./KeywordGap";
 import { AutoTopic } from "./AutoTopic";
 import { ProjectContentEditor } from "./ProjectContentEditor";
-import { savedDraftEntries } from "./contentWorkspaceData";
+import { savedDraftEntries, topicDraftKey } from "./contentWorkspaceData";
 
 export const contentWorkspaceSearch = z.object({
   page: z
@@ -19,9 +19,11 @@ export const contentWorkspaceSearch = z.object({
     .optional(),
   title: z.string().max(180).optional(),
   keyword: z.string().max(100).optional(),
+  brief: z.string().max(400).optional(),
   draft: z
     .string()
-    .regex(/^(legacy|[a-f0-9-]{36})$/)
+    .max(210)
+    .regex(/^(legacy|[a-f0-9-]{36}|topic-[\p{L}\p{N}]+(?: [\p{L}\p{N}]+)*)$/u)
     .optional(),
 });
 
@@ -62,14 +64,23 @@ export function ContentWorkspace({
       setStorageError(true);
     }
   }, [projectId, blog, search.draft, search.page]);
-  const start = (title: string, keyword?: string) => {
+  const start = (title: string, keyword?: string, brief?: string) => {
+    const topicKey = keyword && topicDraftKey(keyword);
+    const existing = topicKey
+      ? drafts.find(
+          (draft) =>
+            !draft.page &&
+            topicDraftKey(draft.keyword || draft.title) === topicKey,
+        )
+      : undefined;
     void navigate({
       to,
       params: { projectId },
       search: {
-        draft: crypto.randomUUID(),
+        draft: existing?.draft ?? (topicKey || crypto.randomUUID()),
         title: title.slice(0, 180),
         keyword,
+        brief,
       },
     });
   };
@@ -81,6 +92,7 @@ export function ContentWorkspace({
         targetPage={search.page}
         suggestedTitle={search.title}
         suggestedKeyword={search.keyword}
+        suggestedBrief={search.brief}
         blog={blog}
         draftId={search.draft === "legacy" ? undefined : search.draft}
       />
@@ -111,15 +123,21 @@ export function ContentWorkspace({
               ? "برای آموزش، پاسخ به سؤال و مقایسه بنویسید؛ هدف این بخش توضیح موضوع است، نه معرفی خدمات."
               : "برای معرفی خدمات و محصول یا ساخت مرجع اصلی موضوع بنویسید. برای اصلاح محتوای فعلی، صفحه را از فهرست پایین انتخاب کنید."}
           </p>
+          <AutoTopic
+            key={`${projectId}:${blog}`}
+            projectId={projectId}
+            blog={blog}
+            onChoose={start}
+          />
           <form
-            className="flex gap-2"
+            className="flex flex-col gap-2 sm:flex-row"
             onSubmit={(event) => {
               event.preventDefault();
               if (topic.trim()) start(topic.trim());
             }}
           >
             <input
-              className="input input-bordered flex-1"
+              className="input input-bordered min-w-0 flex-1"
               aria-label="موضوع محتوای جدید"
               value={topic}
               maxLength={180}
@@ -130,7 +148,6 @@ export function ContentWorkspace({
               شروع پیش‌نویس تازه
             </button>
           </form>
-          <AutoTopic projectId={projectId} blog={blog} onChoose={start} />
           <KeywordGap projectId={projectId} onChoose={start} />
           <section className="space-y-3 rounded-lg border border-base-300 p-4">
             <h3 className="font-semibold">نگارش از کلمات کلیدی ذخیره‌شده</h3>

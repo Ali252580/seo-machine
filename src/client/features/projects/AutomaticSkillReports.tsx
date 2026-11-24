@@ -63,6 +63,17 @@ export function AutomaticSkillReports({ projectId }: { projectId: string }) {
                   آخرین اجرا: {new Date(run.updatedAt).toLocaleString("fa-IR")}
                 </p>
                 <Markdown>{run.report}</Markdown>
+                {run.writingTopic && (
+                  <Link
+                    className="btn btn-sm btn-outline mt-3"
+                    to="/p/$projectId/blog"
+                    params={{ projectId }}
+                    search={{}}
+                    hash="topic-research"
+                  >
+                    بررسی نتیجه در بخش مقالات
+                  </Link>
+                )}
                 <p className="mt-3 text-xs text-base-content/60">
                   ابزارهای فراخوانی‌شده (شامل تلاش ناموفق):{" "}
                   {run.tools.join("، ") || "تحلیل زمینهٔ ذخیره‌شده"}

@@ -81,7 +81,7 @@ it("runs missing skills first and reuses reviewed results for thirty days", asyn
   }));
   expect(nextAutomaticSkill([], now)?.name).toBe("seo-project-setup");
   expect(nextAutomaticSkill(runs, now)).toBeUndefined();
-  runs[2].status = "partial";
+  runs.find((run) => run.name === "seo-audit")!.status = "partial";
   expect(nextAutomaticSkill(runs, now)?.name).toBe("seo-audit");
   expect(nextAutomaticSkill(runs.slice(0, 8), now)?.name).toBe("local-seo");
 });

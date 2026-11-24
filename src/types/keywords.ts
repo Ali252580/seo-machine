@@ -13,6 +13,7 @@ export type MonthlySearch = {
 
 export type KeywordResearchRow = {
   keyword: string;
+  fromGoogleSuggest?: boolean;
   searchVolume: number | null;
   trend: MonthlySearch[];
   keywordDifficulty: number | null;

@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { findOwnSearchResults } from "./articleSearchEvidence";
+import { findOwnSearchResults } from "@/shared/articleSearchEvidence";
 
 it("flags only actual same-site results, not lookalike or unsafe addresses", () => {
   const rows = [

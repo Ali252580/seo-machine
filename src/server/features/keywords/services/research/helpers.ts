@@ -1,14 +1,6 @@
-import type { KeywordIntent, MonthlySearch } from "@/types/keywords";
+import type { KeywordIntent, KeywordResearchRow } from "@/types/keywords";
 
-export type EnrichedKeyword = {
-  keyword: string;
-  searchVolume: number | null;
-  trend: MonthlySearch[];
-  cpc: number | null;
-  competition: number | null;
-  keywordDifficulty: number | null;
-  intent: KeywordIntent;
-};
+export type EnrichedKeyword = KeywordResearchRow;
 
 export function normalizeKeyword(input: string): string {
   return input.trim().toLowerCase();

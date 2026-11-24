@@ -28,6 +28,7 @@ import { maybeSendSelfHostHeartbeat } from "@/server/lib/self-host-telemetry";
 import { handleGdprStorageErasure } from "@/server/gdpr/storage-erasure";
 import { GDPR_STORAGE_ERASURE_PATH } from "@/shared/gdpr-erasure";
 import { runDuePeriodicRecommendations } from "@/server/features/sam/periodicRecommendations";
+import { runDueAutomaticSkills } from "@/server/features/sam/automaticSkills";
 
 const startHandler = createStartHandler(defaultStreamHandler);
 
@@ -196,7 +197,12 @@ export default {
   ) {
     if (controller.cron === MCP_OAUTH_PURGE_CRON) {
       try {
-        await withPgClient(() => runDuePeriodicRecommendations());
+        await withPgClient(() =>
+          Promise.all([
+            runDuePeriodicRecommendations(),
+            runDueAutomaticSkills(),
+          ]),
+        );
       } catch (err) {
         console.error("[cron] Periodic recommendations failed:", err);
       }

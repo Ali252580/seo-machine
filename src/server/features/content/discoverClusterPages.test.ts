@@ -54,6 +54,17 @@ it("reports fresh discovery failure so writing can use existing evidence", async
     unavailable: true,
   });
 });
+it("does not mistake an unreachable fallback homepage for an empty site", async () => {
+  mocks.discover.mockResolvedValue({
+    urls: ["https://example.com/"],
+    blocked: false,
+  });
+  expect((await discoverWritingPages(project)).unavailable).toBe(true);
+  mocks.read.mockResolvedValue({
+    pages: [{ url: "https://example.com/", title: "Garden studio" }],
+  });
+  expect((await discoverWritingPages(project)).unavailable).toBe(false);
+});
 it("discovers public pages without calling either integration and excludes external URLs", async () => {
   mocks.discover.mockResolvedValue({
     urls: [

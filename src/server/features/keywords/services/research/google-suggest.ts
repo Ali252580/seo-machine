@@ -48,6 +48,7 @@ export async function fetchGoogleSuggestRows(
     seen.add(normalized);
     rows.push({
       keyword: normalized,
+      ...(normalized !== normalizeKeyword(seed) && { fromGoogleSuggest: true }),
       searchVolume: null,
       trend: [],
       cpc: null,
