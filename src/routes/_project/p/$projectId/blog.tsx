@@ -1,22 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
-import {
-  ContentWorkspace,
-  contentWorkspaceSearch,
-} from "@/client/features/content/ContentWorkspace";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { contentWorkspaceSearch } from "@/client/features/content/contentWorkspaceData";
 
 export const Route = createFileRoute("/_project/p/$projectId/blog")({
   validateSearch: contentWorkspaceSearch,
-  component: BlogEditor,
+  beforeLoad: ({ params, search, location }) => {
+    throw redirect({
+      to: "/p/$projectId/content",
+      params,
+      search: { ...search, mode: "article" },
+      hash: location.hash,
+      replace: true,
+    });
+  },
 });
-
-function BlogEditor() {
-  const { projectId } = Route.useParams();
-  return (
-    <ContentWorkspace
-      key={projectId}
-      projectId={projectId}
-      search={Route.useSearch()}
-      blog
-    />
-  );
-}

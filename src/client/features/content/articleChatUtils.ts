@@ -29,7 +29,12 @@ export function articleHtml(text: string) {
   }
 }
 
-export function requireGeneratedArticle(text: string) {
+export function requireGeneratedArticle(text: string, finishReason?: string) {
+  if (finishReason === "length") {
+    throw new Error(
+      "مدل پیش از تکمیل متن به سقف پاسخ رسید. موضوع را محدودتر کنید و دوباره بنویسید.",
+    );
+  }
   const html = articleHtml(text);
   if (!html)
     throw new Error(

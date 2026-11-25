@@ -17,6 +17,7 @@ type SamAccessStatus = {
   errorMessage: string | null;
   reason: "missing_key" | "missing_database" | null;
   hasApiKey: boolean;
+  configuredModel: { provider: "apinex" | "openrouter"; model: string } | null;
   runtime: "vercel" | "cloudflare";
 };
 
@@ -26,7 +27,11 @@ export const getSamAccessSetupStatus = createServerFn({ method: "GET" })
   .middleware(requireProjectContext)
   .validator(projectScopedSchema)
   .handler(async (): Promise<SamAccessStatus> => {
-    const hasApiKey = Boolean(await getTextModel());
+    const selected = await getTextModel();
+    const hasApiKey = Boolean(selected);
+    const configuredModel = selected
+      ? { provider: selected.provider, model: selected.model("low").modelId }
+      : null;
     const isVercel =
       (await getOptionalEnvValue("VERCEL")) === "1" ||
       import.meta.env.MODE === "vercel";
@@ -36,6 +41,7 @@ export const getSamAccessSetupStatus = createServerFn({ method: "GET" })
         enabled: false,
         errorMessage: DATABASE_MISSING_MESSAGE,
         reason: "missing_database",
+        configuredModel,
         hasApiKey,
         runtime,
       };
@@ -45,6 +51,7 @@ export const getSamAccessSetupStatus = createServerFn({ method: "GET" })
         enabled: false,
         errorMessage: OPENROUTER_KEY_MISSING_MESSAGE,
         reason: "missing_key",
+        configuredModel,
         hasApiKey: false,
         runtime,
       };
@@ -53,6 +60,7 @@ export const getSamAccessSetupStatus = createServerFn({ method: "GET" })
       enabled: true,
       errorMessage: null,
       reason: null,
+      configuredModel,
       hasApiKey: true,
       runtime,
     };

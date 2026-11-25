@@ -1,4 +1,22 @@
+import { z } from "zod";
 import { normalizeTopicText } from "@/shared/contentClusters";
+
+export const contentWorkspaceSearch = z.object({
+  mode: z.enum(["article", "page"]).optional(),
+  page: z
+    .string()
+    .url()
+    .refine((value) => /^https?:\/\//i.test(value))
+    .optional(),
+  title: z.string().max(180).optional(),
+  keyword: z.string().max(100).optional(),
+  brief: z.string().max(400).optional(),
+  draft: z
+    .string()
+    .max(210)
+    .regex(/^(legacy|[a-f0-9-]{36}|topic-[\p{L}\p{N}]+(?: [\p{L}\p{N}]+)*)$/u)
+    .optional(),
+});
 
 export function topicDraftKey(keyword: string) {
   const normalized = normalizeTopicText(keyword).slice(0, 100).trimEnd();
@@ -51,4 +69,13 @@ export function savedDraftEntries(
     }
   }
   return drafts;
+}
+
+export function workspaceDrafts(storage: Storage, projectId: string) {
+  return (["page", "article"] as const).flatMap((mode) =>
+    savedDraftEntries(storage, projectId, mode === "article").map((draft) => ({
+      ...draft,
+      mode,
+    })),
+  );
 }

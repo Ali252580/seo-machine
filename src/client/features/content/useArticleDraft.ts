@@ -5,6 +5,9 @@ import { recommendationPage } from "@/client/features/dashboard/recommendationPa
 import type { ArticleImage } from "./ArticleMediaPanel";
 
 const localDraft = z.object({
+  generation: z
+    .object({ provider: z.enum(["apinex", "openrouter"]), model: z.string() })
+    .optional(),
   brief: z.string().max(400).optional(),
   profile: z
     .enum([
@@ -82,6 +85,7 @@ export function loadArticleDraft(
   return {
     storageError,
     draft: {
+      generation: data?.generation,
       brief: data?.brief ?? suggestedBrief ?? "",
       profile: data?.profile ?? (blog ? "guide" : "reference"),
       keyword: data?.keyword ?? (suggestedKeyword || proposed).slice(0, 100),
@@ -117,6 +121,8 @@ export function useArticleDraft(
   suggestedBrief?: string,
 ) {
   const [brief, setBrief] = useState("");
+  const [generation, setGeneration] =
+    useState<z.infer<typeof localDraft>["generation"]>();
   const [profile, setProfile] = useState<WritingProfile>(
     blog ? "guide" : "reference",
   );
@@ -140,6 +146,7 @@ export function useArticleDraft(
       suggestedBrief,
     );
     const draft = loaded.draft;
+    setGeneration(draft.generation);
     setBrief(draft.brief);
     setProfile(draft.profile);
     setKeyword(draft.keyword);
@@ -164,6 +171,7 @@ export function useArticleDraft(
     if (loadedKey !== storageKey) return;
     setStorageError(
       !persistArticleDraft(storageKey, {
+        generation,
         brief,
         profile,
         keyword,
@@ -176,6 +184,7 @@ export function useArticleDraft(
     );
   }, [
     loadedKey,
+    generation,
     storageKey,
     brief,
     profile,
@@ -189,6 +198,8 @@ export function useArticleDraft(
 
   return {
     storageError,
+    generation,
+    setGeneration,
     brief,
     setBrief,
     profile,

@@ -7,6 +7,21 @@ import {
 
 afterEach(() => vi.unstubAllGlobals());
 
+it("keeps the responding model with its own draft and leaves older drafts unattributed", () => {
+  const values = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  });
+  const draft = { title: "Sample", keyword: "", slug: "", content: "Text" };
+  const generation = { provider: "apinex" as const, model: "reported-model" };
+  persistArticleDraft("old", draft);
+  persistArticleDraft("new", { ...draft, generation });
+  expect(loadArticleDraft("new").draft.generation).toEqual(generation);
+  expect(loadArticleDraft("old").draft.generation).toBeUndefined();
+  expect(loadArticleDraft("old").draft.content).toBe(draft.content);
+});
+
 it("uses the researched keyword for a new draft without overwriting a saved draft", () => {
   vi.stubGlobal("localStorage", {
     getItem: (key: string) =>

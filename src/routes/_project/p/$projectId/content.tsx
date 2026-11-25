@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  ContentWorkspace,
-  contentWorkspaceSearch,
-} from "@/client/features/content/ContentWorkspace";
+import { ContentWorkspace } from "@/client/features/content/ContentWorkspace";
+import { contentWorkspaceSearch } from "@/client/features/content/contentWorkspaceData";
 
 export const Route = createFileRoute("/_project/p/$projectId/content")({
   validateSearch: contentWorkspaceSearch,

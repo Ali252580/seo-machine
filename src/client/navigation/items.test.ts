@@ -11,12 +11,12 @@ it("keeps every project section reachable once and scoped to the selected projec
       expect.arrayContaining([
         "/p/$projectId/content",
         "/p/$projectId/clusters",
-        "/p/$projectId/blog",
         "/p/$projectId/context",
         "/p/$projectId/recommendations",
         "/p/$projectId/rank-tracking",
       ]),
     );
+    expect(items.some((item) => String(item.to).endsWith("/blog"))).toBe(false);
     for (const item of items) {
       if ("params" in item) {
         expect(item.params).toEqual({ projectId });

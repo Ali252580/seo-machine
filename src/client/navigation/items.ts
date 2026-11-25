@@ -1,6 +1,5 @@
 import {
   Bookmark,
-  BookOpen,
   Bot,
   Brain,
   ClipboardCheck,
@@ -24,13 +23,8 @@ const projectNavItems = [
   },
   {
     to: "/p/$projectId/content" as const,
-    label: "صفحات خدمات و مرجع",
+    label: "مقالات و صفحات خدمات",
     icon: FileText,
-  },
-  {
-    to: "/p/$projectId/blog" as const,
-    label: "مقالات آموزشی و وبلاگ",
-    icon: BookOpen,
   },
   {
     to: "/p/$projectId" as const,
@@ -170,7 +164,6 @@ export function getProjectNavGroups(projectId: string) {
       items: [
         byPath("/p/$projectId/clusters"),
         byPath("/p/$projectId/content"),
-        byPath("/p/$projectId/blog"),
         byPath("/p/$projectId/reports"),
       ],
     },

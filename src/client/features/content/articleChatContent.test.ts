@@ -20,6 +20,12 @@ it("rejects empty or conversational responses instead of replacing the draft", (
   ).toBe("<h2>موضوع</h2><p>متن مقاله</p>");
 });
 
+it("rejects a truncated response even if it contains valid article markup", () => {
+  expect(() =>
+    requireGeneratedArticle("<h2>موضوع</h2><p>بخش اول</p>", "length"),
+  ).toThrow("سقف پاسخ");
+});
+
 it("summarizes an article request without exposing its long evidence URL", () => {
   expect(
     articleRequestSummary(

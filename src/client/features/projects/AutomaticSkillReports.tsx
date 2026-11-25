@@ -66,9 +66,9 @@ export function AutomaticSkillReports({ projectId }: { projectId: string }) {
                 {run.writingTopic && (
                   <Link
                     className="btn btn-sm btn-outline mt-3"
-                    to="/p/$projectId/blog"
+                    to="/p/$projectId/content"
                     params={{ projectId }}
-                    search={{}}
+                    search={{ mode: "article" }}
                     hash="topic-research"
                   >
                     بررسی نتیجه در بخش مقالات

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { z } from "zod";
+import type { z } from "zod";
 import { ArrowLeft, FilePenLine, HardDrive } from "lucide-react";
 import { getSavedKeywords } from "@/serverFunctions/keywords";
 import { ContentEditorHeader } from "./ContentEditorHeader";
@@ -9,39 +9,25 @@ import { WritingPagePicker } from "./WritingPagePicker";
 import { KeywordGap } from "./KeywordGap";
 import { AutoTopic } from "./AutoTopic";
 import { ProjectContentEditor } from "./ProjectContentEditor";
-import { savedDraftEntries, topicDraftKey } from "./contentWorkspaceData";
-
-export const contentWorkspaceSearch = z.object({
-  page: z
-    .string()
-    .url()
-    .refine((value) => /^https?:\/\//i.test(value))
-    .optional(),
-  title: z.string().max(180).optional(),
-  keyword: z.string().max(100).optional(),
-  brief: z.string().max(400).optional(),
-  draft: z
-    .string()
-    .max(210)
-    .regex(/^(legacy|[a-f0-9-]{36}|topic-[\p{L}\p{N}]+(?: [\p{L}\p{N}]+)*)$/u)
-    .optional(),
-});
+import {
+  workspaceDrafts,
+  topicDraftKey,
+  type contentWorkspaceSearch,
+} from "./contentWorkspaceData";
 
 export function ContentWorkspace({
   projectId,
-  blog = false,
   search,
 }: {
   projectId: string;
-  blog?: boolean;
   search: z.infer<typeof contentWorkspaceSearch>;
 }) {
   const navigate = useNavigate();
-  const to = blog ? "/p/$projectId/blog" : "/p/$projectId/content";
+  const mode = search.mode ?? "page";
+  const blog = mode === "article";
+  const to = "/p/$projectId/content";
   const [topic, setTopic] = useState("");
-  const [drafts, setDrafts] = useState<ReturnType<typeof savedDraftEntries>>(
-    [],
-  );
+  const [drafts, setDrafts] = useState<ReturnType<typeof workspaceDrafts>>([]);
   const [storageError, setStorageError] = useState(false);
   const keywords = useQuery({
     queryKey: ["articleKeywords", projectId],
@@ -58,12 +44,12 @@ export function ContentWorkspace({
   });
   useEffect(() => {
     try {
-      setDrafts(savedDraftEntries(localStorage, projectId, blog));
+      setDrafts(workspaceDrafts(localStorage, projectId));
       setStorageError(false);
     } catch {
       setStorageError(true);
     }
-  }, [projectId, blog, search.draft, search.page]);
+  }, [projectId, search.draft, search.page]);
   const start = (title: string, keyword?: string, brief?: string) => {
     const topicKey = keyword && topicDraftKey(keyword);
     const existing = topicKey
@@ -77,6 +63,7 @@ export function ContentWorkspace({
       to,
       params: { projectId },
       search: {
+        mode: existing?.mode ?? mode,
         draft: existing?.draft ?? (topicKey || crypto.randomUUID()),
         title: title.slice(0, 180),
         keyword,
@@ -100,7 +87,7 @@ export function ContentWorkspace({
   return (
     <main className="h-full overflow-auto p-4 md:p-7" dir="rtl">
       <div className="mx-auto max-w-6xl space-y-6">
-        <ContentEditorHeader projectId={projectId} blog={blog} />
+        <ContentEditorHeader projectId={projectId} />
         <nav aria-label="زیرمنوی محتوا" className="flex gap-3">
           <a href="#new-content" className="btn btn-primary btn-sm">
             پیشنهاد و محتوای جدید
@@ -113,6 +100,34 @@ export function ContentWorkspace({
           id="new-content"
           className="space-y-4 rounded-xl border border-base-300 p-5"
         >
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">نوع محتوای جدید</legend>
+            <div className="flex flex-wrap gap-2">
+              {(["article", "page"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={mode === value}
+                  className={
+                    mode === value
+                      ? "btn btn-primary btn-sm"
+                      : "btn btn-outline btn-sm"
+                  }
+                  onClick={() =>
+                    void navigate({
+                      to,
+                      params: { projectId },
+                      search: { mode: value },
+                    })
+                  }
+                >
+                  {value === "article"
+                    ? "مقالهٔ وبلاگ"
+                    : "صفحهٔ خدمات، محصول یا مرجع"}
+                </button>
+              ))}
+            </div>
+          </fieldset>
           <h2 className="text-xl font-bold">
             {blog
               ? "مقالهٔ آموزشی جدید برای مخاطبان سایت"
@@ -199,7 +214,7 @@ export function ContentWorkspace({
                   </span>
                   <button
                     className="btn btn-sm"
-                    onClick={() => start(row.keyword)}
+                    onClick={() => start(row.keyword, row.keyword)}
                   >
                     بررسی و نگارش
                   </button>
@@ -214,7 +229,7 @@ export function ContentWorkspace({
             )}
           </section>
         </section>
-        {!blog && <WritingPagePicker projectId={projectId} />}
+        <WritingPagePicker projectId={projectId} />
         <section
           id="previous-drafts"
           className="overflow-hidden rounded-xl border border-base-300 bg-base-100"
@@ -265,7 +280,7 @@ export function ContentWorkspace({
           )}
           <ul className="divide-y divide-base-300">
             {drafts.map((draft, index) => (
-              <li key={`${draft.page ?? draft.draft}-${index}`}>
+              <li key={`${draft.mode}:${draft.page ?? draft.draft}-${index}`}>
                 <Link
                   className="group flex min-w-0 flex-col gap-3 px-5 py-4 transition-colors hover:bg-base-200/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary sm:flex-row sm:items-center sm:gap-5 sm:px-6"
                   to={to}
@@ -291,8 +306,10 @@ export function ContentWorkspace({
                       </span>
                     ) : (
                       <span className="block text-xs leading-6 text-base-content/70">
-                        {blog ? "مقالهٔ آموزشی" : "محتوای جدید"} · بدون صفحهٔ
-                        مقصد
+                        {draft.mode === "article"
+                          ? "مقالهٔ وبلاگ"
+                          : "محتوای بخش صفحات"}{" "}
+                        · بدون صفحهٔ مقصد
                       </span>
                     )}
                   </span>

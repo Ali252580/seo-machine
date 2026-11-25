@@ -180,8 +180,9 @@ export function DashboardPage({ projectId }: { projectId: string }) {
               </span>
             </Link>
             <Link
-              to="/p/$projectId/blog"
+              to="/p/$projectId/content"
               params={{ projectId }}
+              search={{ mode: "article" }}
               className="rounded-lg p-3 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-primary"
             >
               <span className="block font-medium">۳. نگارش و بازبینی</span>

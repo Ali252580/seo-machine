@@ -15,9 +15,7 @@ export function ContentEditorHeader({
     <>
       <header className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
         <div className="w-full min-w-0 sm:w-auto sm:flex-1">
-          <h1 className="text-2xl font-semibold">
-            {blog ? "مقالات آموزشی و وبلاگ" : "صفحات خدمات، محصول و مرجع"}
-          </h1>
+          <h1 className="text-2xl font-semibold">مقالات و صفحات خدمات</h1>
           {project && (
             <dl className="my-3 flex flex-wrap gap-x-6 gap-y-2 rounded-lg border border-base-300 bg-base-200/50 px-3 py-2 text-sm">
               <div className="flex min-w-0 items-baseline gap-2">
@@ -41,7 +39,7 @@ export function ContentEditorHeader({
               ? "مقالهٔ آموزشی، راهنمای کاربردی یا پاسخ به پرسش مخاطبان همین سایت؛ با زمینهٔ پروژه و ترجیحات نگارش شما. پیش‌نویس را ویرایش کنید، تصویر بسازید و برای بازبینی به وردپرس بفرستید."
               : targetPage
                 ? "صفحهٔ موجود را با داده‌های جست‌وجو و مهارت‌های SAM بررسی و پیش‌نویس بهبود را بازبینی کنید."
-                : "صفحهٔ خدمات، محصول یا مرجع بسازید؛ یا یکی از صفحات فعلی سایت را برای بهبود انتخاب کنید."}
+                : "برای موضوع تازه مقاله یا صفحه بسازید، محتوای فعلی سایت را بهبود دهید یا نگارش یک پیش‌نویس را ادامه دهید."}
           </p>
         </div>
         <Link

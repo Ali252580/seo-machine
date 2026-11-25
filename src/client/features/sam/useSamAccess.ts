@@ -9,6 +9,9 @@ type SamAccess = {
   errorMessage: string | null;
   reason: "missing_key" | "missing_database" | null;
   hasApiKey: boolean | null;
+  configuredModel: Awaited<
+    ReturnType<typeof getSamAccessSetupStatus>
+  >["configuredModel"];
   runtime: "vercel" | "cloudflare" | null;
   isRefetching: boolean;
   onRetry: () => void;
@@ -39,6 +42,7 @@ export function useSamAccess(projectId: string): SamAccess {
         : null),
     reason: data?.reason ?? null,
     hasApiKey: data?.hasApiKey ?? null,
+    configuredModel: data?.configuredModel ?? null,
     runtime: data?.runtime ?? null,
     isRefetching,
     onRetry,

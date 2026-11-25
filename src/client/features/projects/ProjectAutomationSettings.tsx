@@ -85,12 +85,12 @@ export function ProjectAutomationSettings({
           سایت یک موضوع مقاله پیشنهاد می‌کنند. نتیجه و صفحه‌های مشابه را در{" "}
           <Link
             className="link link-primary"
-            to="/p/$projectId/blog"
+            to="/p/$projectId/content"
             params={{ projectId }}
-            search={{}}
+            search={{ mode: "article" }}
             hash="topic-research"
           >
-            مقالات آموزشی و وبلاگ
+            مقالات و صفحات خدمات
           </Link>{" "}
           ببینید.
         </p>

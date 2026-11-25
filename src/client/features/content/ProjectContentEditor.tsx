@@ -8,6 +8,7 @@ import { ArticleGenerationStatus } from "./ArticleGenerationStatus";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArticleResearchSummary } from "@/client/features/content/ArticleResearchSummary";
+import { useSamAccess } from "@/client/features/sam/useSamAccess";
 import { ArticleClusterSummary } from "./ArticleClusterSummary";
 import { WritingPagePicker } from "./WritingPagePicker";
 import { ArticlePreview } from "@/client/features/content/ArticlePreview";
@@ -51,8 +52,11 @@ export function ProjectContentEditor({
   draftId?: string;
 }) {
   const project = useProjectMarket(projectId);
+  const sam = useSamAccess(projectId);
   const {
     storageError,
+    generation,
+    setGeneration,
     brief,
     setBrief,
     profile,
@@ -87,10 +91,11 @@ export function ProjectContentEditor({
       if (!imported) return;
       sessionStorage.removeItem(key);
       setContent(imported);
+      setGeneration(undefined);
     } catch {
       // Restricted browser storage must not prevent manual article editing.
     }
-  }, [projectId, blog, setContent]);
+  }, [projectId, blog, setContent, setGeneration]);
   const [checkedTarget, setCheckedTarget] = useState<string | null>(null);
   const [research, setResearch] = useState<
     Awaited<ReturnType<typeof researchContentTarget>> | undefined
@@ -185,15 +190,21 @@ export function ProjectContentEditor({
         },
       });
       return {
-        content: requireGeneratedArticle(result.assistantMessage.content),
+        content: requireGeneratedArticle(
+          result.assistantMessage.content,
+          result.finishReason,
+        ),
+        generation: result.generation,
         checkedTarget: evidence.wordpressChecked ? target : null,
       };
     },
     onSuccess: ({
       content: generatedContent,
+      generation: generatedBy,
       checkedTarget: verifiedTarget,
     }) => {
       setContent(generatedContent);
+      setGeneration(generatedBy);
       setCheckedTarget(verifiedTarget);
     },
   });
@@ -239,12 +250,38 @@ export function ProjectContentEditor({
         />
         <Link
           className="btn btn-sm btn-outline"
-          to={blog ? "/p/$projectId/blog" : "/p/$projectId/content"}
+          to="/p/$projectId/content"
           params={{ projectId }}
-          search={{}}
+          search={{ mode: blog ? "article" : "page" }}
         >
           بازگشت به پیشنهادها و پیش‌نویس‌های قبلی
         </Link>
+        {sam.configuredModel && (
+          <p className="text-sm text-base-content/75">
+            مدل تنظیم‌شده برای نگارش بعدی ·{" "}
+            <bdi>
+              {sam.configuredModel.provider === "apinex"
+                ? "APInex"
+                : "OpenRouter"}{" "}
+              / {sam.configuredModel.model}
+            </bdi>
+          </p>
+        )}
+        {content && (
+          <p className="text-sm text-base-content/75">
+            {generation ? (
+              <>
+                مدل آخرین نگارش با SAM ·{" "}
+                <bdi>
+                  {generation.provider === "apinex" ? "APInex" : "OpenRouter"} /{" "}
+                  {generation.model}
+                </bdi>
+              </>
+            ) : (
+              "مدل نگارش این پیش‌نویس ثبت نشده است."
+            )}
+          </p>
+        )}
         {content && !/<a\s[^>]*href=/i.test(content) && (
           <p className="alert alert-info text-sm">
             در این پیش‌نویس لینکی پیدا نشد. متن‌های قبلی خودکار تغییر نمی‌کنند؛
@@ -600,6 +637,7 @@ export function ProjectContentEditor({
                   setTitle(article.title);
                   setKind(blog ? "post" : article.kind);
                   setContent(article.content);
+                  setGeneration(undefined);
                   setImage(
                     article.image
                       ? {

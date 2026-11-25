@@ -1,5 +1,9 @@
 import { expect, it } from "vitest";
-import { savedDraftEntries, topicDraftKey } from "./contentWorkspaceData";
+import {
+  savedDraftEntries,
+  topicDraftKey,
+  workspaceDrafts,
+} from "./contentWorkspaceData";
 import { articleDraftKey } from "./useArticleDraft";
 it("reopens the same topic draft across equivalent Persian spellings", () => {
   expect(topicDraftKey("آب‌یاری گياه")).toBe(topicDraftKey("آب یاری گیاه"));
@@ -33,6 +37,11 @@ it("lists old and new drafts without mixing projects, modes or empty entries", (
   ]);
   expect(savedDraftEntries(storage, "a", true)).toEqual([
     { title: "Blog", draft: "legacy" },
+  ]);
+  expect(workspaceDrafts(storage, "a")).toEqual([
+    { title: "Old", draft: "legacy", mode: "page" },
+    { title: "New", draft: "123", mode: "page" },
+    { title: "Blog", draft: "legacy", mode: "article" },
   ]);
   expect(articleDraftKey("a", undefined, false, "new")).not.toBe(
     articleDraftKey("a"),
