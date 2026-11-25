@@ -3,7 +3,7 @@ import { z } from "zod";
 import { buildChatAgentModel } from "./openrouter";
 import { getEnvValueSync, getOptionalEnvValue } from "./runtime-env";
 
-const APINEX_MODEL = "free/glm-5.3-flash";
+const APINEX_MODEL = "free/qwen-3.8-max";
 const freeUsage = z.object({ usage: z.object({ cost_tokens: z.literal(0) }) });
 
 function reportedFreeUsage(body: unknown) {
