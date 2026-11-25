@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildSamSkillSource } from "@/server/features/sam/samSkills";
+import {
+  buildArticleWritingSystemPrompt,
+  buildSamSkillSource,
+} from "@/server/features/sam/samSkills";
 
 describe("buildSamSkillSource", () => {
   // Guards the real failure modes: a skill whose frontmatter breaks (build
@@ -24,4 +27,17 @@ describe("buildSamSkillSource", () => {
     const loaded = await source.load("seo-project-setup");
     expect(loaded?.body).toContain("Surface note: you are SAM");
   });
+});
+
+it("includes the complete editorial references and the project's context in the article prompt", async () => {
+  const prompt = buildArticleWritingSystemPrompt("باغبانی روی بام");
+  expect(prompt).toContain("باغبانی روی بام");
+  for (const name of ["seo-audit", "keyword-research", "keyword-clustering"]) {
+    const skill = await buildSamSkillSource().load(name);
+    const body = skill?.body.match(/^# OpenSEO [\s\S]+/m)?.[0];
+    expect(body).toBeTruthy();
+    expect(prompt).toContain(`<skill name="${name}">\n${body}\n</skill>`);
+  }
+  expect(prompt).not.toContain("Surface note: you are SAM");
+  expect(prompt).toContain("ONLY the requested article body in Persian HTML");
 });

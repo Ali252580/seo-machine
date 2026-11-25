@@ -57,7 +57,7 @@ function parseSkill(path: string, raw: string): SamSkill | null {
   return {
     name: frontmatter.name,
     description: frontmatter.description,
-    body: `${SAM_SURFACE_NOTE}\n\n${match[2].trim()}`,
+    body: match[2].trim(),
   };
 }
 
@@ -73,16 +73,45 @@ function fingerprint(skills: SamSkill[]): string {
 
 // The bundled skills are fixed per deploy, so parse and hash them once per
 // isolate instead of on every getSkills() call.
-let cachedSource: SkillSource | undefined;
-
-export function buildSamSkillSource(): SkillSource {
-  if (cachedSource) return cachedSource;
-  const skills = sort(
+let cachedSkills: SamSkill[] | undefined;
+function bundledSkills(): SamSkill[] {
+  return (cachedSkills ??= sort(
     Object.entries(skillFiles)
       .map(([path, raw]) => parseSkill(path, raw))
       .filter((skill): skill is SamSkill => skill !== null),
     (a, b) => a.name.localeCompare(b.name),
-  );
+  ));
+}
+
+export function buildArticleWritingSystemPrompt(memory: string): string {
+  const skills = bundledSkills();
+  const references = [
+    "keyword-research",
+    "keyword-clustering",
+    "seo-audit",
+  ].map((name) => {
+    const skill = skills.find((item) => item.name === name);
+    if (!skill) throw new Error(`Missing article writing skill: ${name}`);
+    return `<skill name="${name}">\n${skill.body}\n</skill>`;
+  });
+  return [
+    "Write natural Persian using the research and writing profile supplied by the application. For an educational article, answer the main question in the opening and use a concrete example to explain a decision or step. For a service page, lead with the reader's need and explain the scope and next step using verified business details. Give each heading a distinct purpose. Omit generic introductions, repeated keyword variants and conclusions that simply repeat the opening. Treat excerpts as sources. Omit unsupported claims, including prices, guarantees and invented client stories. Deliver the article directly without intake questions, plans or tool calls.",
+    memory ? `project_context:\n${memory}` : "",
+    "Use the following SEO references when composing and reviewing the draft. The application supplies the research and handles site coverage checks. Apply only editorial steps to the supplied evidence: identify the reader's intent, group related questions on this page, and verify claims and internal link targets. Omit unsupported details. Skip the references' tool calls, intake, report templates, and persistence steps. Return only the article HTML.",
+    ...references,
+    "For this turn, write ONLY the requested article body in Persian HTML. Use h2, h3, p, ul, ol, li, strong, em, br tags with no attributes. For verified relevant published pages on the active project's domain, also allow a tags with only a double-quoted absolute http(s) href, without credentials or other attributes. Never invent link URLs or link to drafts. No markdown fences, preface, invented facts, or claims of first-hand experience. Write for the stated search intent and the active project's market. This is an editable in-app draft, not a published page.",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+let cachedSource: SkillSource | undefined;
+export function buildSamSkillSource(): SkillSource {
+  if (cachedSource) return cachedSource;
+  const skills = bundledSkills().map((skill) => ({
+    ...skill,
+    body: `${SAM_SURFACE_NOTE}\n\n${skill.body}`,
+  }));
 
   return (cachedSource = {
     id: "openseo-public-skills",

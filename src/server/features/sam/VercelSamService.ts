@@ -9,7 +9,10 @@ import { SamMessageRepository } from "./SamMessageRepository";
 import { SamSessionRepository } from "./SamSessionRepository";
 import { buildSamMcpTools } from "./samChatTools";
 import { buildSamSystemPrompt } from "./samSystemPrompt";
-import { buildSamSkillSource } from "./samSkills";
+import {
+  buildArticleWritingSystemPrompt,
+  buildSamSkillSource,
+} from "./samSkills";
 import { hasOrgPermission } from "@/lib/org-permissions";
 import {
   createWordPressDraft,
@@ -118,14 +121,14 @@ export async function sendVercelSamMessage(
     // Vercel does not run Think's built-in skill registry. Expose the same
     // bundled public skills on demand so the model can follow their steps here.
     const skillSource = buildSamSkillSource();
-    const skills = await skillSource.list();
+    const skills = article ? [] : await skillSource.list();
     let remaining = balance.monthlyRemaining;
     const result = await generateText({
       model: textModel.model("low"),
-      system: [
-        article
-          ? "Write natural Persian using the research and writing profile supplied by the application. For an educational article, answer the main question in the opening and use a concrete example to explain a decision or step. For a service page, lead with the reader's need and explain the scope and next step using verified business details. Give each heading a distinct purpose. Omit generic introductions, repeated keyword variants and conclusions that simply repeat the opening. Treat excerpts as sources. Omit unsupported claims, including prices, guarantees and invented client stories. Deliver the article directly without intake questions, plans or tool calls."
-          : buildSamSystemPrompt(
+      system: article
+        ? buildArticleWritingSystemPrompt(memory)
+        : [
+            buildSamSystemPrompt(
               {
                 projectId: caller.project.id,
                 projectName: caller.project.name,
@@ -137,16 +140,11 @@ export async function sendVercelSamMessage(
                 intakeMode: needsContextIntake(projectContext),
               },
             ),
-        memory ? `project_context:\n${memory}` : "",
-        article
-          ? ""
-          : `Available in-app skills: ${skills.map(({ name, description }) => `${name}: ${description}`).join("; ")}. When a request fits a skill, call activate_skill and follow its instructions using the available tools.`,
-        article
-          ? "For this turn, write ONLY the requested article body in Persian HTML. Use h2, h3, p, ul, ol, li, strong, em, br tags with no attributes. For verified relevant published pages on the active project's domain, also allow a tags with only a double-quoted absolute http(s) href, without credentials or other attributes. Never invent link URLs or link to drafts. No markdown fences, preface, invented facts, or claims of first-hand experience. Write for the stated search intent and the active project's market. This is an editable in-app draft, not a published page."
-          : "",
-      ]
-        .filter(Boolean)
-        .join("\n\n"),
+            memory ? `project_context:\n${memory}` : "",
+            `Available in-app skills: ${skills.map(({ name, description }) => `${name}: ${description}`).join("; ")}. When a request fits a skill, call activate_skill and follow its instructions using the available tools.`,
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
       messages: [...previous, userMessage].map((message) => ({
         role: message.role,
         content: message.content,
